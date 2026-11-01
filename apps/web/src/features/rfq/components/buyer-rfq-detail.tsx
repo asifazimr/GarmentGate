@@ -36,6 +36,7 @@ import { countryName } from '@/lib/countries';
 import { formatMoney } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useAcceptQuote, useBuyerRfq } from '../api';
+import { OpenThreadButton } from '@/features/chat/components/open-thread-button';
 import { AttachmentList } from './attachment-list';
 
 const BADGE_ICON = { BEST_VALUE: Trophy, LOWEST_PRICE: Sparkles, FASTEST: Zap } as const;
@@ -95,10 +96,13 @@ function DetailView({ rfq }: { rfq: Detail }) {
         <h1 className="text-2xl font-semibold tracking-[-0.02em] text-balance sm:text-3xl">
           {rfq.title}
         </h1>
-        <p className="text-muted-foreground text-sm">
-          {t('reached', { count: rfq.factoriesReached })} ·{' '}
-          {t('quotesDue', { date: date(rfq.deadline) })}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-muted-foreground text-sm">
+            {t('reached', { count: rfq.factoriesReached })} ·{' '}
+            {t('quotesDue', { date: date(rfq.deadline) })}
+          </p>
+          <OpenThreadButton target={{ rfqCode: rfq.code }} base="/buyer" />
+        </div>
       </header>
 
       {rfq.orderCode ? (

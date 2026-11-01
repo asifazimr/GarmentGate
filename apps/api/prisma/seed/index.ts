@@ -769,13 +769,12 @@ async function main(): Promise<void> {
       -3,
     ],
   ];
-  let lastAt = new Date(0);
   for (const [conversationId, senderId, text, days] of messages) {
-    const m = message(senderId, text, days);
-    await prisma.message.create({ data: { conversationId, ...m } });
-    lastAt = m.createdAt;
+    await prisma.message.create({ data: { conversationId, ...message(senderId, text, days) } });
   }
-  await prisma.conversation.updateMany({ data: { lastMessageAt: lastAt } });
+  await prisma.$executeRaw`
+    UPDATE "conversations" c SET "lastMessageAt" =
+      (SELECT max(m."createdAt") FROM "messages" m WHERE m."conversationId" = c."id")`;
 
   // ── Notifications and audit trail ─────────────────────────────────────────
   await prisma.notification.createMany({

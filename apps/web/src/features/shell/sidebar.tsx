@@ -9,6 +9,7 @@ import { Suspense } from 'react';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { UnreadBadge } from '@/features/chat/components/unread-badge';
 import { cn } from '@/lib/utils';
 import { isActive, NAV } from './nav';
 
@@ -85,6 +86,12 @@ function SidebarNav({
                   aria-hidden="true"
                 />
                 <span className={cn('truncate', collapsed && 'sr-only')}>{t(item.label)}</span>
+                {item.label === 'messages' ? (
+                  <UnreadBadge
+                    dot={collapsed}
+                    className={collapsed ? 'absolute top-1.5 end-1.5' : 'ms-auto'}
+                  />
+                ) : null}
               </Link>
             );
             return (

@@ -13,13 +13,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useMediaReviewQueue, useReviewMedia } from '../api';
 
 /** Sanitized files waiting for a human check (logos, labels, faces, brand names). */
-export function AdminMediaReview() {
+export function AdminMediaReview({ embedded = false }: { embedded?: boolean }) {
   const t = useTranslations('rfq.review');
   const queue = useMediaReviewQueue();
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t('title')} description={t('description')} />
+      {embedded ? (
+        <p className="text-muted-foreground text-sm">{t('description')}</p>
+      ) : (
+        <PageHeader title={t('title')} description={t('description')} />
+      )}
       {queue.isPending ? (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }, (_, i) => (

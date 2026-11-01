@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { z } from 'zod';
 import type { AppConfigService } from './config/config.module.js';
+import { ChatIoAdapter } from './modules/chat/chat-io.adapter.js';
 
 /**
  * Cross-cutting HTTP setup shared by `main.ts` and e2e tests,
@@ -27,6 +28,8 @@ export function configureApp(app: INestApplication): void {
     origin: config.get('CORS_ORIGINS', { infer: true }),
     credentials: true,
   });
+  // Socket.io for chat, with the same allowed origins as CORS.
+  app.useWebSocketAdapter(new ChatIoAdapter(app));
   app.enableShutdownHooks();
 
   if (config.get('SWAGGER_ENABLED', { infer: true })) {

@@ -20,6 +20,8 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    // WebSocket handlers are authenticated once, in the gateway's handshake.
+    if (context.getType() !== 'http') return true;
     const isPublic = this.reflector.getAllAndOverride<boolean | undefined>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),

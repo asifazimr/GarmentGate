@@ -25,6 +25,7 @@ import { applyServerErrors } from '@/lib/form-errors';
 import { formatMoney, fromMinor, toMinor } from '@/lib/format';
 import { useFactoryRfq, useSubmitQuote } from '../api';
 import { QUOTE_FIELDS, QuoteFormSchema, type QuoteFormValues } from '../forms';
+import { OpenThreadButton } from '@/features/chat/components/open-thread-button';
 import { AttachmentList } from './attachment-list';
 
 export function FactoryRfqDetail({ code }: { code: string }) {
@@ -85,7 +86,10 @@ function DetailView({ rfq }: { rfq: ManufacturerRfqDetail }) {
         <h1 className="text-2xl font-semibold tracking-[-0.02em] text-balance sm:text-3xl">
           {rfq.title}
         </h1>
-        <p className="text-muted-foreground text-sm">{t('due', { date: date(rfq.deadline) })}</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-muted-foreground text-sm">{t('due', { date: date(rfq.deadline) })}</p>
+          <OpenThreadButton target={{ rfqCode: rfq.code }} base="/manufacturer" />
+        </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">

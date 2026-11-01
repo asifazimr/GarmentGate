@@ -460,6 +460,7 @@ model User {
   kycReviews          Company[]                 @relation("KycReviewedBy")
   disputesOpened      Dispute[]                 @relation("DisputeOpenedBy")
   disputesAssigned    Dispute[]                 @relation("DisputeAssignedTo")
+  accountWarnings     AccountWarning[]
 
   @@index([companyId])
   @@index([role, status])
@@ -997,6 +998,8 @@ model Message {
   originalContent  String
   /// What other participants receive.
   filteredContent  String
+  /// Set when an admin relayed this message from the other side's thread.
+  relayedFromId    String?          @db.Uuid
   flagged          Boolean          @default(false)
   flagReasons      ContactFlag[]
   moderationStatus ModerationStatus @default(CLEAN)
@@ -1014,9 +1017,16 @@ model Message {
 }
 
 model MessageAttachment {
-  id        String @id @default(uuid(7)) @db.Uuid
-  messageId String @db.Uuid
-  fileId    String @unique @db.Uuid
+  id          String        @id @default(uuid(7)) @db.Uuid
+  messageId   String        @db.Uuid
+  fileId      String        @unique @db.Uuid
+  /// Contact-filtered file name: what other participants see.
+  displayName String
+  /// Contact details found in the file name or the PDF's text.
+  flagged     Boolean       @default(false)
+  flagReasons ContactFlag[]
+  /// When the PDF text was checked (null: not checked yet, or not a PDF).
+  scannedAt   DateTime?
 
   message Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
   file    FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
@@ -1523,4 +1533,25 @@ model ShortlistItem {
   @@unique([shortlistId, manufacturerProfileId])
   @@index([shortlistId, createdAt])
   @@map("shortlist_items")
+}
+
+enum WarningLevel {
+  WARNING
+  FINAL_WARNING
+}
+
+/// Raised automatically when a user keeps trying to share contact details.
+model AccountWarning {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  userId         String       @db.Uuid
+  level          WarningLevel
+  /// Contact-filter hits in the window that triggered it.
+  violations     Int
+  createdAt      DateTime     @default(now())
+  acknowledgedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("account_warnings")
 }

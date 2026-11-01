@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Suspense, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { UnreadBadge } from '@/features/chat/components/unread-badge';
 import { cn } from '@/lib/utils';
 import { isActive, NAV } from './nav';
 
@@ -51,7 +52,12 @@ function BottomNavBar({ role, pathname }: { role: Role; pathname: string | null 
                   aria-current={active ? 'page' : undefined}
                   className={cn(tab, active ? 'text-primary-ink' : 'text-muted-foreground')}
                 >
-                  <item.icon className="size-5" aria-hidden="true" />
+                  <span className="relative">
+                    <item.icon className="size-5" aria-hidden="true" />
+                    {item.label === 'messages' ? (
+                      <UnreadBadge dot className="absolute -top-0.5 -end-1" />
+                    ) : null}
+                  </span>
                   <span className="max-w-full truncate px-1">{t(item.label)}</span>
                 </Link>
               </li>
@@ -65,7 +71,12 @@ function BottomNavBar({ role, pathname }: { role: Role; pathname: string | null 
                 aria-haspopup="dialog"
                 className={cn(tab, moreActive ? 'text-primary-ink' : 'text-muted-foreground')}
               >
-                <Ellipsis className="size-5" aria-hidden="true" />
+                <span className="relative">
+                  <Ellipsis className="size-5" aria-hidden="true" />
+                  {more.some((i) => i.label === 'messages') ? (
+                    <UnreadBadge dot className="absolute -top-0.5 -end-1" />
+                  ) : null}
+                </span>
                 {t('more')}
               </button>
             </li>
@@ -88,6 +99,7 @@ function BottomNavBar({ role, pathname }: { role: Role; pathname: string | null 
                 >
                   <item.icon className="text-muted-foreground size-5" aria-hidden="true" />
                   {t(item.label)}
+                  {item.label === 'messages' ? <UnreadBadge className="ms-auto" /> : null}
                 </Link>
               </li>
             ))}

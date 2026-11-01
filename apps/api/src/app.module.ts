@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { HttpThrottlerGuard } from './common/throttle/http-throttler.guard.js';
 import { LoggingModule } from './common/logging/logging.module.js';
 import { QueueModule } from './common/queue/queue.module.js';
 import { AppConfigModule, type AppConfigService } from './config/config.module.js';
@@ -10,6 +11,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { BuyerModule } from './modules/buyer/buyer.module.js';
 import { CatalogModule } from './modules/catalog/catalog.module.js';
+import { ChatModule } from './modules/chat/chat.module.js';
 import { KycModule } from './modules/kyc/kyc.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
 import { ManufacturerModule } from './modules/manufacturer/manufacturer.module.js';
@@ -50,8 +52,9 @@ import { PrismaModule } from './prisma/prisma.module.js';
     CatalogModule,
     BuyerModule,
     RfqModule,
+    ChatModule,
   ],
   // Global rate limit; auth routes tighten it with @Throttle.
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [{ provide: APP_GUARD, useClass: HttpThrottlerGuard }],
 })
 export class AppModule {}
