@@ -4,12 +4,21 @@ import {
   CountryCodeSchema,
   type PublicManufacturer,
   PublicManufacturerSchema,
+  type ManufacturerSearchQuery,
+  ManufacturerSearchQuerySchema,
+  type ManufacturerSearchResult,
+  ManufacturerSearchResultSchema,
+  type ProductSearchQuery,
+  ProductSearchQuerySchema,
+  type ProductSearchResult,
+  ProductSearchResultSchema,
   type PublicProduct,
   PublicProductSchema,
 } from '@garmentgate/shared';
 import { z } from 'zod';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { Roles } from '../auth/auth.decorators.js';
+import { SearchService } from '../search/search.service.js';
 import { CatalogService } from './catalog.service.js';
 
 const ManufacturerQuerySchema = z.object({
@@ -27,7 +36,28 @@ const ProductQuerySchema = z.object({
 @Roles('BUYER', 'ADMIN')
 @Controller()
 export class CatalogController {
-  constructor(private readonly catalog: CatalogService) {}
+  constructor(
+    private readonly catalog: CatalogService,
+    private readonly search: SearchService,
+  ) {}
+
+  @Get('catalog/search')
+  @ApiOperation({ summary: 'Instant product search with filters, facets and sorting' })
+  @ApiOkResponse({ standardSchema: ProductSearchResultSchema })
+  searchProducts(
+    @Query(new ZodValidationPipe(ProductSearchQuerySchema)) query: ProductSearchQuery,
+  ): Promise<ProductSearchResult> {
+    return this.search.searchProducts(query);
+  }
+
+  @Get('catalog/manufacturers/search')
+  @ApiOperation({ summary: 'Factory search (anonymised)' })
+  @ApiOkResponse({ standardSchema: ManufacturerSearchResultSchema })
+  searchManufacturers(
+    @Query(new ZodValidationPipe(ManufacturerSearchQuerySchema)) query: ManufacturerSearchQuery,
+  ): Promise<ManufacturerSearchResult> {
+    return this.search.searchManufacturers(query);
+  }
 
   @Get('manufacturers')
   @ApiOperation({ summary: 'Verified factories, anonymised (public codes only)' })

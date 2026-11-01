@@ -8,6 +8,7 @@ import { AppConfigModule, type AppConfigService } from './config/config.module.j
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { BuyerModule } from './modules/buyer/buyer.module.js';
 import { CatalogModule } from './modules/catalog/catalog.module.js';
 import { KycModule } from './modules/kyc/kyc.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
@@ -15,6 +16,7 @@ import { ManufacturerModule } from './modules/manufacturer/manufacturer.module.j
 import { MediaModule } from './modules/media/media.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
+import { SearchModule } from './modules/search/search.module.js';
 import { StorageModule } from './modules/storage/storage.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
@@ -36,6 +38,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     AuditModule,
     MailModule,
     MediaModule,
+    SearchModule,
     StorageModule,
     HealthModule,
     AuthModule,
@@ -44,6 +47,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     NotificationsModule,
     ManufacturerModule,
     CatalogModule,
+    BuyerModule,
   ],
   // Global rate limit; auth routes tighten it with @Throttle.
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

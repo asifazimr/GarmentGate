@@ -46,6 +46,11 @@ export const EnvSchema = z.object({
 
   MEILISEARCH_HOST: z.url(),
   MEILISEARCH_API_KEY: z.string().min(16),
+  /** Prepended to index names, so e2e tests don't touch the dev indexes. */
+  MEILISEARCH_INDEX_PREFIX: z
+    .string()
+    .regex(/^[a-z0-9_]*$/)
+    .default(''),
 
   S3_ENDPOINT: z.url(),
   S3_REGION: z.string().min(1),

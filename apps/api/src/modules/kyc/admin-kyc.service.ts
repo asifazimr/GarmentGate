@@ -12,6 +12,7 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { MailService } from '../mail/mail.service.js';
+import { SearchService } from '../search/search.service.js';
 
 const listInclude = {
   users: { where: { companyRole: 'OWNER' }, take: 1 },
@@ -44,6 +45,7 @@ export class AdminKycService {
     private readonly mail: MailService,
     private readonly audit: AuditService,
     private readonly config: ConfigService<Env, true>,
+    private readonly search: SearchService,
   ) {}
 
   async list(status: KycStatus): Promise<AdminKycCompany[]> {
@@ -171,6 +173,7 @@ export class AdminKycService {
         })),
       }),
     ]);
+    await this.syncListing(company.id);
     await this.audit.log({
       actorUserId: adminId,
       action: 'kyc.approved',
@@ -208,6 +211,7 @@ export class AdminKycService {
         })),
       }),
     ]);
+    await this.syncListing(company.id);
     await this.audit.log({
       actorUserId: adminId,
       action: 'kyc.rejected',
@@ -223,6 +227,15 @@ export class AdminKycService {
         actionUrl: this.webUrl('/onboarding'),
       });
     }
+  }
+
+  /** Listing changes with KYC status: keep the factory's search documents in step. */
+  private async syncListing(companyId: string): Promise<void> {
+    const profile = await this.prisma.manufacturerProfile.findUnique({
+      where: { companyId },
+      select: { id: true },
+    });
+    if (profile) await this.search.syncManufacturer(profile.id);
   }
 
   private async pending(companyId: string) {

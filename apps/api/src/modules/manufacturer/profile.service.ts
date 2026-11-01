@@ -17,6 +17,7 @@ import { toPublicManufacturer } from '../catalog/public.serializer.js';
 import { publicManufacturerInclude } from '../catalog/catalog.queries.js';
 import { fileWithRenditions, MediaService } from '../media/media.service.js';
 import { capabilitiesView, capabilitiesWrite } from '../onboarding/capabilities.mapper.js';
+import { SearchService } from '../search/search.service.js';
 import { FilesService } from '../storage/files.service.js';
 import { type ManufacturerContext } from './manufacturer-context.service.js';
 import { toOwnedImage } from './owned-image.js';
@@ -30,6 +31,7 @@ export class ManufacturerProfileService {
     private readonly media: MediaService,
     private readonly files: FilesService,
     private readonly audit: AuditService,
+    private readonly search: SearchService,
   ) {}
 
   async view(
@@ -62,6 +64,7 @@ export class ManufacturerProfileService {
       where: { id: ctx.profileId },
       data: write.data,
     });
+    await this.search.syncManufacturer(ctx.profileId);
     await this.audit.log({
       actorUserId: ctx.userId,
       action:
@@ -188,6 +191,7 @@ export class ManufacturerProfileService {
     });
     if (!cert) throw new NotFoundException('Certification not found');
     await this.prisma.certification.delete({ where: { id: cert.id } });
+    await this.search.syncManufacturer(ctx.profileId);
     if (cert.fileId) await this.files.remove(cert.fileId);
   }
 

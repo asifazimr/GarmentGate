@@ -4,6 +4,7 @@ import {
   Factory,
   FileText,
   Gauge,
+  Heart,
   Inbox,
   LayoutDashboard,
   type LucideIcon,
@@ -14,6 +15,7 @@ import {
   Scale,
   Settings,
   ShieldAlert,
+  Search,
   ShieldCheck,
   Shirt,
 } from 'lucide-react';
@@ -33,7 +35,9 @@ export type NavLabel =
   | 'moderation'
   | 'margins'
   | 'products'
-  | 'capacity';
+  | 'capacity'
+  | 'discover'
+  | 'shortlists';
 
 export interface NavItem {
   href: string;
@@ -51,11 +55,13 @@ export interface NavItem {
  */
 export const NAV: Record<Role, NavItem[]> = {
   BUYER: [
-    { href: '/buyer', label: 'dashboard', icon: LayoutDashboard, primary: true },
+    { href: '/buyer', label: 'dashboard', icon: LayoutDashboard, primary: true, built: true },
+    { href: '/buyer/search', label: 'discover', icon: Search, primary: true, built: true },
     { href: '/buyer/rfqs', label: 'rfqs', icon: FileText, primary: true },
     { href: '/buyer/orders', label: 'orders', icon: Package, primary: true },
-    { href: '/buyer/messages', label: 'messages', icon: MessageSquare, primary: true },
-    { href: '/buyer/factories', label: 'factories', icon: Factory },
+    { href: '/buyer/messages', label: 'messages', icon: MessageSquare },
+    { href: '/buyer/factories', label: 'factories', icon: Factory, built: true },
+    { href: '/buyer/shortlists', label: 'shortlists', icon: Heart, built: true },
     { href: '/buyer/settings', label: 'settings', icon: Settings },
   ],
   MANUFACTURER: [

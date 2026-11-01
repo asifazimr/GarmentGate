@@ -11,6 +11,7 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { fileWithRenditions, MediaService } from '../media/media.service.js';
 import { applyMarkup, pickCatalogRule } from '../pricing/margin.js';
+import { SearchService } from '../search/search.service.js';
 import { FilesService } from '../storage/files.service.js';
 import { type ManufacturerContext } from './manufacturer-context.service.js';
 import { toOwnedImage } from './owned-image.js';
@@ -34,6 +35,7 @@ export class ManufacturerProductsService {
     private readonly prisma: PrismaService,
     private readonly media: MediaService,
     private readonly files: FilesService,
+    private readonly search: SearchService,
   ) {}
 
   async list(ctx: ManufacturerContext): Promise<ManufacturerProduct[]> {
@@ -61,6 +63,7 @@ export class ManufacturerProductsService {
         priceTiers: { create: tiers },
       },
     });
+    await this.search.syncProduct(product.id);
     return this.get(ctx, product.id);
   }
 
@@ -78,6 +81,7 @@ export class ManufacturerProductsService {
         data: { ...this.productData(dto), priceTiers: { create: tiers } },
       }),
     ]);
+    await this.search.syncProduct(id);
     return this.get(ctx, id);
   }
 
@@ -88,6 +92,7 @@ export class ManufacturerProductsService {
       where: { id },
       data: { deletedAt: new Date(), status: 'ARCHIVED' },
     });
+    await this.search.syncProduct(id);
   }
 
   async addImage(

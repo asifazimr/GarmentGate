@@ -1,0 +1,70 @@
+import type { ManufacturerSearchQuery, ProductSearchQuery } from '@garmentgate/shared';
+
+/** Quotes a value for a Meilisearch filter expression. */
+const q = (value: string) => JSON.stringify(value);
+const anyOf = (field: string, values: string[] | undefined) =>
+  values && values.length > 0 ? `${field} IN [${values.map(q).join(', ')}]` : null;
+
+/** Builds the Meilisearch filter for a product query. Every value is quoted or numeric. */
+export function productFilter(query: ProductSearchQuery): string[] {
+  const filters: (string | null)[] = [
+    anyOf('categories', query.category),
+    anyOf('fabric', query.fabric),
+    anyOf('country', query.country),
+    // Certifications are AND: "GOTS and OEKO-TEX" means both.
+    ...(query.cert ?? []).map((c) => `certifications = ${q(c)}`),
+    query.gsmMin !== undefined ? `gsm >= ${String(query.gsmMin)}` : null,
+    query.gsmMax !== undefined ? `gsm <= ${String(query.gsmMax)}` : null,
+    query.moqMin !== undefined ? `moqPcs >= ${String(query.moqMin)}` : null,
+    query.moqMax !== undefined ? `moqPcs <= ${String(query.moqMax)}` : null,
+    query.leadTimeMax !== undefined ? `leadTimeDays <= ${String(query.leadTimeMax)}` : null,
+  ];
+  // Prices only compare within one currency.
+  if (query.priceMin !== undefined || query.priceMax !== undefined) {
+    filters.push(`currency = ${q(query.currency)}`);
+    if (query.priceMin !== undefined) filters.push(`minPrice >= ${String(query.priceMin)}`);
+    if (query.priceMax !== undefined) filters.push(`minPrice <= ${String(query.priceMax)}`);
+  }
+  return filters.filter((f): f is string => f !== null);
+}
+
+export function productSort(sort: ProductSearchQuery['sort']): string[] | undefined {
+  switch (sort) {
+    case 'price_asc':
+      return ['minPrice:asc'];
+    case 'price_desc':
+      return ['minPrice:desc'];
+    case 'moq_asc':
+      return ['moqPcs:asc'];
+    case 'lead_time_asc':
+      return ['leadTimeDays:asc'];
+    case 'score_desc':
+      return ['performanceScore:desc'];
+    case 'newest':
+      return ['createdAt:desc'];
+    default:
+      return undefined;
+  }
+}
+
+export function manufacturerFilter(query: ManufacturerSearchQuery): string[] {
+  return [
+    anyOf('categories', query.category),
+    anyOf('country', query.country),
+    ...(query.cert ?? []).map((c) => `certifications = ${q(c)}`),
+    query.moqMax !== undefined ? `moqPcs <= ${String(query.moqMax)}` : null,
+  ].filter((f): f is string => f !== null);
+}
+
+export function manufacturerSort(sort: ManufacturerSearchQuery['sort']): string[] | undefined {
+  switch (sort) {
+    case 'score_desc':
+      return ['performanceScore:desc'];
+    case 'capacity_desc':
+      return ['monthlyCapacityPcs:desc'];
+    case 'moq_asc':
+      return ['moqPcs:asc'];
+    default:
+      return undefined;
+  }
+}

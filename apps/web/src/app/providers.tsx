@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MotionConfig } from 'motion/react';
 import { ThemeProvider } from 'next-themes';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { type ReactNode, useState } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -29,7 +30,10 @@ export function Providers({ children }: { children: ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider delay={300}>
           {/* Honour prefers-reduced-motion for every Motion animation. */}
-          <MotionConfig reducedMotion="user">{children}</MotionConfig>
+          <MotionConfig reducedMotion="user">
+            {/* URL state (search filters, selected list) via nuqs. */}
+            <NuqsAdapter>{children}</NuqsAdapter>
+          </MotionConfig>
         </TooltipProvider>
         <Toaster position="top-center" closeButton />
       </QueryClientProvider>

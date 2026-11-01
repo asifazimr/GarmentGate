@@ -21,6 +21,7 @@ Object.assign(process.env, {
   REDIS_URL: 'redis://localhost:6379/1',
   MEILISEARCH_HOST: 'http://localhost:7700',
   MEILISEARCH_API_KEY: 'garmentgate-dev-master-key-change-me',
+  MEILISEARCH_INDEX_PREFIX: 'test_',
   S3_ENDPOINT: 'http://localhost:9000',
   S3_REGION: 'us-east-1',
   S3_BUCKET: 'garmentgate',

@@ -233,6 +233,8 @@ enum MilestoneStatus {
 }
 
 enum SampleType {
+  /// A sample of an existing catalog style, requested from the product page.
+  CATALOG
   PROTO
   FIT
   SIZE_SET
@@ -553,6 +555,7 @@ model Company {
   ledgerAccounts      LedgerAccount[]
   conversations       Conversation[]
   reviewsWritten      Review[]
+  shortlists          Shortlist[]
 
   @@index([type, kycStatus])
   @@index([kycStatus, kycSubmittedAt])
@@ -637,6 +640,7 @@ model ManufacturerProfile {
   rfqInvitations  RfqInvitation[]
   photos          FactoryPhoto[]
   capacityMonths  CapacityMonth[]
+  shortlistItems  ShortlistItem[]
   quotes          Quote[]
   orders          Order[]
   reviewsReceived Review[]
@@ -717,6 +721,8 @@ model Product {
   category            Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   priceTiers          ProductPriceTier[]
   images              ProductImage[]
+  rfqs                Rfq[]
+  shortlistItems      ShortlistItem[]
 
   @@index([manufacturerProfileId, status])
   @@index([categoryId, status])
@@ -817,6 +823,8 @@ model Rfq {
   incoterm             Incoterm?
   /// ISO 3166-1 alpha-2
   destinationCountry   String?   @db.Char(2)
+  /// Set when the request started from a catalog product.
+  productId            String?   @db.Uuid
   status               RfqStatus @default(DRAFT)
   publishedAt          DateTime?
   createdAt            DateTime  @default(now())
@@ -825,6 +833,7 @@ model Rfq {
   buyerCompany  Company         @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
   createdBy     User            @relation(fields: [createdById], references: [id], onDelete: Restrict)
   category      Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  product       Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
   invitations   RfqInvitation[]
   attachments   RfqAttachment[]
   quotes        Quote[]
@@ -1469,4 +1478,40 @@ model ImageRendition {
 
   @@unique([fileId, width])
   @@map("image_renditions")
+}
+
+/// A buyer company's saved list of products and factories. Each company has one default "Favorites".
+model Shortlist {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  companyId   String   @db.Uuid
+  name        String
+  isDefault   Boolean  @default(false)
+  createdById String?  @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items   ShortlistItem[]
+
+  @@unique([companyId, name])
+  @@map("shortlists")
+}
+
+/// Exactly one of productId / manufacturerProfileId is set (checked in SQL).
+model ShortlistItem {
+  id                    String   @id @default(uuid(7)) @db.Uuid
+  shortlistId           String   @db.Uuid
+  productId             String?  @db.Uuid
+  manufacturerProfileId String?  @db.Uuid
+  note                  String?
+  createdAt             DateTime @default(now())
+
+  shortlist           Shortlist            @relation(fields: [shortlistId], references: [id], onDelete: Cascade)
+  product             Product?             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  manufacturerProfile ManufacturerProfile? @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([shortlistId, productId])
+  @@unique([shortlistId, manufacturerProfileId])
+  @@index([shortlistId, createdAt])
+  @@map("shortlist_items")
 }

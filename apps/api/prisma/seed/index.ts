@@ -8,6 +8,8 @@ import { filterContactDetails } from '@garmentgate/shared';
 import { createPrismaClient } from '../../src/prisma/create-prisma-client.js';
 import type { Currency, Prisma } from '../../src/generated/prisma/client.js';
 import { ADMIN, BUYERS, CATEGORIES, DEMO_PASSWORD, MANUFACTURERS } from './data.js';
+import { Meilisearch } from 'meilisearch';
+import { SearchIndexer } from '../../src/modules/search/search-indexer.js';
 import { seedImage } from './media.js';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
@@ -838,7 +840,29 @@ async function main(): Promise<void> {
     ],
   });
 
+  await reindexSearch();
   printLogins();
+}
+
+/** Rebuilds the Meilisearch indexes from the fresh data (the API also does this on boot). */
+async function reindexSearch(): Promise<void> {
+  const host = process.env.MEILISEARCH_HOST;
+  const apiKey = process.env.MEILISEARCH_API_KEY;
+  if (!host || !apiKey) return;
+  try {
+    const indexer = new SearchIndexer(
+      prisma,
+      new Meilisearch({ host, apiKey }),
+      process.env.MEILISEARCH_INDEX_PREFIX ?? '',
+    );
+    await indexer.ensureIndexes();
+    const counts = await indexer.reindexAll();
+    console.warn(
+      `Indexed ${String(counts.products)} products and ${String(counts.manufacturers)} factories`,
+    );
+  } catch (error) {
+    console.warn('Search not reindexed (is Meilisearch running?):', error);
+  }
 }
 
 function monthStartOffset(offset: number): Date {
