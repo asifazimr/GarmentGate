@@ -1,0 +1,10 @@
+{
+  "extends": "@garmentgate/config/tsconfig/library.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "types": []
+  },
+  "include": ["src", "*.ts", "*.js"],
+  "exclude": ["node_modules", "dist"]
+}

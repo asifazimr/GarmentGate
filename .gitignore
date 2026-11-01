@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# builds
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# turbo
+.turbo/
+
+# tests
+coverage/
+
+# env files (commit .env.example only)
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# misc
+.DS_Store
+*.pem
+.vercel
+.idea/

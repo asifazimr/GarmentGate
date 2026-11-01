@@ -1,0 +1,96 @@
+# Local development infrastructure for GarmentGate.
+# Start: pnpm db:up   Stop: pnpm db:down   Wipe data: pnpm db:reset
+# Credentials here are for local development only and match apps/api/.env.example.
+
+name: garmentgate
+
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: garmentgate
+      POSTGRES_PASSWORD: garmentgate
+      POSTGRES_DB: garmentgate
+    ports:
+      - '5432:5432'
+    volumes:
+      # Postgres 18+ images keep data under /var/lib/postgresql/<major>/docker
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U garmentgate -d garmentgate']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8.8-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.55.0
+    restart: unless-stopped
+    environment:
+      MEILI_ENV: development
+      MEILI_MASTER_KEY: garmentgate-dev-master-key-change-me
+      MEILI_NO_ANALYTICS: 'true'
+    ports:
+      - '7700:7700'
+    volumes:
+      - meilisearch-data:/meili_data
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:7700/health']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # MinIO no longer publishes official images; pgsty/minio is the maintained community build.
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    restart: unless-stopped
+    command: ['server', '/data', '--console-address', ':9001']
+    environment:
+      MINIO_ROOT_USER: garmentgate
+      MINIO_ROOT_PASSWORD: garmentgate-dev-secret
+    ports:
+      - '9000:9000' # S3 API
+      - '9001:9001' # Web console
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:9000/minio/health/live']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # One-shot job: creates the private application bucket, then exits.
+  minio-init:
+    image: pgsty/mc:RELEASE.2026-09-16T00-00-00Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    profiles: [init] # run by `pnpm db:up` after MinIO is healthy, not by a plain `up`
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        mc alias set local http://minio:9000 garmentgate garmentgate-dev-secret
+        mc mb --ignore-existing local/garmentgate
+        mc anonymous set none local/garmentgate
+        echo "Bucket 'garmentgate' ready"
+
+volumes:
+  postgres-data:
+  redis-data:
+  meilisearch-data:
+  minio-data:

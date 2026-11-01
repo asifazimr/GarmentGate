@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+
+# pnpm only runs dependency install scripts that are explicitly allowed here.
+allowBuilds:
+  '@nestjs/core': false
+  '@scarf/scarf': false
+  sharp: true
+  unrs-resolver: true
