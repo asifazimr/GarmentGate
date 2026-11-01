@@ -23,5 +23,6 @@ import { ConversationsService } from './conversations.service.js';
     ChatGateway,
     ChatScanProcessor,
   ],
+  exports: [ChatActorService],
 })
 export class ChatModule {}

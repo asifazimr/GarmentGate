@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { InvalidDocumentError, sanitizePdf } from './document-processor.js';
 import { InvalidImageError, processImage } from './image-processor.js';
+import { InvalidVideoError, sanitizeVideo } from './video-processor.js';
 import { MEDIA_QUEUE, type MediaJob } from './media.constants.js';
 
 /**
@@ -33,10 +34,11 @@ export class MediaProcessor extends WorkerHost {
 
     try {
       const original = await this.storage.getObject(file.storageKey);
-      if (file.mimeType === 'application/pdf') {
-        const { data } = await sanitizePdf(original);
-        const sanitizedKey = `sanitized/${file.id}.pdf`;
-        await this.storage.putObject(sanitizedKey, data, 'application/pdf');
+      const video = file.mimeType.startsWith('video/');
+      if (file.mimeType === 'application/pdf' || video) {
+        const data = video ? sanitizeVideo(original) : (await sanitizePdf(original)).data;
+        const sanitizedKey = `sanitized/${file.id}.${video ? (file.mimeType === 'video/quicktime' ? 'mov' : 'mp4') : 'pdf'}`;
+        await this.storage.putObject(sanitizedKey, data, file.mimeType);
         await this.prisma.fileAsset.update({
           where: { id: file.id },
           data: {
@@ -47,7 +49,7 @@ export class MediaProcessor extends WorkerHost {
             scanStatus: 'CLEAN',
           },
         });
-        this.logger.log(`Sanitized document ${file.id}`);
+        this.logger.log(`Sanitized ${video ? 'video' : 'document'} ${file.id}`);
         return;
       }
       const result = await processImage(original);
@@ -83,7 +85,10 @@ export class MediaProcessor extends WorkerHost {
       this.logger.log(`Processed image ${file.id} into ${renditions.length} renditions`);
     } catch (error) {
       const finalAttempt = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
-      const invalid = error instanceof InvalidImageError || error instanceof InvalidDocumentError;
+      const invalid =
+        error instanceof InvalidImageError ||
+        error instanceof InvalidDocumentError ||
+        error instanceof InvalidVideoError;
       if (invalid || finalAttempt) {
         await this.prisma.fileAsset.update({
           where: { id: file.id },

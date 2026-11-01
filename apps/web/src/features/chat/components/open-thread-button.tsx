@@ -14,7 +14,9 @@ export function OpenThreadButton({
   base,
   variant = 'outline',
   className,
+  label,
 }: {
+  label?: string;
   target: OpenConversationDto;
   base: '/buyer' | '/manufacturer' | '/admin';
   variant?: 'outline' | 'default' | 'ghost';
@@ -36,7 +38,7 @@ export function OpenThreadButton({
       }
     >
       <MessageSquare />
-      {base === '/admin' ? t('openThread') : t('messageUs')}
+      {label ?? (base === '/admin' ? t('openThread') : t('messageUs'))}
     </Button>
   );
 }

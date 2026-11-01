@@ -68,6 +68,8 @@ export const MediaReviewKindSchema = z.enum([
   'factory-photos',
   'product-images',
   'rfq-attachments',
+  'sample-photos',
+  'milestone-media',
 ]);
 export type MediaReviewKind = z.infer<typeof MediaReviewKindSchema>;
 
@@ -83,6 +85,8 @@ export const MediaReviewItemSchema = z.object({
   urls: ImageUrlsSchema.nullable(),
   /** Sanitized PDFs: a short-lived link to the copy the other side would get. */
   documentUrl: z.url().nullable(),
+  /** Sanitized videos (metadata stripped). */
+  videoUrl: z.url().nullable(),
 });
 export type MediaReviewItem = z.infer<typeof MediaReviewItemSchema>;
 

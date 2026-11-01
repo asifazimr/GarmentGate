@@ -74,6 +74,15 @@ export class MediaService {
     };
   }
 
+  /** Signed link to a sanitized video (metadata stripped); null until processed. */
+  async videoUrl(file: {
+    processingStatus: string | null;
+    sanitizedKey: string | null;
+  }): Promise<string | null> {
+    if (file.processingStatus !== 'READY' || !file.sanitizedKey) return null;
+    return this.storage.presignDownload(file.sanitizedKey, undefined, IMAGE_URL_EXPIRES_SECONDS);
+  }
+
   /** Resolves URLs for many files at once, keyed by file id. */
   async urlMap(files: FileWithRenditions[]): Promise<Map<string, ImageUrls>> {
     const entries = await Promise.all(files.map(async (f) => [f.id, await this.urls(f)] as const));

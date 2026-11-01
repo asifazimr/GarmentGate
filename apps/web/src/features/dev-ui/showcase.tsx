@@ -662,7 +662,7 @@ function TableDemo() {
       factory: 'MFR-IN-0264',
       qty: 3000,
       total: 2790000,
-      status: 'QUALITY_CHECK' as const,
+      status: 'QC' as const,
     },
     {
       code: 'ORD-2026-00012',
@@ -678,7 +678,7 @@ function TableDemo() {
       factory: 'MFR-BD-0587',
       qty: 5000,
       total: 4225000,
-      status: 'PENDING_DEPOSIT' as const,
+      status: 'DEPOSIT_PENDING' as const,
     },
     {
       code: 'ORD-2026-00004',

@@ -12,6 +12,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { BuyerModule } from './modules/buyer/buyer.module.js';
 import { CatalogModule } from './modules/catalog/catalog.module.js';
 import { ChatModule } from './modules/chat/chat.module.js';
+import { OrdersModule } from './modules/orders/orders.module.js';
 import { KycModule } from './modules/kyc/kyc.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
 import { ManufacturerModule } from './modules/manufacturer/manufacturer.module.js';
@@ -53,6 +54,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     BuyerModule,
     RfqModule,
     ChatModule,
+    OrdersModule,
   ],
   // Global rate limit; auth routes tighten it with @Throttle.
   providers: [{ provide: APP_GUARD, useClass: HttpThrottlerGuard }],

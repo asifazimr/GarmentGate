@@ -67,7 +67,14 @@ function ReviewCard({ item }: { item: MediaReviewItem }) {
   return (
     <li className="bg-card flex flex-col overflow-hidden rounded-xl border shadow-xs">
       <div className="bg-muted relative aspect-[4/3]">
-        {item.urls ? (
+        {item.videoUrl ? (
+          <video
+            src={item.videoUrl}
+            controls
+            preload="metadata"
+            className="size-full bg-black object-contain"
+          />
+        ) : item.urls ? (
           // eslint-disable-next-line @next/next/no-img-element -- short-lived signed rendition URL
           <img src={item.urls.medium} alt="" className="size-full object-contain" />
         ) : (
@@ -85,7 +92,7 @@ function ReviewCard({ item }: { item: MediaReviewItem }) {
         {item.context ? (
           <p className="text-muted-foreground line-clamp-2 text-sm">{item.context}</p>
         ) : null}
-        {item.documentUrl || item.urls ? (
+        {item.documentUrl || item.urls || item.videoUrl ? (
           <Button
             variant="outline"
             size="sm"

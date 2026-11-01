@@ -5,10 +5,11 @@ import { KycStatusSchema } from '../auth/auth.schema.js';
 
 export const OrderStatusSchema = z.enum([
   'DRAFT',
-  'PENDING_DEPOSIT',
-  'CONFIRMED',
+  'SAMPLING',
+  'SAMPLE_APPROVED',
+  'DEPOSIT_PENDING',
   'IN_PRODUCTION',
-  'QUALITY_CHECK',
+  'QC',
   'READY_TO_SHIP',
   'SHIPPED',
   'DELIVERED',
@@ -110,10 +111,11 @@ export type StatusTone = 'neutral' | 'info' | 'progress' | 'warning' | 'success'
 export const STATUS_TONES: { [D in StatusDomain]: Record<StatusOf<D>, StatusTone> } = {
   order: {
     DRAFT: 'neutral',
-    PENDING_DEPOSIT: 'warning',
-    CONFIRMED: 'info',
+    SAMPLING: 'progress',
+    SAMPLE_APPROVED: 'info',
+    DEPOSIT_PENDING: 'warning',
     IN_PRODUCTION: 'progress',
-    QUALITY_CHECK: 'progress',
+    QC: 'progress',
     READY_TO_SHIP: 'info',
     SHIPPED: 'info',
     DELIVERED: 'success',

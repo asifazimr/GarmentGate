@@ -17,7 +17,7 @@ const BASE: Record<Role, string> = {
 function contextHref(role: Role) {
   return (kind: 'RFQ' | 'ORDER', code: string): string | null => {
     if (kind === 'RFQ') return role === 'ADMIN' ? null : `${BASE[role]}/rfqs/${code}`;
-    return null;
+    return `${BASE[role]}/orders/${code}`;
   };
 }
 

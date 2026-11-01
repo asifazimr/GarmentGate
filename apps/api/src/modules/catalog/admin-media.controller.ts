@@ -46,7 +46,7 @@ export class AdminMediaController {
   @ApiOkResponse({ standardSchema: MediaReviewItemSchema.array() })
   async pending(): Promise<MediaReviewItem[]> {
     const ready = { file: { processingStatus: 'READY' as const } };
-    const [photos, images, attachments] = await Promise.all([
+    const [photos, images, attachments, samplePhotos, milestoneMedia] = await Promise.all([
       this.prisma.factoryPhoto.findMany({
         where: { reviewStatus: 'PENDING', ...ready },
         include: {
@@ -80,11 +80,48 @@ export class AdminMediaController {
         orderBy: { createdAt: 'asc' },
         take: 100,
       }),
+      this.prisma.samplePhoto.findMany({
+        where: { reviewStatus: 'PENDING', ...ready },
+        include: {
+          file: fileWithRenditions,
+          sample: {
+            select: {
+              round: true,
+              order: {
+                select: {
+                  code: true,
+                  buyerCompany: { select: { buyerProfile: { select: { publicCode: true } } } },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 100,
+      }),
+      this.prisma.milestonePhoto.findMany({
+        where: { reviewStatus: 'PENDING', ...ready },
+        include: {
+          file: fileWithRenditions,
+          milestone: {
+            select: {
+              stage: true,
+              order: {
+                select: { code: true, manufacturerProfile: { select: { publicCode: true } } },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 100,
+      }),
     ]);
     const urls = await this.media.urlMap([
       ...photos.map((p) => p.file),
       ...images.map((i) => i.file),
       ...attachments.map((a) => a.file),
+      ...samplePhotos.map((p) => p.file),
+      ...milestoneMedia.filter((m) => !m.file.mimeType.startsWith('video/')).map((m) => m.file),
     ]);
     const rfqItems = await Promise.all(
       attachments.map(async (a) => {
@@ -97,6 +134,7 @@ export class AdminMediaController {
           contentType: a.file.mimeType,
           urls: urls.get(a.fileId) ?? null,
           documentUrl: a.file.mimeType === 'application/pdf' ? (view?.url ?? null) : null,
+          videoUrl: null,
         };
       }),
     );
@@ -109,6 +147,7 @@ export class AdminMediaController {
         contentType: p.file.mimeType,
         urls: urls.get(p.fileId) ?? null,
         documentUrl: null,
+        videoUrl: null,
       })),
       ...images.map((i) => ({
         kind: 'product-images' as const,
@@ -118,8 +157,31 @@ export class AdminMediaController {
         contentType: i.file.mimeType,
         urls: urls.get(i.fileId) ?? null,
         documentUrl: null,
+        videoUrl: null,
       })),
       ...rfqItems,
+      ...samplePhotos.map((p) => ({
+        kind: 'sample-photos' as const,
+        id: p.id,
+        ownerCode: p.sample.order?.buyerCompany.buyerProfile?.publicCode ?? 'BYR',
+        context: `${p.sample.order?.code ?? ''} · sample round ${String(p.sample.round)}`,
+        contentType: p.file.mimeType,
+        urls: urls.get(p.fileId) ?? null,
+        documentUrl: null,
+        videoUrl: null,
+      })),
+      ...(await Promise.all(
+        milestoneMedia.map(async (m) => ({
+          kind: 'milestone-media' as const,
+          id: m.id,
+          ownerCode: m.milestone.order.manufacturerProfile.publicCode,
+          context: `${m.milestone.order.code} · ${m.milestone.stage.toLowerCase().replace('_', ' ')}${m.caption ? ` · ${m.caption}` : ''}`,
+          contentType: m.file.mimeType,
+          urls: urls.get(m.fileId) ?? null,
+          documentUrl: null,
+          videoUrl: m.file.mimeType.startsWith('video/') ? await this.media.videoUrl(m.file) : null,
+        })),
+      )),
     ];
   }
 
@@ -155,7 +217,11 @@ export class AdminMediaController {
     if (kind === 'factory-photos') await this.prisma.factoryPhoto.update({ where: { id }, data });
     else if (kind === 'product-images')
       await this.prisma.productImage.update({ where: { id }, data });
-    else await this.prisma.rfqAttachment.update({ where: { id }, data });
+    else if (kind === 'rfq-attachments')
+      await this.prisma.rfqAttachment.update({ where: { id }, data });
+    else if (kind === 'sample-photos')
+      await this.prisma.samplePhoto.update({ where: { id }, data });
+    else await this.prisma.milestonePhoto.update({ where: { id }, data });
     await this.audit.log({
       actorUserId: adminId,
       action: `media.${status.toLowerCase()}`,

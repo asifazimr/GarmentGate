@@ -41,6 +41,11 @@ export const EnvSchema = z.object({
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().min(3).default('GarmentGate <onboarding@resend.dev>'),
 
+  /** GarmentGate's own details, printed on purchase orders. */
+  PLATFORM_LEGAL_NAME: z.string().min(2).default('GarmentGate Trading Ltd.'),
+  PLATFORM_ADDRESS: z.string().min(2).default('1 Sourcing Way, London EC2A 1AA, United Kingdom'),
+  PLATFORM_EMAIL: z.email().default('orders@garmentgate.example'),
+
   DATABASE_URL: z.url(),
   REDIS_URL: z.url(),
 

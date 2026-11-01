@@ -182,7 +182,7 @@ describe('Manufacturer catalog, image pipeline and anonymity (e2e)', () => {
       { minQty: 5000, unitPriceMinor: 300 },
     ]);
     const mfrListRaw = JSON.stringify((await agent.get('/manufacturer/products').expect(200)).body);
-    expect(mfrListRaw).not.toContain('460'); // 400 + 15% buyer price must not leak to the factory
+    expect(mfrListRaw).not.toMatch(/:460[,}]/); // 400 + 15% buyer price must not leak to the factory
     expect(mfrListRaw).not.toContain('buyerUnitPrice');
 
     // Upload an image with GPS + owner EXIF; the worker strips it into WebP renditions.

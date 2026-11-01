@@ -57,7 +57,7 @@ export async function seedImage(
   opts: {
     companyId: string;
     userId: string;
-    purpose: 'FACTORY_PHOTO' | 'PRODUCT_IMAGE';
+    purpose: 'FACTORY_PHOTO' | 'PRODUCT_IMAGE' | 'MILESTONE_PHOTO';
     hue: number;
   },
 ): Promise<string> {

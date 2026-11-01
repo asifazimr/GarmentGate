@@ -2,10 +2,9 @@ import type { CapacityMonth } from '@garmentgate/shared';
 
 /** Orders that still occupy factory capacity. */
 export const CAPACITY_ORDER_STATUSES = [
-  'PENDING_DEPOSIT',
-  'CONFIRMED',
+  'DEPOSIT_PENDING',
   'IN_PRODUCTION',
-  'QUALITY_CHECK',
+  'QC',
   'READY_TO_SHIP',
 ] as const;
 

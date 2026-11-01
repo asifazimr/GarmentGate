@@ -341,6 +341,11 @@ export class BuyerRfqsService {
           destinationCountry: rfq.destinationCountry ?? rfq.buyerCompany.country,
           requestedShipDate: rfq.requiredDeliveryDate,
           status: 'DRAFT',
+          events: {
+            create: [
+              { toStatus: 'DRAFT', actorUserId: ctx.userId, note: `Quote accepted on ${rfq.code}` },
+            ],
+          },
         },
       });
     });

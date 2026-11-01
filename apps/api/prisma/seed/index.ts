@@ -516,12 +516,6 @@ async function main(): Promise<void> {
       milestones: {
         create: [
           {
-            stage: 'ORDER_CONFIRMED',
-            status: 'COMPLETED',
-            plannedAt: daysFromNow(-42),
-            completedAt: daysFromNow(-42),
-          },
-          {
             stage: 'FABRIC_SOURCING',
             status: 'COMPLETED',
             plannedAt: daysFromNow(-30),
@@ -534,24 +528,60 @@ async function main(): Promise<void> {
             status: 'COMPLETED',
             plannedAt: daysFromNow(-18),
             completedAt: daysFromNow(-17),
+            note: 'All three colours cut; bundles tagged by size.',
+            noteFiltered: 'All three colours cut; bundles tagged by size.',
           },
           {
             stage: 'SEWING',
             status: 'IN_PROGRESS',
-            plannedAt: daysFromNow(-12),
+            plannedAt: daysFromNow(2),
             note: '62% sewn as of today.',
             noteFiltered: '62% sewn as of today.',
           },
-          { stage: 'FINISHING', status: 'PENDING', plannedAt: daysFromNow(6) },
-          { stage: 'PACKING', status: 'PENDING', plannedAt: daysFromNow(12) },
-          { stage: 'READY_FOR_INSPECTION', status: 'PENDING', plannedAt: daysFromNow(15) },
-          { stage: 'SHIPPED', status: 'PENDING', plannedAt: daysFromNow(21) },
+          { stage: 'FINISHING', status: 'PENDING', plannedAt: daysFromNow(10) },
+          { stage: 'PACKING', status: 'PENDING', plannedAt: daysFromNow(16) },
+        ],
+      },
+      events: {
+        create: [
+          {
+            toStatus: 'DRAFT',
+            actorUserId: northbound.userId,
+            note: 'Quote accepted on RFQ-2026-00031',
+            createdAt: daysFromNow(-62),
+          },
+          {
+            fromStatus: 'DRAFT',
+            toStatus: 'SAMPLING',
+            actorUserId: northbound.userId,
+            createdAt: daysFromNow(-61),
+          },
+          {
+            fromStatus: 'SAMPLING',
+            toStatus: 'SAMPLE_APPROVED',
+            actorUserId: northbound.userId,
+            createdAt: daysFromNow(-54),
+          },
+          {
+            fromStatus: 'SAMPLE_APPROVED',
+            toStatus: 'DEPOSIT_PENDING',
+            actorUserId: northbound.userId,
+            createdAt: daysFromNow(-44),
+          },
+          {
+            fromStatus: 'DEPOSIT_PENDING',
+            toStatus: 'IN_PRODUCTION',
+            actorUserId: admin.id,
+            note: 'Deposit WIRE-NB-2026-0917 received',
+            createdAt: daysFromNow(-41),
+          },
         ],
       },
       samples: {
         create: [
           {
             type: 'FIT',
+            round: 1,
             status: 'APPROVED',
             quantity: 2,
             courier: 'DHL Express',
@@ -564,6 +594,7 @@ async function main(): Promise<void> {
           },
           {
             type: 'PRE_PRODUCTION',
+            round: 2,
             status: 'APPROVED',
             quantity: 3,
             courier: 'DHL Express',
@@ -870,6 +901,14 @@ async function main(): Promise<void> {
   });
 
   await seedMedia();
+  await seedOrderLifecycle({
+    admin: admin.id,
+    northbound,
+    gruenfeld,
+    meghna,
+    noyyal,
+    order00017: order.id,
+  });
   await prisma.capacityMonth.createMany({
     data: [
       {
@@ -916,6 +955,202 @@ async function reindexSearch(): Promise<void> {
     );
   } catch (error) {
     console.warn('Search not reindexed (is Meilisearch running?):', error);
+  }
+}
+
+/**
+ * More of the order lifecycle for the demo: a completed order (try "Reorder"), an order whose
+ * sample is waiting for the buyer, and approved production photos on ORD-2026-00017.
+ */
+async function seedOrderLifecycle(p: {
+  admin: string;
+  northbound: { companyId: string; userId: string };
+  gruenfeld: { companyId: string; userId: string };
+  meghna: { companyId: string; userId: string; profileId: string };
+  noyyal: { companyId: string; userId: string; profileId: string };
+  order00017: string;
+}): Promise<void> {
+  const flow = [
+    'DRAFT',
+    'SAMPLING',
+    'SAMPLE_APPROVED',
+    'DEPOSIT_PENDING',
+    'IN_PRODUCTION',
+    'QC',
+    'READY_TO_SHIP',
+    'SHIPPED',
+    'DELIVERED',
+    'COMPLETED',
+  ] as const;
+  const completedEvents = flow.map((to, i) => ({
+    fromStatus: i === 0 ? null : flow[i - 1],
+    toStatus: to,
+    actorUserId: [
+      'DEPOSIT_PENDING',
+      'SAMPLING',
+      'SAMPLE_APPROVED',
+      'DELIVERED',
+      'COMPLETED',
+      'DRAFT',
+    ].includes(to)
+      ? p.northbound.userId
+      : to === 'QC' || to === 'SHIPPED'
+        ? p.meghna.userId
+        : p.admin,
+    createdAt: daysFromNow(-130 + i * 12),
+  }));
+  await prisma.order.create({
+    data: {
+      code: 'ORD-2026-00009',
+      buyerCompanyId: p.northbound.companyId,
+      manufacturerProfileId: p.meghna.profileId,
+      title: 'Piqué polo shirt, 220 GSM, embroidered chest logo',
+      specification:
+        'Combed cotton piqué, 2-button placket, flat-knit collar. Individually polybagged.',
+      quantity: 5000,
+      buyerUnitPriceMinor: 538,
+      manufacturerUnitPriceMinor: 480,
+      buyerTotalMinor: 2_690_000n,
+      manufacturerTotalMinor: 2_400_000n,
+      currency: 'USD',
+      incoterm: 'FOB',
+      destinationCountry: 'US',
+      destinationPort: 'Los Angeles',
+      requestedShipDate: daysFromNow(-46),
+      status: 'COMPLETED',
+      confirmedAt: daysFromNow(-94),
+      completedAt: daysFromNow(-22),
+      createdAt: daysFromNow(-130),
+      milestones: {
+        create: (['FABRIC_SOURCING', 'CUTTING', 'SEWING', 'FINISHING', 'PACKING'] as const).map(
+          (stage, i) => ({
+            stage,
+            status: 'COMPLETED' as const,
+            plannedAt: daysFromNow(-80 + i * 7),
+            completedAt: daysFromNow(-80 + i * 7),
+          }),
+        ),
+      },
+      samples: {
+        create: [
+          {
+            type: 'PRE_PRODUCTION',
+            round: 1,
+            status: 'APPROVED',
+            quantity: 2,
+            courier: 'DHL Express',
+            trackingNumber: '4920011177',
+            shippedAt: daysFromNow(-112),
+            receivedAt: daysFromNow(-108),
+            decidedAt: daysFromNow(-106),
+            buyerFeedback: 'Approved.',
+            buyerFeedbackFiltered: 'Approved.',
+          },
+        ],
+      },
+      shipments: {
+        create: [
+          {
+            mode: 'SEA',
+            status: 'DELIVERED',
+            carrier: 'Maersk',
+            trackingNumber: 'MAEU7716342',
+            destinationPort: 'Los Angeles',
+            shippedAt: daysFromNow(-46),
+            deliveredAt: daysFromNow(-24),
+          },
+        ],
+      },
+      events: { create: completedEvents },
+    },
+  });
+
+  await prisma.order.create({
+    data: {
+      code: 'ORD-2026-00014',
+      buyerCompanyId: p.gruenfeld.companyId,
+      manufacturerProfileId: p.noyyal.profileId,
+      title: 'Organic crew-neck tee, 180 GSM',
+      specification:
+        'GOTS organic jersey, side seams, 4 colours (Ecru, Moss, Ink, Clay), sizes XS–XXL.',
+      quantity: 4000,
+      buyerUnitPriceMinor: 495,
+      manufacturerUnitPriceMinor: 430,
+      buyerTotalMinor: 1_980_000n,
+      manufacturerTotalMinor: 1_720_000n,
+      currency: 'EUR',
+      incoterm: 'DDP',
+      destinationCountry: 'DE',
+      destinationPort: 'Hamburg',
+      requestedShipDate: daysFromNow(85),
+      status: 'SAMPLING',
+      createdAt: daysFromNow(-9),
+      samples: {
+        create: [
+          {
+            type: 'PRE_PRODUCTION',
+            round: 1,
+            status: 'SHIPPED',
+            quantity: 2,
+            requestNotes: 'One in Ecru and one in Moss, size M. Please include the woven label.',
+            requestNotesFiltered:
+              'One in Ecru and one in Moss, size M. Please include the woven label.',
+            courier: 'DHL Express',
+            trackingNumber: '4920033810',
+            shippedAt: daysFromNow(-2),
+            createdAt: daysFromNow(-8),
+          },
+        ],
+      },
+      events: {
+        create: [
+          {
+            toStatus: 'DRAFT',
+            actorUserId: p.gruenfeld.userId,
+            note: 'Quote accepted',
+            createdAt: daysFromNow(-9),
+          },
+          {
+            fromStatus: 'DRAFT',
+            toStatus: 'SAMPLING',
+            actorUserId: p.gruenfeld.userId,
+            createdAt: daysFromNow(-8),
+          },
+        ],
+      },
+    },
+  });
+
+  // Approved production photos on the order in production.
+  if (process.env.SEED_SKIP_MEDIA === '1') return;
+  const milestones = await prisma.orderMilestone.findMany({
+    where: { orderId: p.order00017, stage: { in: ['FABRIC_SOURCING', 'CUTTING', 'SEWING'] } },
+  });
+  const captions: Record<string, string[]> = {
+    FABRIC_SOURCING: ['Dyed fabric rolls, Washed Navy', 'Shrinkage test'],
+    CUTTING: ['Cut panels bundled by size'],
+    SEWING: ['Line 4, shoulder seams'],
+  };
+  let hue = 190;
+  for (const milestone of milestones) {
+    for (const caption of captions[milestone.stage] ?? []) {
+      hue = (hue + 37) % 360;
+      const fileId = await seedImage(prisma, {
+        companyId: p.meghna.companyId,
+        userId: p.meghna.userId,
+        purpose: 'MILESTONE_PHOTO',
+        hue,
+      });
+      await prisma.milestonePhoto.create({
+        data: {
+          milestoneId: milestone.id,
+          fileId,
+          caption,
+          reviewStatus: 'APPROVED',
+          reviewedAt: new Date(),
+        },
+      });
+    }
   }
 }
 

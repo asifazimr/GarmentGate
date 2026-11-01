@@ -454,10 +454,11 @@
   "statuses": {
     "order": {
       "DRAFT": "Draft",
-      "PENDING_DEPOSIT": "Awaiting deposit",
-      "CONFIRMED": "Confirmed",
+      "SAMPLING": "Sampling",
+      "SAMPLE_APPROVED": "Sample approved",
+      "DEPOSIT_PENDING": "Awaiting deposit",
       "IN_PRODUCTION": "In production",
-      "QUALITY_CHECK": "Quality check",
+      "QC": "Quality check",
       "READY_TO_SHIP": "Ready to ship",
       "SHIPPED": "Shipped",
       "DELIVERED": "Delivered",
@@ -1218,7 +1219,9 @@
       "kinds": {
         "factory-photos": "Factory photo",
         "product-images": "Product image",
-        "rfq-attachments": "RFQ file"
+        "rfq-attachments": "RFQ file",
+        "sample-photos": "Sample photo (buyer)",
+        "milestone-media": "Production media (factory)"
       },
       "document": "PDF document",
       "open": "Open sanitized copy",
@@ -1299,5 +1302,447 @@
       "confirmed": "Kept hidden"
     },
     "thread": "Conversation"
+  },
+  "orders": {
+    "back": "All orders",
+    "notFound": "Order not found",
+    "purchaseOrder": "Purchase order",
+    "poBuyer": "Buyer PO",
+    "poFactory": "Factory PO",
+    "buyerThread": "Buyer thread",
+    "factoryThread": "Factory thread",
+    "summary": "Summary",
+    "history": "History",
+    "shipment": "{carrier} · tracking {tracking}",
+    "list": {
+      "title": "Orders",
+      "description": {
+        "BUYER": "Everything you’ve ordered, from sample to delivery.",
+        "MANUFACTURER": "Orders GarmentGate placed with your factory.",
+        "ADMIN": "Every order on the platform."
+      },
+      "empty": "No orders yet",
+      "emptyBody": {
+        "BUYER": "Accept a quote on one of your requests and it becomes an order here.",
+        "MANUFACTURER": "Quote on requests in your inbox: accepted quotes become orders.",
+        "ADMIN": "Orders appear when buyers accept quotes."
+      },
+      "newRfq": "New request for quote",
+      "inbox": "RFQ inbox",
+      "meta": "{quantity, number} pcs · {total} · ship by {date}",
+      "progress": "{percent}% complete"
+    },
+    "fields": {
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "total": "Total",
+      "deposit": "Deposit ({percent}%)",
+      "terms": "Terms",
+      "destination": "Destination",
+      "shipBy": "Ship by",
+      "reorderOf": "Reorder of",
+      "yourPrice": "Your price / pc",
+      "yourTotal": "Your total",
+      "buyerPrice": "Buyer price / pc",
+      "factoryPrice": "Factory price / pc",
+      "buyerTotal": "Buyer total",
+      "factoryTotal": "Factory total",
+      "margin": "Margin"
+    },
+    "actions": {
+      "requestSample": "Request a sample",
+      "skipSample": "Confirm without a sample",
+      "reviewSample": "Review the sample",
+      "confirm": "Confirm order",
+      "anotherSample": "Ask for another sample",
+      "delivered": "Confirm delivery",
+      "complete": "Everything’s right: complete",
+      "reorder": "Reorder",
+      "dispute": "Report a problem",
+      "cancel": "Cancel order",
+      "shipSample": "Mark sample shipped",
+      "toInspection": "Ready for inspection",
+      "ship": "Mark shipped"
+    },
+    "timeline": {
+      "title": "Progress",
+      "now": "Now",
+      "attention": "Needs attention",
+      "skipped": "Skipped",
+      "disputed": "This order is disputed. GarmentGate is working on it with both sides.",
+      "cancelled": "This order was cancelled.",
+      "media": "Photo or video",
+      "openPhoto": "Open photo",
+      "openVideo": "Play video",
+      "processing": "Processing…",
+      "review": {
+        "PENDING": "In review",
+        "APPROVED": "Approved",
+        "REJECTED": "Not shown"
+      },
+      "date": {
+        "done": "Done {date}",
+        "expected": "Expected {date}",
+        "since": "Since {date}"
+      },
+      "phases": {
+        "placed": "Order placed",
+        "sample": "Sample",
+        "deposit": "Confirmation & deposit",
+        "FABRIC_SOURCING": "Fabric sourced",
+        "CUTTING": "Cutting",
+        "SEWING": "Sewing",
+        "FINISHING": "Finishing",
+        "PACKING": "Packing",
+        "ORDER_CONFIRMED": "Order confirmed",
+        "READY_FOR_INSPECTION": "Ready for inspection",
+        "SHIPPED": "Shipped",
+        "qc": "Quality inspection",
+        "shipping": "Shipping",
+        "delivered": "Delivered",
+        "completed": "Completed"
+      },
+      "hints": {
+        "placed": "Choose whether to see a sample first.",
+        "sample": "A sample is on its way or being made.",
+        "deposit": "Production starts as soon as the deposit arrives.",
+        "FABRIC_SOURCING": "Fabric is being sourced, knitted or dyed.",
+        "CUTTING": "Panels are being cut.",
+        "SEWING": "Garments are being sewn.",
+        "FINISHING": "Washing, trimming, pressing and labels.",
+        "PACKING": "Folding, tagging and cartons.",
+        "qc": "An inspector checks the goods against the approved sample.",
+        "shipping": "Getting the goods on their way.",
+        "delivered": "Check the goods and confirm everything is right.",
+        "completed": "All done."
+      }
+    },
+    "samples": {
+      "round": "Round {round}",
+      "pieces": "{count, plural, one {# piece} other {# pieces}}",
+      "brief": "Brief: {text}",
+      "shipped": "Shipped {date} · {courier} {tracking}",
+      "feedback": "Feedback: {text}"
+    },
+    "stage": {
+      "note": "Update note",
+      "notePlaceholder": "What happened at this stage? (optional)",
+      "start": "Started",
+      "complete": "Mark complete",
+      "delayed": "Delayed",
+      "addMedia": "Add photos or videos",
+      "mediaHint": "JPG, PNG, WebP up to {photo} MB · MP4/MOV up to {video} MB. Reviewed before the buyer sees them.",
+      "uploaded": "Uploaded: it appears for the buyer once reviewed",
+      "uploadFailed": "Upload failed. Try again.",
+      "saved": {
+        "IN_PROGRESS": "Stage started",
+        "COMPLETED": "Stage completed",
+        "DELAYED": "Delay reported"
+      }
+    },
+    "dialogs": {
+      "requestSample": "Request a sample",
+      "requestSampleBody": "The factory makes and ships a sample before bulk production.",
+      "sampleQuantity": "Pieces",
+      "sampleNotes": "What should the sample show?",
+      "sampleNotesPlaceholder": "Colour, size, fabric, label…",
+      "sampleRequested": "Sample requested",
+      "reviewSample": "Review sample (round {round})",
+      "reviewSampleBody": "Approve it to go ahead, or tell the factory what to change.",
+      "decision": {
+        "APPROVE": "Approve",
+        "APPROVEBody": "The sample is right: continue to the order.",
+        "CHANGES": "Request changes",
+        "CHANGESBody": "The factory makes a revised sample."
+      },
+      "whatToChange": "What should change?",
+      "comments": "Comments (optional)",
+      "changesPlaceholder": "e.g. Neck rib too tight; colour slightly too warm.",
+      "photos": "Photos",
+      "addPhotos": "Add photos",
+      "photosHint": "JPG, PNG or WebP",
+      "photosReview": "Photos are cleaned of metadata and checked by GarmentGate before the factory sees them.",
+      "removePhoto": "Remove {name}",
+      "uploadFailed": "Upload failed. Try again.",
+      "approveSample": "Approve sample",
+      "sendChanges": "Send to the factory",
+      "sampleApproved": "Sample approved",
+      "changesSent": "Changes sent: a revised sample is on the way",
+      "shipSample": "Ship sample (round {round})",
+      "shipSampleBody": "Add the courier and tracking number.",
+      "courier": "Courier",
+      "tracking": "Tracking number",
+      "markShipped": "Mark shipped",
+      "sampleShipped": "Sample marked shipped",
+      "mode": "Mode",
+      "modes": {
+        "SEA": "Sea",
+        "AIR": "Air",
+        "ROAD": "Road",
+        "RAIL": "Rail",
+        "COURIER": "Courier"
+      },
+      "carrier": "Carrier",
+      "note": "Note (optional)",
+      "reason": "What went wrong?",
+      "reasonRequired": "Please say what went wrong",
+      "checkFields": "Check the details and try again.",
+      "reorder": "Reorder",
+      "reorderBody": "Same style, factory and unit price as {code}.",
+      "quantity": "Quantity (pcs)",
+      "shipBy": "Ship by",
+      "changes": "Anything different this time?",
+      "changesHint": "Colours, sizes, labels… (optional)",
+      "reorderNote": "This creates a draft order. GarmentGate confirms the price and dates with the factory before any deposit.",
+      "createReorder": "Create reorder",
+      "reordered": "Reorder {code} created"
+    },
+    "transitions": {
+      "DEPOSIT_PENDING": {
+        "title": "Confirm the order?",
+        "body": "Your purchase order is issued and the deposit becomes due.",
+        "action": "Confirm order",
+        "done": "Order confirmed"
+      },
+      "IN_PRODUCTION": {
+        "title": "Start production?",
+        "body": "Confirm the deposit has arrived (or resume production).",
+        "action": "Start production",
+        "done": "Production started"
+      },
+      "QC": {
+        "title": "Ready for inspection?",
+        "body": "All stages are complete and the goods are ready to inspect.",
+        "action": "Send to inspection",
+        "done": "Sent to inspection"
+      },
+      "READY_TO_SHIP": {
+        "title": "Inspection passed?",
+        "body": "The goods passed inspection and can ship.",
+        "action": "Pass inspection",
+        "done": "Inspection passed"
+      },
+      "SHIPPED": {
+        "title": "Mark as shipped",
+        "body": "Add how the goods travel and the tracking number.",
+        "action": "Mark shipped",
+        "done": "Marked shipped"
+      },
+      "DELIVERED": {
+        "title": "Confirm delivery?",
+        "body": "The goods have arrived.",
+        "action": "Confirm delivery",
+        "done": "Delivery confirmed"
+      },
+      "COMPLETED": {
+        "title": "Complete the order?",
+        "body": "Everything arrived as agreed. The balance is released to the factory.",
+        "action": "Complete order",
+        "done": "Order completed"
+      },
+      "CANCELLED": {
+        "title": "Cancel this order?",
+        "body": "This can’t be undone.",
+        "action": "Cancel order",
+        "done": "Order cancelled"
+      },
+      "DISPUTED": {
+        "title": "Report a problem",
+        "body": "GarmentGate reviews the order with both sides. Tell us what went wrong.",
+        "action": "Open dispute",
+        "done": "Dispute opened"
+      },
+      "DRAFT": {
+        "title": "Back to draft",
+        "body": "",
+        "action": "Back to draft",
+        "done": "Done"
+      },
+      "SAMPLING": {
+        "title": "Sampling",
+        "body": "",
+        "action": "Sampling",
+        "done": "Done"
+      },
+      "SAMPLE_APPROVED": {
+        "title": "Approve sample",
+        "body": "",
+        "action": "Approve sample",
+        "done": "Done"
+      }
+    },
+    "next": {
+      "yourMove": "Your move",
+      "waiting": {
+        "you": "Your move",
+        "buyer": "Waiting for the buyer",
+        "manufacturer": "Waiting for the factory",
+        "admin": "Waiting for GarmentGate",
+        "none": "All done"
+      },
+      "BUYER": {
+        "CHOOSE_SAMPLING": {
+          "title": "Sample first, or go straight to production?",
+          "body": "A sample lets you check fit, fabric and finish before bulk. Reorders of an approved style can skip it."
+        },
+        "FACTORY_SHIPS_SAMPLE": {
+          "title": "Your sample is being made",
+          "body": "The factory ships it soon; you’ll get the tracking number here."
+        },
+        "REVIEW_SAMPLE": {
+          "title": "Your sample has shipped: review it",
+          "body": "Approve it, or tell the factory what to change (photos help)."
+        },
+        "CONFIRM_ORDER": {
+          "title": "Sample approved: confirm the order",
+          "body": "Confirming issues your purchase order; production starts once the deposit arrives."
+        },
+        "PAY_DEPOSIT": {
+          "title": "Pay the {deposit} deposit",
+          "body": "Payment details are on your purchase order. Production starts as soon as it arrives."
+        },
+        "PRODUCTION": {
+          "title": "In production: {stage}",
+          "body": "Photos from the factory appear on each stage as it progresses."
+        },
+        "INSPECTION": {
+          "title": "Quality inspection",
+          "body": "An inspector checks the goods against your approved sample."
+        },
+        "SHIP": {
+          "title": "Getting ready to ship",
+          "body": "You’ll get the carrier and tracking number here."
+        },
+        "IN_TRANSIT": {
+          "title": "On its way: {carrier} {tracking}",
+          "body": "Confirm delivery when the goods arrive."
+        },
+        "CONFIRM_COMPLETION": {
+          "title": "Delivered: is everything right?",
+          "body": "Complete the order, or report a problem within 14 days."
+        },
+        "RESOLVE_DISPUTE": {
+          "title": "We’re resolving your dispute",
+          "body": "GarmentGate is working with the factory and will update you."
+        },
+        "DONE": {
+          "title": "Order completed",
+          "body": "Need more? Reorder the same style in a click."
+        },
+        "CANCELLED": {
+          "title": "Order cancelled",
+          "body": "Message GarmentGate if you have questions."
+        }
+      },
+      "MANUFACTURER": {
+        "CHOOSE_SAMPLING": {
+          "title": "Nothing to do right now",
+          "body": "We’ll let you know when it’s your turn."
+        },
+        "FACTORY_SHIPS_SAMPLE": {
+          "title": "Make and ship the sample",
+          "body": "Follow the brief, then add the courier and tracking number."
+        },
+        "REVIEW_SAMPLE": {
+          "title": "The buyer is reviewing your sample",
+          "body": "You’ll hear as soon as they decide."
+        },
+        "CONFIRM_ORDER": {
+          "title": "Sample approved",
+          "body": "Waiting for the buyer to confirm the order."
+        },
+        "PAY_DEPOSIT": {
+          "title": "Order confirmed",
+          "body": "Your purchase order is ready. Production starts when the deposit arrives."
+        },
+        "PRODUCTION": {
+          "title": "Production: {stage}",
+          "body": "Update each stage and add photos or videos: buyers love seeing progress."
+        },
+        "INSPECTION": {
+          "title": "Inspection",
+          "body": "GarmentGate’s inspector checks the goods."
+        },
+        "SHIP": {
+          "title": "Inspection passed: ship it",
+          "body": "Add the carrier and tracking number when the goods leave."
+        },
+        "IN_TRANSIT": {
+          "title": "Shipped",
+          "body": "Waiting for delivery."
+        },
+        "CONFIRM_COMPLETION": {
+          "title": "Delivered",
+          "body": "Waiting for the buyer to confirm."
+        },
+        "RESOLVE_DISPUTE": {
+          "title": "Dispute open",
+          "body": "GarmentGate will be in touch."
+        },
+        "DONE": {
+          "title": "Order completed",
+          "body": "Thank you!"
+        },
+        "CANCELLED": {
+          "title": "Order cancelled",
+          "body": "Message GarmentGate if you have questions."
+        }
+      },
+      "ADMIN": {
+        "CHOOSE_SAMPLING": {
+          "title": "Buyer to choose sampling",
+          "body": "Draft order: the buyer requests a sample or confirms."
+        },
+        "FACTORY_SHIPS_SAMPLE": {
+          "title": "Factory to ship the sample",
+          "body": "Chase the factory if it’s late."
+        },
+        "REVIEW_SAMPLE": {
+          "title": "Buyer reviewing the sample",
+          "body": "Follow up if the buyer goes quiet."
+        },
+        "CONFIRM_ORDER": {
+          "title": "Buyer to confirm",
+          "body": "Sample approved."
+        },
+        "PAY_DEPOSIT": {
+          "title": "Deposit pending",
+          "body": "Start production when the deposit is in."
+        },
+        "PRODUCTION": {
+          "title": "In production",
+          "body": "Review the factory’s photos in Moderation."
+        },
+        "INSPECTION": {
+          "title": "Inspection",
+          "body": "Pass it (ready to ship) or send it back to production."
+        },
+        "SHIP": {
+          "title": "Factory to ship",
+          "body": "Waiting for tracking."
+        },
+        "IN_TRANSIT": {
+          "title": "In transit",
+          "body": "Confirm delivery if the buyer doesn’t."
+        },
+        "CONFIRM_COMPLETION": {
+          "title": "Delivered",
+          "body": "Waiting for the buyer to complete."
+        },
+        "RESOLVE_DISPUTE": {
+          "title": "Resolve the dispute",
+          "body": "Resume where it was, complete, or cancel."
+        },
+        "DONE": {
+          "title": "Completed",
+          "body": "Nothing left to do."
+        },
+        "CANCELLED": {
+          "title": "Cancelled",
+          "body": "Nothing left to do."
+        }
+      }
+    },
+    "stagesDone": "all stages complete"
   }
 }

@@ -379,7 +379,7 @@ describe('RFQ → quotes → accepted order (e2e)', () => {
 
     // The factory's view of its quote never includes the buyer price.
     const theirs = (await matched.agent.get(`/manufacturer/rfqs/${rfqCode}`).expect(200)).body;
-    expect(JSON.stringify(theirs)).not.toContain('1200');
+    expect(JSON.stringify(theirs)).not.toMatch(/:1200[,}]/); // as a value, not inside a signed URL
     expect(buyerLeaks(theirs)).toEqual([]);
 
     const list = BuyerRfqSummarySchema.array().parse(
