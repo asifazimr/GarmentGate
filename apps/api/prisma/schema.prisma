@@ -1,0 +1,1387 @@
+// GarmentGate data model.
+//
+// Rules encoded here (see CLAUDE.md):
+// - Company holds real identities and is admin-only. Buyers and manufacturers only ever see
+//   each other's public codes (BuyerProfile.publicCode / ManufacturerProfile.publicCode).
+// - Every price that exists on both sides is stored twice: buyer*Minor (what the buyer pays us)
+//   and manufacturer*Minor (what we pay the manufacturer). Margin is derived, never stored.
+// - Money is integer minor units + Currency. Unit prices are Int; totals and ledger amounts BigInt.
+// - User-generated text keeps the original (admin-only) next to the contact-filtered version.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  BUYER
+  MANUFACTURER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum CompanyRole {
+  OWNER
+  MEMBER
+}
+
+enum UserTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+enum CompanyType {
+  BUYER
+  MANUFACTURER
+}
+
+enum KycStatus {
+  NOT_SUBMITTED
+  PENDING_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+/// Where a company left the onboarding wizard, so it can resume later.
+enum OnboardingStep {
+  COMPANY_INFO
+  PROFILE
+  DOCUMENTS
+  SUBMITTED
+}
+
+enum BuyerBusinessType {
+  BRAND
+  RETAILER
+  IMPORTER
+  WHOLESALER
+  SOURCING_AGENT
+  OTHER
+}
+
+enum CompanyDocumentType {
+  BUSINESS_LICENSE
+  EXPORT_REGISTRATION
+  TAX_CERTIFICATE
+  BANK_LETTER
+  ID_PROOF
+  OTHER
+}
+
+enum ReviewState {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum CertificationType {
+  BSCI_AMFORI
+  WRAP
+  SEDEX_SMETA
+  OEKO_TEX_100
+  GOTS
+  GRS
+  BCI
+  ISO_9001
+  ISO_14001
+  SA8000
+  FAIR_TRADE
+  HIGG_FEM
+  OTHER
+}
+
+enum CertificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum Currency {
+  USD
+  EUR
+  GBP
+  BDT
+  INR
+  VND
+  TRY
+  PKR
+  CNY
+}
+
+enum Incoterm {
+  EXW
+  FCA
+  FOB
+  CFR
+  CIF
+  CPT
+  CIP
+  DAP
+  DPU
+  DDP
+}
+
+enum ProductStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum RfqStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  AWARDED
+  CANCELLED
+}
+
+enum RfqInvitationStatus {
+  INVITED
+  VIEWED
+  DECLINED
+  QUOTED
+}
+
+enum RfqAttachmentKind {
+  TECH_PACK
+  REFERENCE_IMAGE
+  SIZE_CHART
+  OTHER
+}
+
+/// SUBMITTED (by manufacturer) → UNDER_REVIEW (buyer price pre-filled by MarginRule)
+/// → OFFERED (released to buyer by an admin) → ACCEPTED | REJECTED.
+enum QuoteStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  OFFERED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+  EXPIRED
+}
+
+/// Threads are always between one side and GarmentGate, never buyer↔manufacturer.
+enum ConversationType {
+  BUYER_PLATFORM
+  MANUFACTURER_PLATFORM
+  SUPPORT
+}
+
+enum ContactFlag {
+  EMAIL
+  PHONE
+  URL
+  SOCIAL_HANDLE
+  OBFUSCATED_CONTACT
+  OTHER
+}
+
+enum ModerationStatus {
+  CLEAN
+  FLAGGED
+  REVIEWED_OK
+  REVIEWED_BLOCKED
+}
+
+enum OrderStatus {
+  PENDING_DEPOSIT
+  CONFIRMED
+  IN_PRODUCTION
+  QUALITY_CHECK
+  READY_TO_SHIP
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum MilestoneStage {
+  ORDER_CONFIRMED
+  FABRIC_SOURCING
+  CUTTING
+  SEWING
+  FINISHING
+  PACKING
+  READY_FOR_INSPECTION
+  SHIPPED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+}
+
+enum SampleType {
+  PROTO
+  FIT
+  SIZE_SET
+  PRE_PRODUCTION
+  TOP
+  SHIPMENT
+}
+
+enum SampleStatus {
+  REQUESTED
+  IN_PROGRESS
+  SHIPPED
+  RECEIVED
+  APPROVED
+  REJECTED
+}
+
+enum PaymentDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum PaymentPurpose {
+  DEPOSIT
+  BALANCE
+  SAMPLE_FEE
+  PAYOUT
+  REFUND
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CARD
+  LETTER_OF_CREDIT
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum LedgerAccountType {
+  PLATFORM_CASH
+  BUYER_ESCROW
+  MANUFACTURER_PAYABLE
+  PLATFORM_REVENUE
+}
+
+enum LedgerTransactionKind {
+  DEPOSIT
+  HOLD
+  RELEASE
+  REFUND
+  COMMISSION
+  PAYOUT
+}
+
+enum EntryDirection {
+  DEBIT
+  CREDIT
+}
+
+enum InspectionType {
+  PRE_PRODUCTION
+  DURING_PRODUCTION
+  PRE_SHIPMENT
+  CONTAINER_LOADING
+}
+
+enum InspectionResult {
+  PENDING
+  PASS
+  FAIL
+  ON_HOLD
+}
+
+enum ShipmentMode {
+  SEA
+  AIR
+  ROAD
+  RAIL
+  COURIER
+}
+
+enum ShipmentStatus {
+  PENDING
+  BOOKED
+  IN_TRANSIT
+  AT_PORT
+  CUSTOMS
+  DELIVERED
+  EXCEPTION
+}
+
+enum ShipmentDocumentType {
+  COMMERCIAL_INVOICE
+  PACKING_LIST
+  BILL_OF_LADING
+  AIRWAY_BILL
+  CERTIFICATE_OF_ORIGIN
+  INSPECTION_CERTIFICATE
+  OTHER
+}
+
+enum ReviewStatus {
+  PENDING_MODERATION
+  PUBLISHED
+  HIDDEN
+}
+
+enum DisputeReason {
+  QUALITY
+  QUANTITY
+  LATE_DELIVERY
+  NOT_AS_DESCRIBED
+  PAYMENT
+  OTHER
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED_FOR_BUYER
+  RESOLVED_FOR_MANUFACTURER
+  SETTLED
+  CLOSED
+}
+
+enum NotificationType {
+  EMAIL_VERIFIED
+  KYC_SUBMITTED
+  KYC_APPROVED
+  KYC_REJECTED
+  RFQ_INVITATION
+  QUOTE_RECEIVED
+  QUOTE_OFFERED
+  ORDER_UPDATE
+  MESSAGE_RECEIVED
+  PAYMENT_UPDATE
+  DISPUTE_UPDATE
+  SYSTEM
+}
+
+enum FilePurpose {
+  KYC_DOCUMENT
+  CERTIFICATION
+  PRODUCT_IMAGE
+  TECH_PACK
+  MESSAGE_ATTACHMENT
+  MILESTONE_PHOTO
+  INSPECTION_REPORT
+  SHIPMENT_DOCUMENT
+  DISPUTE_EVIDENCE
+  AVATAR
+  OTHER
+}
+
+enum FileStatus {
+  PENDING_UPLOAD
+  UPLOADED
+  REJECTED
+}
+
+enum ScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Identity
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id              String       @id @default(uuid(7)) @db.Uuid
+  /// Always stored lowercased and trimmed.
+  email           String       @unique
+  passwordHash    String
+  role            Role
+  status          UserStatus   @default(ACTIVE)
+  locale          String       @default("en")
+  firstName       String
+  lastName        String
+  emailVerifiedAt DateTime?
+  lastLoginAt     DateTime?
+  companyId       String?      @db.Uuid
+  companyRole     CompanyRole?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  sessions            Session[]
+  tokens              UserToken[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  uploadedFiles       FileAsset[]
+  conversationsJoined ConversationParticipant[]
+  messagesSent        Message[]
+  rfqsCreated         Rfq[]
+  quotesPriced        Quote[]                   @relation("QuotePricedBy")
+  kycReviews          Company[]                 @relation("KycReviewedBy")
+  disputesOpened      Dispute[]                 @relation("DisputeOpenedBy")
+  disputesAssigned    Dispute[]                 @relation("DisputeAssignedTo")
+
+  @@index([companyId])
+  @@index([role, status])
+  @@map("users")
+}
+
+/// One row per refresh token. Rotation replaces the row; reuse of a revoked token
+/// outside the grace window revokes the whole family.
+model Session {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  userId           String    @db.Uuid
+  familyId         String    @db.Uuid
+  refreshTokenHash String    @unique
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  replacedById     String?   @db.Uuid
+  ip               String?
+  userAgent        String?
+  createdAt        DateTime  @default(now())
+  lastUsedAt       DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model UserToken {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  userId    String        @db.Uuid
+  type      UserTokenType
+  tokenHash String        @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([expiresAt])
+  @@map("user_tokens")
+}
+
+/// Atomic counters for human-readable codes (MFR-BD-0421, RFQ-2026-00042, …).
+model CodeSequence {
+  prefix    String @id
+  lastValue Int    @default(0)
+
+  @@map("code_sequences")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Companies, profiles, KYC
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Real legal identity. ADMIN-ONLY: never serialize to the other side of a deal.
+model Company {
+  id                 String         @id @default(uuid(7)) @db.Uuid
+  type               CompanyType
+  legalName          String
+  tradeName          String?
+  /// ISO 3166-1 alpha-2
+  country            String         @db.Char(2)
+  city               String?
+  addressLine1       String?
+  addressLine2       String?
+  postalCode         String?
+  registrationNumber String?
+  taxId              String?
+  website            String?
+  phone              String?
+  yearEstablished    Int?
+  onboardingStep     OnboardingStep @default(PROFILE)
+  kycStatus          KycStatus      @default(NOT_SUBMITTED)
+  kycSubmittedAt     DateTime?
+  kycReviewedAt      DateTime?
+  kycReviewedById    String?        @db.Uuid
+  kycRejectionReason String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  deletedAt          DateTime?
+
+  kycReviewedBy User? @relation("KycReviewedBy", fields: [kycReviewedById], references: [id], onDelete: SetNull)
+
+  users               User[]
+  documents           CompanyDocument[]
+  buyerProfile        BuyerProfile?
+  manufacturerProfile ManufacturerProfile?
+  files               FileAsset[]
+  rfqs                Rfq[]
+  ordersAsBuyer       Order[]
+  marginRules         MarginRule[]
+  ledgerAccounts      LedgerAccount[]
+  conversations       Conversation[]
+  reviewsWritten      Review[]
+
+  @@index([type, kycStatus])
+  @@index([kycStatus, kycSubmittedAt])
+  @@index([country])
+  @@map("companies")
+}
+
+model CompanyDocument {
+  id              String              @id @default(uuid(7)) @db.Uuid
+  companyId       String              @db.Uuid
+  type            CompanyDocumentType
+  fileId          String              @unique @db.Uuid
+  status          ReviewState         @default(PENDING)
+  documentNumber  String?
+  expiresAt       DateTime?
+  rejectionReason String?
+  reviewedAt      DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  company Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  file    FileAsset @relation(fields: [fileId], references: [id], onDelete: Restrict)
+
+  @@index([companyId, type])
+  @@index([status])
+  @@map("company_documents")
+}
+
+model BuyerProfile {
+  id                      String             @id @default(uuid(7)) @db.Uuid
+  companyId               String             @unique @db.Uuid
+  /// e.g. BYR-US-0012 — what manufacturers and admins-in-relay see.
+  publicCode              String             @unique
+  businessType            BuyerBusinessType?
+  annualVolumePcs         Int?
+  typicalOrderQuantityPcs Int?
+  /// ISO 3166-1 alpha-2 codes of markets the buyer sells into.
+  targetMarkets           String[]
+  sourcingNeeds           String?
+  sourcingNeedsFiltered   String?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  categories Category[] @relation("BuyerCategories")
+
+  @@map("buyer_profiles")
+}
+
+/// Buyer-facing manufacturer record. Only publicCode identifies the factory to buyers.
+model ManufacturerProfile {
+  id                        String   @id @default(uuid(7)) @db.Uuid
+  companyId                 String   @unique @db.Uuid
+  /// e.g. MFR-BD-0421
+  publicCode                String   @unique
+  headline                  String?
+  about                     String?
+  aboutFiltered             String?
+  monthlyCapacityPcs        Int?
+  moqPcs                    Int?
+  sampleLeadTimeDays        Int?
+  productionLeadTimeMinDays Int?
+  productionLeadTimeMaxDays Int?
+  /// [{ "type": "Single needle lockstitch", "count": 120 }, …]
+  machinery                 Json?
+  workforceSize             Int?
+  factorySizeSqm            Int?
+  /// ISO 3166-1 alpha-2 codes
+  exportMarkets             String[]
+  /// 0–100, recalculated from orders, inspections and reviews.
+  performanceScore          Int      @default(0)
+  /// Basis points (9450 = 94.5%).
+  onTimeDeliveryBps         Int?
+  isListed                  Boolean  @default(false)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  company         Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  categories      Category[]      @relation("ManufacturerCategories")
+  certifications  Certification[]
+  products        Product[]
+  rfqInvitations  RfqInvitation[]
+  quotes          Quote[]
+  orders          Order[]
+  reviewsReceived Review[]
+
+  @@index([isListed, performanceScore])
+  @@map("manufacturer_profiles")
+}
+
+model Category {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  slug      String   @unique
+  name      String
+  parentId  String?  @db.Uuid
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryTree")
+
+  manufacturers ManufacturerProfile[] @relation("ManufacturerCategories")
+  buyers        BuyerProfile[]        @relation("BuyerCategories")
+  products      Product[]
+  rfqs          Rfq[]
+  marginRules   MarginRule[]
+
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Certification {
+  id                    String              @id @default(uuid(7)) @db.Uuid
+  manufacturerProfileId String              @db.Uuid
+  type                  CertificationType
+  /// For OTHER, the certificate's name.
+  customName            String?
+  /// Identifies the factory: admin-only.
+  certificateNumber     String?
+  issuedAt              DateTime?
+  expiresAt             DateTime?
+  fileId                String?             @unique @db.Uuid
+  status                CertificationStatus @default(PENDING)
+  verifiedAt            DateTime?
+  rejectionReason       String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+  file                FileAsset?          @relation(fields: [fileId], references: [id], onDelete: SetNull)
+
+  @@index([manufacturerProfileId, type])
+  @@index([status, expiresAt])
+  @@map("certifications")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Catalog
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Product {
+  id                    String        @id @default(uuid(7)) @db.Uuid
+  manufacturerProfileId String        @db.Uuid
+  categoryId            String        @db.Uuid
+  title                 String
+  description           String?
+  descriptionFiltered   String?
+  fabric                String?
+  composition           String?
+  gsm                   Int?
+  moqPcs                Int
+  leadTimeDays          Int
+  currency              Currency      @default(USD)
+  status                ProductStatus @default(DRAFT)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  deletedAt             DateTime?
+
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+  category            Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  priceTiers          ProductPriceTier[]
+  images              ProductImage[]
+
+  @@index([manufacturerProfileId, status])
+  @@index([categoryId, status])
+  @@map("products")
+}
+
+/// Price for orders of at least minQty pieces. Both sides' prices live together.
+model ProductPriceTier {
+  id                         String @id @default(uuid(7)) @db.Uuid
+  productId                  String @db.Uuid
+  minQty                     Int
+  manufacturerUnitPriceMinor Int
+  buyerUnitPriceMinor        Int
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, minQty])
+  @@map("product_price_tiers")
+}
+
+model ProductImage {
+  id        String  @id @default(uuid(7)) @db.Uuid
+  productId String  @db.Uuid
+  fileId    String  @unique @db.Uuid
+  sortOrder Int     @default(0)
+  alt       String?
+
+  product Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  file    FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@map("product_images")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sourcing: RFQs, quotes, margin rules
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Rfq {
+  id                   String    @id @default(uuid(7)) @db.Uuid
+  /// e.g. RFQ-2026-00042
+  code                 String    @unique
+  buyerCompanyId       String    @db.Uuid
+  createdById          String    @db.Uuid
+  categoryId           String    @db.Uuid
+  title                String
+  description          String
+  descriptionFiltered  String
+  quantity             Int
+  targetUnitPriceMinor Int?
+  currency             Currency  @default(USD)
+  /// Quotes are due by this date.
+  deadline             DateTime
+  requiredDeliveryDate DateTime?
+  incoterm             Incoterm?
+  /// ISO 3166-1 alpha-2
+  destinationCountry   String?   @db.Char(2)
+  status               RfqStatus @default(DRAFT)
+  publishedAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  buyerCompany  Company         @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
+  createdBy     User            @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  category      Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  invitations   RfqInvitation[]
+  attachments   RfqAttachment[]
+  quotes        Quote[]
+  orders        Order[]
+  samples       Sample[]
+  conversations Conversation[]
+
+  @@index([buyerCompanyId, status])
+  @@index([status, deadline])
+  @@index([categoryId])
+  @@map("rfqs")
+}
+
+/// Admins route each RFQ to selected manufacturers.
+model RfqInvitation {
+  id                    String              @id @default(uuid(7)) @db.Uuid
+  rfqId                 String              @db.Uuid
+  manufacturerProfileId String              @db.Uuid
+  status                RfqInvitationStatus @default(INVITED)
+  invitedAt             DateTime            @default(now())
+  respondedAt           DateTime?
+  declineReason         String?
+
+  rfq                 Rfq                 @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([rfqId, manufacturerProfileId])
+  @@index([manufacturerProfileId, status])
+  @@map("rfq_invitations")
+}
+
+model RfqAttachment {
+  id     String            @id @default(uuid(7)) @db.Uuid
+  rfqId  String            @db.Uuid
+  fileId String            @unique @db.Uuid
+  kind   RfqAttachmentKind
+
+  rfq  Rfq       @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  file FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([rfqId])
+  @@map("rfq_attachments")
+}
+
+model Quote {
+  id                         String      @id @default(uuid(7)) @db.Uuid
+  rfqId                      String      @db.Uuid
+  manufacturerProfileId      String      @db.Uuid
+  manufacturerUnitPriceMinor Int
+  /// Pre-filled from the matching MarginRule, adjustable by an admin. Null until priced.
+  buyerUnitPriceMinor        Int?
+  currency                   Currency
+  leadTimeDays               Int
+  moqPcs                     Int?
+  validUntil                 DateTime?
+  notes                      String?
+  notesFiltered              String?
+  status                     QuoteStatus @default(SUBMITTED)
+  marginRuleId               String?     @db.Uuid
+  pricedById                 String?     @db.Uuid
+  pricedAt                   DateTime?
+  offeredAt                  DateTime?
+  decidedAt                  DateTime?
+  createdAt                  DateTime    @default(now())
+  updatedAt                  DateTime    @updatedAt
+
+  rfq                 Rfq                 @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Restrict)
+  marginRule          MarginRule?         @relation(fields: [marginRuleId], references: [id], onDelete: SetNull)
+  pricedBy            User?               @relation("QuotePricedBy", fields: [pricedById], references: [id], onDelete: SetNull)
+  order               Order?
+
+  @@unique([rfqId, manufacturerProfileId])
+  @@index([rfqId, status])
+  @@index([manufacturerProfileId, status])
+  @@index([status, createdAt])
+  @@map("quotes")
+}
+
+/// Markup applied to manufacturer prices. Most specific active rule wins:
+/// company + category > company > category > default (both null).
+model MarginRule {
+  id                    String   @id @default(uuid(7)) @db.Uuid
+  name                  String
+  /// Basis points over the manufacturer price (1500 = 15%).
+  markupBps             Int
+  /// Optional floor per unit, in the quote's currency minor units.
+  minMarginPerUnitMinor Int?
+  categoryId            String?  @db.Uuid
+  /// Usually a buyer company with negotiated rates.
+  companyId             String?  @db.Uuid
+  active                Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  company  Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  quotes   Quote[]
+
+  @@index([active, companyId, categoryId])
+  @@map("margin_rules")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Messaging (relayed: each thread is one side ↔ GarmentGate)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Conversation {
+  id            String           @id @default(uuid(7)) @db.Uuid
+  type          ConversationType
+  /// The external party: a buyer company for BUYER_PLATFORM, a manufacturer company for
+  /// MANUFACTURER_PLATFORM. A thread never has members from two external companies.
+  companyId     String           @db.Uuid
+  subject       String
+  rfqId         String?          @db.Uuid
+  orderId       String?          @db.Uuid
+  lastMessageAt DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  company      Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  rfq          Rfq?                      @relation(fields: [rfqId], references: [id], onDelete: SetNull)
+  order        Order?                    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([companyId, lastMessageAt])
+  @@index([rfqId])
+  @@index([orderId])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  conversationId String    @db.Uuid
+  userId         String    @db.Uuid
+  joinedAt       DateTime  @default(now())
+  lastReadAt     DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id               String           @id @default(uuid(7)) @db.Uuid
+  conversationId   String           @db.Uuid
+  senderId         String           @db.Uuid
+  /// Exactly what the sender typed. ADMIN-ONLY.
+  originalContent  String
+  /// What other participants receive.
+  filteredContent  String
+  flagged          Boolean          @default(false)
+  flagReasons      ContactFlag[]
+  moderationStatus ModerationStatus @default(CLEAN)
+  editedAt         DateTime?
+  createdAt        DateTime         @default(now())
+
+  conversation Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User                @relation(fields: [senderId], references: [id], onDelete: Restrict)
+  attachments  MessageAttachment[]
+
+  @@index([conversationId, createdAt])
+  @@index([flagged, moderationStatus])
+  @@index([senderId, createdAt])
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id        String @id @default(uuid(7)) @db.Uuid
+  messageId String @db.Uuid
+  fileId    String @unique @db.Uuid
+
+  message Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  file    FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("message_attachments")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Orders
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Order {
+  id                         String      @id @default(uuid(7)) @db.Uuid
+  /// e.g. ORD-2026-00017
+  code                       String      @unique
+  buyerCompanyId             String      @db.Uuid
+  manufacturerProfileId      String      @db.Uuid
+  rfqId                      String?     @db.Uuid
+  quoteId                    String?     @unique @db.Uuid
+  title                      String
+  specification              String?
+  quantity                   Int
+  /// What the buyer pays GarmentGate per unit. Buyer-facing.
+  buyerUnitPriceMinor        Int
+  /// What GarmentGate pays the manufacturer per unit. Manufacturer-facing.
+  manufacturerUnitPriceMinor Int
+  buyerTotalMinor            BigInt
+  manufacturerTotalMinor     BigInt
+  currency                   Currency
+  incoterm                   Incoterm
+  /// ISO 3166-1 alpha-2
+  destinationCountry         String      @db.Char(2)
+  destinationPort            String?
+  /// Basis points of buyerTotal due as deposit (3000 = 30%).
+  depositBps                 Int         @default(3000)
+  requestedShipDate          DateTime?
+  status                     OrderStatus @default(PENDING_DEPOSIT)
+  confirmedAt                DateTime?
+  completedAt                DateTime?
+  cancelledAt                DateTime?
+  createdAt                  DateTime    @default(now())
+  updatedAt                  DateTime    @updatedAt
+
+  buyerCompany        Company             @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Restrict)
+  rfq                 Rfq?                @relation(fields: [rfqId], references: [id], onDelete: SetNull)
+  quote               Quote?              @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+
+  items              OrderItem[]
+  milestones         OrderMilestone[]
+  samples            Sample[]
+  payments           Payment[]
+  ledgerTransactions LedgerTransaction[]
+  inspections        Inspection[]
+  shipments          Shipment[]
+  reviews            Review[]
+  disputes           Dispute[]
+  conversations      Conversation[]
+
+  @@index([buyerCompanyId, status])
+  @@index([manufacturerProfileId, status])
+  @@index([status, createdAt])
+  @@map("orders")
+}
+
+/// Colour × size breakdown of the order quantity.
+model OrderItem {
+  id       String  @id @default(uuid(7)) @db.Uuid
+  orderId  String  @db.Uuid
+  color    String
+  size     String
+  quantity Int
+  sku      String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, color, size])
+  @@map("order_items")
+}
+
+model OrderMilestone {
+  id           String          @id @default(uuid(7)) @db.Uuid
+  orderId      String          @db.Uuid
+  stage        MilestoneStage
+  status       MilestoneStatus @default(PENDING)
+  plannedAt    DateTime?
+  completedAt  DateTime?
+  note         String?
+  noteFiltered String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  order  Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  photos MilestonePhoto[]
+
+  @@unique([orderId, stage])
+  @@map("order_milestones")
+}
+
+model MilestonePhoto {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  milestoneId  String    @db.Uuid
+  fileId       String    @unique @db.Uuid
+  /// Set by an admin after checking the photo shows no logos, signage or people's faces.
+  buyerVisible Boolean   @default(false)
+  takenAt      DateTime?
+  caption      String?
+
+  milestone OrderMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  file      FileAsset      @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([milestoneId])
+  @@map("milestone_photos")
+}
+
+model Sample {
+  id                    String       @id @default(uuid(7)) @db.Uuid
+  /// A sample belongs to an RFQ (pre-order) or an order.
+  rfqId                 String?      @db.Uuid
+  orderId               String?      @db.Uuid
+  type                  SampleType
+  status                SampleStatus @default(REQUESTED)
+  quantity              Int          @default(1)
+  buyerFeeMinor         Int?
+  currency              Currency?
+  courier               String?
+  trackingNumber        String?
+  shippedAt             DateTime?
+  receivedAt            DateTime?
+  buyerFeedback         String?
+  buyerFeedbackFiltered String?
+  decidedAt             DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  rfq   Rfq?   @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, type])
+  @@index([rfqId])
+  @@map("samples")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Money: payments and double-entry escrow ledger
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Payment {
+  id            String           @id @default(uuid(7)) @db.Uuid
+  orderId       String           @db.Uuid
+  direction     PaymentDirection
+  purpose       PaymentPurpose
+  amountMinor   BigInt
+  currency      Currency
+  method        PaymentMethod
+  provider      String?
+  providerRef   String?          @unique
+  status        PaymentStatus    @default(PENDING)
+  paidAt        DateTime?
+  failureReason String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  order        Order               @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  transactions LedgerTransaction[]
+
+  @@index([orderId, status])
+  @@index([status, createdAt])
+  @@map("payments")
+}
+
+/// One account per (type, company, currency). Platform accounts have no company.
+model LedgerAccount {
+  id        String            @id @default(uuid(7)) @db.Uuid
+  type      LedgerAccountType
+  companyId String?           @db.Uuid
+  currency  Currency
+  createdAt DateTime          @default(now())
+
+  company Company?            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  entries EscrowLedgerEntry[]
+
+  @@unique([type, companyId, currency])
+  @@map("ledger_accounts")
+}
+
+/// A balanced group of entries: sum(DEBIT) == sum(CREDIT), single currency.
+model LedgerTransaction {
+  id             String                @id @default(uuid(7)) @db.Uuid
+  kind           LedgerTransactionKind
+  orderId        String?               @db.Uuid
+  paymentId      String?               @db.Uuid
+  currency       Currency
+  description    String
+  idempotencyKey String                @unique
+  postedAt       DateTime              @default(now())
+
+  order   Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  payment Payment?            @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  entries EscrowLedgerEntry[]
+
+  @@index([orderId, postedAt])
+  @@map("ledger_transactions")
+}
+
+/// Append-only. amountMinor is always positive; direction gives the sign.
+model EscrowLedgerEntry {
+  id            String         @id @default(uuid(7)) @db.Uuid
+  transactionId String         @db.Uuid
+  accountId     String         @db.Uuid
+  direction     EntryDirection
+  amountMinor   BigInt
+  createdAt     DateTime       @default(now())
+
+  transaction LedgerTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  account     LedgerAccount     @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([accountId, createdAt])
+  @@index([transactionId])
+  @@map("escrow_ledger_entries")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Quality and logistics
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Inspection {
+  id              String           @id @default(uuid(7)) @db.Uuid
+  orderId         String           @db.Uuid
+  type            InspectionType
+  agency          String?
+  scheduledAt     DateTime?
+  inspectedAt     DateTime?
+  /// General inspection level, e.g. "II"
+  aqlLevel        String?
+  /// Acceptable quality limits, e.g. "2.5"
+  aqlMajor        String?
+  aqlMinor        String?
+  sampleSize      Int?
+  criticalDefects Int?
+  majorDefects    Int?
+  minorDefects    Int?
+  result          InspectionResult @default(PENDING)
+  summary         String?
+  reportFileId    String?          @unique @db.Uuid
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  order      Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reportFile FileAsset? @relation(fields: [reportFileId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, type])
+  @@index([result, scheduledAt])
+  @@map("inspections")
+}
+
+model Shipment {
+  id              String         @id @default(uuid(7)) @db.Uuid
+  orderId         String         @db.Uuid
+  mode            ShipmentMode
+  status          ShipmentStatus @default(PENDING)
+  carrier         String?
+  trackingNumber  String?
+  containerNumber String?
+  /// Bill of lading or air waybill number
+  transportDocNo  String?
+  originPort      String?
+  destinationPort String?
+  cartons         Int?
+  grossWeightKg   Int?
+  etd             DateTime?
+  eta             DateTime?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  order     Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  documents ShipmentDocument[]
+
+  @@index([orderId])
+  @@index([trackingNumber])
+  @@index([status, eta])
+  @@map("shipments")
+}
+
+model ShipmentDocument {
+  id           String               @id @default(uuid(7)) @db.Uuid
+  shipmentId   String               @db.Uuid
+  fileId       String               @unique @db.Uuid
+  type         ShipmentDocumentType
+  /// Manufacturer-issued papers name the factory; buyers get platform-issued versions.
+  buyerVisible Boolean              @default(false)
+  createdAt    DateTime             @default(now())
+
+  shipment Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  file     FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([shipmentId])
+  @@map("shipment_documents")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Trust and operations
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Review {
+  id                    String       @id @default(uuid(7)) @db.Uuid
+  orderId               String       @db.Uuid
+  authorCompanyId       String       @db.Uuid
+  manufacturerProfileId String       @db.Uuid
+  /// 1–5
+  rating                Int
+  qualityRating         Int?
+  communicationRating   Int?
+  deliveryRating        Int?
+  comment               String?
+  commentFiltered       String?
+  status                ReviewStatus @default(PENDING_MODERATION)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  order               Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  authorCompany       Company             @relation(fields: [authorCompanyId], references: [id], onDelete: Cascade)
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, authorCompanyId])
+  @@index([manufacturerProfileId, status])
+  @@map("reviews")
+}
+
+model Dispute {
+  id                  String        @id @default(uuid(7)) @db.Uuid
+  orderId             String        @db.Uuid
+  openedById          String        @db.Uuid
+  assignedToId        String?       @db.Uuid
+  reason              DisputeReason
+  description         String
+  descriptionFiltered String
+  status              DisputeStatus @default(OPEN)
+  resolution          String?
+  refundAmountMinor   BigInt?
+  resolvedAt          DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  order      Order             @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  openedBy   User              @relation("DisputeOpenedBy", fields: [openedById], references: [id], onDelete: Restrict)
+  assignedTo User?             @relation("DisputeAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  evidence   DisputeEvidence[]
+
+  @@index([orderId])
+  @@index([status, createdAt])
+  @@index([assignedToId, status])
+  @@map("disputes")
+}
+
+model DisputeEvidence {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  disputeId String   @db.Uuid
+  fileId    String   @unique @db.Uuid
+  note      String?
+  createdAt DateTime @default(now())
+
+  dispute Dispute   @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  file    FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([disputeId])
+  @@map("dispute_evidence")
+}
+
+model Notification {
+  id        String           @id @default(uuid(7)) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  title     String
+  body      String
+  /// Deep-link data, e.g. { "orderId": "…" }
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+/// Append-only record of security- and money-relevant actions.
+model AuditLog {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  actorUserId String?  @db.Uuid
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorUserId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+/// Every object in S3. Linked to its owner through explicit relations, never ownerType/ownerId.
+model FileAsset {
+  id               String      @id @default(uuid(7)) @db.Uuid
+  bucket           String
+  storageKey       String      @unique
+  /// EXIF-stripped / watermark-free copy safe to show the other side.
+  sanitizedKey     String?
+  /// May contain names: ADMIN-ONLY.
+  originalFilename String
+  mimeType         String
+  sizeBytes        Int
+  checksumSha256   String?
+  purpose          FilePurpose
+  status           FileStatus  @default(PENDING_UPLOAD)
+  scanStatus       ScanStatus  @default(PENDING)
+  uploadedById     String?     @db.Uuid
+  ownerCompanyId   String?     @db.Uuid
+  uploadedAt       DateTime?
+  createdAt        DateTime    @default(now())
+
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  ownerCompany Company? @relation(fields: [ownerCompanyId], references: [id], onDelete: SetNull)
+
+  companyDocument   CompanyDocument?
+  certification     Certification?
+  productImage      ProductImage?
+  rfqAttachment     RfqAttachment?
+  messageAttachment MessageAttachment?
+  milestonePhoto    MilestonePhoto?
+  inspectionReport  Inspection?
+  shipmentDocument  ShipmentDocument?
+  disputeEvidence   DisputeEvidence?
+
+  @@index([ownerCompanyId, purpose])
+  @@index([status, createdAt])
+  @@map("file_assets")
+}

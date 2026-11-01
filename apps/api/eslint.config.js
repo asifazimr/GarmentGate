@@ -1,7 +1,8 @@
 import nest from '@garmentgate/config/eslint/nest';
-import { defineConfig } from 'eslint/config';
+import { defineConfig, globalIgnores } from 'eslint/config';
 
 export default defineConfig([
+  globalIgnores(['src/generated/**']),
   nest,
   {
     languageOptions: {

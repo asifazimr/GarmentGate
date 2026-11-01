@@ -17,8 +17,13 @@
     "format:check": "prettier --check .",
     "db:up": "docker compose up -d --wait postgres redis meilisearch minio && docker compose run --rm minio-init",
     "db:down": "docker compose down",
-    "db:reset": "docker compose down -v && pnpm db:up",
-    "db:logs": "docker compose logs -f"
+    "db:reset": "docker compose down -v && pnpm db:up && pnpm db:deploy && pnpm db:seed",
+    "db:logs": "docker compose logs -f",
+    "db:migrate": "pnpm --filter api db:migrate",
+    "db:deploy": "pnpm --filter api db:deploy",
+    "db:generate": "pnpm --filter api db:generate",
+    "db:seed": "pnpm --filter api db:seed",
+    "db:studio": "pnpm --filter api db:studio"
   },
   "devDependencies": {
     "@garmentgate/config": "workspace:*",

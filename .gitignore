@@ -31,3 +31,6 @@ pnpm-debug.log*
 *.pem
 .vercel
 .idea/
+
+# generated
+apps/api/src/generated/
