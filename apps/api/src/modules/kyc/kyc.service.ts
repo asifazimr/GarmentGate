@@ -1,6 +1,4 @@
-import { randomUUID } from 'node:crypto';
 import {
-  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -17,20 +15,15 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import type { AuthenticatedUser } from '../auth/auth.decorators.js';
 import { assertEditable } from '../onboarding/onboarding.service.js';
+import { FilesService } from '../storage/files.service.js';
 import { StorageService } from '../storage/storage.service.js';
-
-const EXTENSIONS: Record<string, string> = {
-  'application/pdf': 'pdf',
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-};
 
 @Injectable()
 export class KycService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly files: FilesService,
     private readonly audit: AuditService,
   ) {}
 
@@ -43,33 +36,16 @@ export class KycService {
     if (dto.purpose === 'CERTIFICATION' && company.type !== 'MANUFACTURER') {
       throw new ForbiddenException('Only manufacturers upload certifications');
     }
-    const ext = EXTENSIONS[dto.contentType] ?? 'bin';
-    const folder = dto.purpose === 'CERTIFICATION' ? 'certifications' : 'kyc';
-    const storageKey = `${folder}/${company.id}/${randomUUID()}.${ext}`;
-
-    const file = await this.prisma.fileAsset.create({
-      data: {
-        bucket: this.storage.bucket,
-        storageKey,
-        originalFilename: dto.fileName,
-        mimeType: dto.contentType,
-        sizeBytes: dto.sizeBytes,
-        purpose: dto.purpose,
-        uploadedById: userId,
-        ownerCompanyId: company.id,
-      },
+    return this.files.reserveUpload({
+      userId,
+      companyId: company.id,
+      purpose: dto.purpose,
+      folder: dto.purpose === 'CERTIFICATION' ? 'certifications' : 'kyc',
+      fileName: dto.fileName,
+      contentType: dto.contentType,
+      sizeBytes: dto.sizeBytes,
+      maxBytes: UPLOAD_MAX_BYTES,
     });
-    const upload = await this.storage.presignUpload(
-      storageKey,
-      dto.contentType,
-      Math.min(dto.sizeBytes, UPLOAD_MAX_BYTES),
-    );
-    return {
-      fileId: file.id,
-      url: upload.url,
-      fields: upload.fields,
-      expiresAt: upload.expiresAt.toISOString(),
-    };
   }
 
   async addDocument(userId: string, dto: AddCompanyDocumentDto): Promise<void> {
@@ -168,28 +144,11 @@ export class KycService {
   }
 
   /** Checks the object really landed in S3 with the declared type and an allowed size. */
-  private async confirmUpload(
+  private confirmUpload(
     fileId: string,
     companyId: string,
     purpose: 'KYC_DOCUMENT' | 'CERTIFICATION',
   ) {
-    const file = await this.prisma.fileAsset.findFirst({
-      where: { id: fileId, ownerCompanyId: companyId, purpose },
-    });
-    if (!file) throw new NotFoundException('Upload not found');
-    if (file.status !== 'PENDING_UPLOAD')
-      throw new ConflictException('This file is already attached');
-
-    const object = await this.storage.head(file.storageKey);
-    if (!object) throw new BadRequestException('The file has not finished uploading');
-    if (object.sizeBytes > UPLOAD_MAX_BYTES || object.contentType !== file.mimeType) {
-      await this.storage.delete(file.storageKey).catch(() => undefined);
-      await this.prisma.fileAsset.update({ where: { id: file.id }, data: { status: 'REJECTED' } });
-      throw new BadRequestException('The uploaded file does not match what was declared');
-    }
-    return this.prisma.fileAsset.update({
-      where: { id: file.id },
-      data: { status: 'UPLOADED', sizeBytes: object.sizeBytes, uploadedAt: new Date() },
-    });
+    return this.files.confirmUpload(fileId, companyId, purpose, UPLOAD_MAX_BYTES);
   }
 }

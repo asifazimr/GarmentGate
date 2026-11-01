@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
  */
 export function FileDropzone({
   onFile,
+  multiple = false,
   accept,
   maxBytes,
   progress = null,
@@ -20,7 +21,9 @@ export function FileDropzone({
   compact = false,
   disabled = false,
 }: {
+  /** Called once per accepted file (several times when `multiple`). */
   onFile: (file: File) => void;
+  multiple?: boolean;
   /** MIME types, e.g. ['application/pdf', 'image/png'] */
   accept: readonly string[];
   maxBytes: number;
@@ -39,24 +42,22 @@ export function FileDropzone({
   const busy = progress !== null;
   const size = formatBytes(maxBytes, locale);
 
-  const take = (file: File | undefined) => {
-    if (!file || busy || disabled) return;
-    if (!accept.includes(file.type)) {
-      setProblem(t('fileType'));
-      return;
+  const take = (list: FileList | null | undefined) => {
+    if (!list || busy || disabled) return;
+    const files = multiple ? Array.from(list) : Array.from(list).slice(0, 1);
+    let issue: string | null = null;
+    for (const file of files) {
+      if (!accept.includes(file.type)) issue = t('fileType');
+      else if (file.size > maxBytes) issue = t('fileSize', { size });
+      else onFile(file);
     }
-    if (file.size > maxBytes) {
-      setProblem(t('fileSize', { size }));
-      return;
-    }
-    setProblem(null);
-    onFile(file);
+    setProblem(issue);
   };
 
   const onDrop = (event: DragEvent) => {
     event.preventDefault();
     setDragging(false);
-    take(event.dataTransfer.files[0]);
+    take(event.dataTransfer.files);
   };
 
   return (
@@ -118,9 +119,10 @@ export function FileDropzone({
           type="file"
           className="sr-only"
           accept={accept.join(',')}
+          multiple={multiple}
           disabled={busy || disabled}
           onChange={(e) => {
-            take(e.target.files?.[0]);
+            take(e.target.files);
             e.target.value = '';
           }}
         />

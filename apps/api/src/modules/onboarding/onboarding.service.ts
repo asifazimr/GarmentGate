@@ -16,6 +16,7 @@ import {
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { capabilitiesView, capabilitiesWrite } from './capabilities.mapper.js';
 import { PublicCodeService } from './public-code.service.js';
 
 const onboardingInclude = {
@@ -125,38 +126,24 @@ export class OnboardingService {
     assertEditable(company.kycStatus);
     await this.assertCategoriesExist(dto.categoryIds);
 
-    const about = dto.about ? filterContactDetails(dto.about) : null;
+    const write = capabilitiesWrite(dto);
     await this.prisma.$transaction([
       this.prisma.manufacturerProfile.update({
         where: { companyId: company.id },
-        data: {
-          headline: dto.headline ? filterContactDetails(dto.headline).filtered : null,
-          about: dto.about ?? null,
-          aboutFiltered: about?.filtered ?? null,
-          monthlyCapacityPcs: dto.monthlyCapacityPcs,
-          moqPcs: dto.moqPcs,
-          sampleLeadTimeDays: dto.sampleLeadTimeDays,
-          productionLeadTimeMinDays: dto.productionLeadTimeMinDays,
-          productionLeadTimeMaxDays: dto.productionLeadTimeMaxDays,
-          workforceSize: dto.workforceSize,
-          factorySizeSqm: dto.factorySizeSqm ?? null,
-          machinery: dto.machinery,
-          exportMarkets: dto.exportMarkets,
-          categories: { set: dto.categoryIds.map((id) => ({ id })) },
-        },
+        data: write.data,
       }),
       this.prisma.company.update({
         where: { id: company.id },
         data: { onboardingStep: advance(company.onboardingStep, 'DOCUMENTS') },
       }),
     ]);
-    if (about?.flagged) {
+    if (write.flagged.length > 0) {
       await this.audit.log({
         actorUserId: userId,
         action: 'moderation.contact_filtered',
         entityType: 'ManufacturerProfile',
         entityId: company.id,
-        metadata: { field: 'about', reasons: about.reasons },
+        metadata: { field: 'profile', reasons: write.flagged },
       });
     }
     return this.getState(userId);
@@ -330,25 +317,7 @@ export class OnboardingService {
             yearEstablished: company.yearEstablished ?? undefined,
           }
         : null,
-      manufacturerProfile:
-        mp && mp.monthlyCapacityPcs !== null
-          ? {
-              categoryIds: mp.categories.map((c) => c.id),
-              headline: mp.headline ?? undefined,
-              about: mp.about ?? undefined,
-              monthlyCapacityPcs: mp.monthlyCapacityPcs,
-              moqPcs: mp.moqPcs ?? 1,
-              sampleLeadTimeDays: mp.sampleLeadTimeDays ?? 1,
-              productionLeadTimeMinDays: mp.productionLeadTimeMinDays ?? 1,
-              productionLeadTimeMaxDays: mp.productionLeadTimeMaxDays ?? 1,
-              workforceSize: mp.workforceSize ?? 1,
-              factorySizeSqm: mp.factorySizeSqm ?? undefined,
-              machinery: Array.isArray(mp.machinery)
-                ? (mp.machinery as { type: string; count: number }[])
-                : [],
-              exportMarkets: mp.exportMarkets,
-            }
-          : null,
+      manufacturerProfile: capabilitiesView(mp),
       buyerProfile:
         bp && bp.businessType !== null
           ? {

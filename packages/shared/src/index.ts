@@ -6,3 +6,6 @@ export * from './moderation/contact-filter.js';
 export * from './onboarding/onboarding.schema.js';
 export * from './status/statuses.js';
 export * from './notifications/notification.schema.js';
+export * from './catalog/product.schema.js';
+export * from './manufacturer/manufacturer.schema.js';
+export * from './media/media.schema.js';

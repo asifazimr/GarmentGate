@@ -3,6 +3,7 @@ import {
   GetObjectCommand,
   HeadObjectCommand,
   NotFound,
+  PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
@@ -19,6 +20,8 @@ export interface PresignedUpload {
 
 const UPLOAD_EXPIRES_SECONDS = 10 * 60;
 const DOWNLOAD_EXPIRES_SECONDS = 5 * 60;
+/** Processed images are viewed inside long-lived pages; their links last an hour. */
+export const IMAGE_URL_EXPIRES_SECONDS = 60 * 60;
 
 /** Private S3-compatible storage. Browsers only ever get short-lived presigned URLs. */
 @Injectable()
@@ -70,7 +73,30 @@ export class StorageService {
     }
   }
 
-  presignDownload(key: string, downloadName?: string): Promise<string> {
+  /** Reads a whole object into memory. Only for bounded files (uploads are size-capped). */
+  async getObject(key: string): Promise<Buffer> {
+    const out = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    if (!out.Body) throw new Error(`Empty object: ${key}`);
+    return Buffer.from(await out.Body.transformToByteArray());
+  }
+
+  async putObject(key: string, body: Buffer, contentType: string): Promise<void> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+        CacheControl: 'private, max-age=31536000, immutable',
+      }),
+    );
+  }
+
+  presignDownload(
+    key: string,
+    downloadName?: string,
+    expiresIn = DOWNLOAD_EXPIRES_SECONDS,
+  ): Promise<string> {
     return getSignedUrl(
       this.client,
       new GetObjectCommand({
@@ -80,7 +106,7 @@ export class StorageService {
           ResponseContentDisposition: `inline; filename="${downloadName.replace(/["\\\r\n]/g, '_')}"`,
         }),
       }),
-      { expiresIn: DOWNLOAD_EXPIRES_SECONDS },
+      { expiresIn },
     );
   }
 

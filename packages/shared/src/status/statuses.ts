@@ -77,6 +77,14 @@ export type DisputeStatus = z.infer<typeof DisputeStatusSchema>;
 export const MilestoneStatusSchema = z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'DELAYED']);
 export type MilestoneStatus = z.infer<typeof MilestoneStatusSchema>;
 
+export const ProductStatusDomainSchema = z.enum([
+  'DRAFT',
+  'PENDING_REVIEW',
+  'PUBLISHED',
+  'ARCHIVED',
+]);
+export const MediaReviewDomainSchema = z.enum(['PENDING', 'APPROVED', 'REJECTED']);
+
 /** Every status-bearing domain, keyed by name, for StatusBadge and filters. */
 export const STATUS_DOMAINS = {
   order: OrderStatusSchema,
@@ -89,6 +97,8 @@ export const STATUS_DOMAINS = {
   inspection: InspectionResultSchema,
   dispute: DisputeStatusSchema,
   milestone: MilestoneStatusSchema,
+  product: ProductStatusDomainSchema,
+  media: MediaReviewDomainSchema,
 } as const;
 export type StatusDomain = keyof typeof STATUS_DOMAINS;
 export type StatusOf<D extends StatusDomain> = z.infer<(typeof STATUS_DOMAINS)[D]>;
@@ -174,6 +184,17 @@ export const STATUS_TONES: { [D in StatusDomain]: Record<StatusOf<D>, StatusTone
     IN_PROGRESS: 'progress',
     COMPLETED: 'success',
     DELAYED: 'warning',
+  },
+  product: {
+    DRAFT: 'neutral',
+    PENDING_REVIEW: 'warning',
+    PUBLISHED: 'success',
+    ARCHIVED: 'neutral',
+  },
+  media: {
+    PENDING: 'warning',
+    APPROVED: 'success',
+    REJECTED: 'danger',
   },
 };
 

@@ -5,21 +5,32 @@ import { Ellipsis } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { isActive, NAV } from './nav';
 
 /** Mobile navigation: four primary destinations plus "More" in a bottom sheet. */
 export function BottomNav({ role }: { role: Role }) {
+  return (
+    <Suspense fallback={<BottomNavBar role={role} pathname={null} />}>
+      <ActiveBottomNav role={role} />
+    </Suspense>
+  );
+}
+
+function ActiveBottomNav({ role }: { role: Role }) {
+  return <BottomNavBar role={role} pathname={usePathname()} />;
+}
+
+function BottomNavBar({ role, pathname }: { role: Role; pathname: string | null }) {
   const t = useTranslations('nav');
-  const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const items = NAV[role];
   const home = items[0]?.href ?? '/';
   const primary = items.filter((i) => i.primary);
   const more = items.filter((i) => !i.primary);
-  const moreActive = more.some((i) => isActive(pathname, i.href, home));
+  const moreActive = pathname !== null && more.some((i) => isActive(pathname, i.href, home));
 
   const tab =
     'flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium outline-none transition-colors focus-visible:bg-muted';
@@ -32,7 +43,7 @@ export function BottomNav({ role }: { role: Role }) {
       >
         <ul className="flex">
           {primary.map((item) => {
-            const active = isActive(pathname, item.href, home);
+            const active = pathname !== null && isActive(pathname, item.href, home);
             return (
               <li key={item.href} className="flex flex-1">
                 <Link

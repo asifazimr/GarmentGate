@@ -9,11 +9,11 @@ import {
   type ManufacturerCapabilitiesDto,
   type OnboardingState,
   OnboardingStateSchema,
-  PresignUploadResponseSchema,
 } from '@garmentgate/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { apiJson, apiSend } from '@/lib/api';
+import { uploadFile } from '@/lib/upload';
 
 export const onboardingQueryKey = ['onboarding'] as const;
 
@@ -78,7 +78,7 @@ export function useAddDocument() {
       type: KycDocumentType;
       onProgress: (p: number) => void;
     }) => {
-      const fileId = await uploadFile(file, 'KYC_DOCUMENT', onProgress);
+      const fileId = await uploadKyc(file, 'KYC_DOCUMENT', onProgress);
       await apiSend('/kyc/documents', { method: 'POST', body: { fileId, type } });
     },
   );
@@ -99,7 +99,7 @@ export function useAddCertification() {
       details: Omit<AddCertificationDto, 'fileId'>;
       onProgress: (p: number) => void;
     }) => {
-      const fileId = await uploadFile(file, 'CERTIFICATION', onProgress);
+      const fileId = await uploadKyc(file, 'CERTIFICATION', onProgress);
       await apiSend('/kyc/certifications', { method: 'POST', body: { ...details, fileId } });
     },
   );
@@ -111,36 +111,8 @@ export function useRemoveCertification() {
   );
 }
 
-// ── Direct-to-storage upload ────────────────────────────────────────────────
-
-/** Presign with the API, then send the bytes straight to object storage with progress. */
-async function uploadFile(
+const uploadKyc = (
   file: File,
   purpose: 'KYC_DOCUMENT' | 'CERTIFICATION',
-  onProgress: (percent: number) => void,
-): Promise<string> {
-  const presign = await apiJson('/kyc/uploads', PresignUploadResponseSchema, {
-    method: 'POST',
-    body: { purpose, fileName: file.name, contentType: file.type, sizeBytes: file.size },
-  });
-
-  const form = new FormData();
-  for (const [key, value] of Object.entries(presign.fields)) form.append(key, value);
-  form.append('file', file); // must be last
-
-  await new Promise<void>((resolve, reject) => {
-    // XHR (not fetch) because it reports upload progress.
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', presign.url);
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
-    };
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) resolve();
-      else reject(new Error(`Upload failed (${xhr.status})`));
-    };
-    xhr.onerror = () => reject(new Error('Upload failed'));
-    xhr.send(form);
-  });
-  return presign.fileId;
-}
+  onProgress: (p: number) => void,
+) => uploadFile('/kyc/uploads', purpose, file, onProgress);

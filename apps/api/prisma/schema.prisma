@@ -383,6 +383,7 @@ enum FilePurpose {
   KYC_DOCUMENT
   CERTIFICATION
   PRODUCT_IMAGE
+  FACTORY_PHOTO
   TECH_PACK
   MESSAGE_ATTACHMENT
   MILESTONE_PHOTO
@@ -391,6 +392,20 @@ enum FilePurpose {
   DISPUTE_EVIDENCE
   AVATAR
   OTHER
+}
+
+enum ImageProcessingStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
+/// Human review of images shown to buyers (logos, signage, faces).
+enum MediaReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum FileStatus {
@@ -620,6 +635,8 @@ model ManufacturerProfile {
   certifications  Certification[]
   products        Product[]
   rfqInvitations  RfqInvitation[]
+  photos          FactoryPhoto[]
+  capacityMonths  CapacityMonth[]
   quotes          Quote[]
   orders          Order[]
   reviewsReceived Review[]
@@ -721,17 +738,60 @@ model ProductPriceTier {
 }
 
 model ProductImage {
-  id        String  @id @default(uuid(7)) @db.Uuid
-  productId String  @db.Uuid
-  fileId    String  @unique @db.Uuid
-  sortOrder Int     @default(0)
-  alt       String?
+  id           String            @id @default(uuid(7)) @db.Uuid
+  productId    String            @db.Uuid
+  fileId       String            @unique @db.Uuid
+  sortOrder    Int               @default(0)
+  alt          String?
+  /// Buyers only see APPROVED images, and only their processed renditions.
+  reviewStatus MediaReviewStatus @default(PENDING)
+  reviewNote   String?
+  reviewedAt   DateTime?
 
   product Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   file    FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
 
   @@index([productId, sortOrder])
   @@map("product_images")
+}
+
+/// Photos of the factory floor for the buyer-facing profile.
+model FactoryPhoto {
+  id                    String            @id @default(uuid(7)) @db.Uuid
+  manufacturerProfileId String            @db.Uuid
+  fileId                String            @unique @db.Uuid
+  caption               String?
+  sortOrder             Int               @default(0)
+  reviewStatus          MediaReviewStatus @default(PENDING)
+  reviewNote            String?
+  reviewedAt            DateTime?
+  createdAt             DateTime          @default(now())
+
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+  file                FileAsset           @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([manufacturerProfileId, sortOrder])
+  @@index([reviewStatus])
+  @@map("factory_photos")
+}
+
+/// Per-month capacity plan. Rows exist only for months the factory adjusted.
+model CapacityMonth {
+  id                    String   @id @default(uuid(7)) @db.Uuid
+  manufacturerProfileId String   @db.Uuid
+  /// First day of the month (UTC).
+  month                 DateTime @db.Date
+  /// Override of ManufacturerProfile.monthlyCapacityPcs for this month.
+  availablePcs          Int?
+  /// Capacity already sold outside GarmentGate.
+  externalBookedPcs     Int      @default(0)
+  note                  String?
+  updatedAt             DateTime @updatedAt
+
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([manufacturerProfileId, month])
+  @@map("capacity_months")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1350,9 +1410,9 @@ model AuditLog {
 
 /// Every object in S3. Linked to its owner through explicit relations, never ownerType/ownerId.
 model FileAsset {
-  id               String      @id @default(uuid(7)) @db.Uuid
+  id               String                 @id @default(uuid(7)) @db.Uuid
   bucket           String
-  storageKey       String      @unique
+  storageKey       String                 @unique
   /// EXIF-stripped / watermark-free copy safe to show the other side.
   sanitizedKey     String?
   /// May contain names: ADMIN-ONLY.
@@ -1361,12 +1421,18 @@ model FileAsset {
   sizeBytes        Int
   checksumSha256   String?
   purpose          FilePurpose
-  status           FileStatus  @default(PENDING_UPLOAD)
-  scanStatus       ScanStatus  @default(PENDING)
-  uploadedById     String?     @db.Uuid
-  ownerCompanyId   String?     @db.Uuid
+  status           FileStatus             @default(PENDING_UPLOAD)
+  scanStatus       ScanStatus             @default(PENDING)
+  uploadedById     String?                @db.Uuid
+  ownerCompanyId   String?                @db.Uuid
   uploadedAt       DateTime?
-  createdAt        DateTime    @default(now())
+  /// Set for images: the pipeline strips metadata and writes WebP renditions.
+  processingStatus ImageProcessingStatus?
+  processingError  String?
+  processedAt      DateTime?
+  width            Int?
+  height           Int?
+  createdAt        DateTime               @default(now())
 
   uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
   ownerCompany Company? @relation(fields: [ownerCompanyId], references: [id], onDelete: SetNull)
@@ -1374,6 +1440,8 @@ model FileAsset {
   companyDocument   CompanyDocument?
   certification     Certification?
   productImage      ProductImage?
+  factoryPhoto      FactoryPhoto?
+  renditions        ImageRendition[]
   rfqAttachment     RfqAttachment?
   messageAttachment MessageAttachment?
   milestonePhoto    MilestonePhoto?
@@ -1384,4 +1452,21 @@ model FileAsset {
   @@index([ownerCompanyId, purpose])
   @@index([status, createdAt])
   @@map("file_assets")
+}
+
+/// A processed, metadata-free WebP copy of an uploaded image. The only form buyers ever get.
+model ImageRendition {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  fileId     String   @db.Uuid
+  width      Int
+  height     Int
+  storageKey String   @unique
+  sizeBytes  Int
+  format     String   @default("webp")
+  createdAt  DateTime @default(now())
+
+  file FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([fileId, width])
+  @@map("image_renditions")
 }

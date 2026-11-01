@@ -1,6 +1,8 @@
 import { Button as ButtonPrimitive } from '@base-ui/react/button';
+import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from 'cn';
+import { isValidElement, type ReactElement } from 'react';
 
 /**
  * Sizes are mobile-first: `default`, `lg` and `icon` are 44px tall on touch screens and
@@ -43,24 +45,41 @@ const buttonVariants = cva(
   },
 );
 
+type ButtonProps = ButtonPrimitive.Props & VariantProps<typeof buttonVariants>;
+
 function Button({
   className,
   variant = 'default',
   size = 'default',
   render,
-  nativeButton,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
-  return (
-    <ButtonPrimitive
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      render={render}
-      // Rendered as something else (usually a <Link>): keep link semantics, not button ones.
-      nativeButton={nativeButton ?? render === undefined}
-      {...props}
-    />
-  );
+}: ButtonProps) {
+  const classes = cn(buttonVariants({ variant, size, className }));
+  if (isValidElement(render)) {
+    return <ButtonAs render={render} className={classes} {...props} />;
+  }
+  return <ButtonPrimitive data-slot="button" className={classes} render={render} {...props} />;
+}
+
+/**
+ * Button styling on another element, usually a <Link>. Deliberately not the Button primitive:
+ * that would add role="button" and make screen readers announce a link as a button.
+ */
+function ButtonAs({
+  render,
+  className,
+  children,
+  disabled,
+}: Pick<ButtonProps, 'className' | 'children' | 'disabled'> & { render: ReactElement }) {
+  return useRender({
+    render,
+    props: {
+      className: typeof className === 'string' ? className : undefined,
+      children: typeof children === 'function' ? undefined : children,
+      ...(disabled && { 'aria-disabled': true, tabIndex: -1 }),
+    },
+    state: { slot: 'button' },
+  });
 }
 
 export { Button, buttonVariants };

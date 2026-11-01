@@ -5,6 +5,7 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { Suspense } from 'react';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -12,17 +13,32 @@ import { cn } from '@/lib/utils';
 import { isActive, NAV } from './nav';
 
 /** Desktop navigation. Collapses to an icon rail; labels move into tooltips. */
-export function Sidebar({
+export function Sidebar(props: { role: Role; collapsed: boolean; onToggle: () => void }) {
+  // The pathname is request data on dynamic routes: read it inside Suspense and render the
+  // same nav without a highlight until it's known.
+  return (
+    <Suspense fallback={<SidebarNav {...props} pathname={null} />}>
+      <ActiveSidebar {...props} />
+    </Suspense>
+  );
+}
+
+function ActiveSidebar(props: { role: Role; collapsed: boolean; onToggle: () => void }) {
+  return <SidebarNav {...props} pathname={usePathname()} />;
+}
+
+function SidebarNav({
   role,
   collapsed,
   onToggle,
+  pathname,
 }: {
   role: Role;
   collapsed: boolean;
   onToggle: () => void;
+  pathname: string | null;
 }) {
   const t = useTranslations('nav');
-  const pathname = usePathname();
   const items = NAV[role];
   const home = items[0]?.href ?? '/';
 
@@ -46,7 +62,7 @@ export function Sidebar({
       <nav aria-label={t('mainNavigation')} className="flex-1 overflow-y-auto px-3 py-2">
         <ul className="space-y-0.5">
           {items.map((item) => {
-            const active = isActive(pathname, item.href, home);
+            const active = pathname !== null && isActive(pathname, item.href, home);
             const link = (
               <Link
                 href={item.href}

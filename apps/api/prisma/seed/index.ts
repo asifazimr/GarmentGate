@@ -8,6 +8,7 @@ import { filterContactDetails } from '@garmentgate/shared';
 import { createPrismaClient } from '../../src/prisma/create-prisma-client.js';
 import type { Currency, Prisma } from '../../src/generated/prisma/client.js';
 import { ADMIN, BUYERS, CATEGORIES, DEMO_PASSWORD, MANUFACTURERS } from './data.js';
+import { seedImage } from './media.js';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
 const databaseUrl = process.env.DATABASE_URL;
@@ -812,7 +813,78 @@ async function main(): Promise<void> {
     data: Object.entries(sequences).map(([prefix, lastValue]) => ({ prefix, lastValue })),
   });
 
+  await seedMedia();
+  await prisma.capacityMonth.createMany({
+    data: [
+      {
+        manufacturerProfileId: meghna.profileId,
+        month: monthStartOffset(1),
+        externalBookedPcs: 180_000,
+        note: 'Winter programme for an existing customer',
+      },
+      {
+        manufacturerProfileId: meghna.profileId,
+        month: monthStartOffset(3),
+        availablePcs: 320_000,
+        externalBookedPcs: 60_000,
+        note: 'Eid holidays: reduced lines',
+      },
+      {
+        manufacturerProfileId: meghna.profileId,
+        month: monthStartOffset(4),
+        externalBookedPcs: 400_000,
+        note: 'Peak season',
+      },
+    ],
+  });
+
   printLogins();
+}
+
+function monthStartOffset(offset: number): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1));
+}
+
+/** Approved factory photos and product images for every verified factory. */
+async function seedMedia(): Promise<void> {
+  if (process.env.SEED_SKIP_MEDIA === '1') return;
+  const profiles = await prisma.manufacturerProfile.findMany({
+    where: { isListed: true },
+    include: { company: { include: { users: true } }, products: true },
+  });
+  for (const [i, profile] of profiles.entries()) {
+    const owner = profile.company.users[0];
+    if (!owner) continue;
+    const base = { companyId: profile.companyId, userId: owner.id };
+    for (let n = 0; n < 3; n++) {
+      const fileId = await seedImage(prisma, {
+        ...base,
+        purpose: 'FACTORY_PHOTO',
+        hue: (i * 67 + n * 23) % 360,
+      });
+      await prisma.factoryPhoto.create({
+        data: {
+          manufacturerProfileId: profile.id,
+          fileId,
+          sortOrder: n,
+          reviewStatus: 'APPROVED',
+          reviewedAt: new Date(),
+        },
+      });
+    }
+    for (const [j, product] of profile.products.entries()) {
+      const fileId = await seedImage(prisma, {
+        ...base,
+        purpose: 'PRODUCT_IMAGE',
+        hue: (i * 67 + j * 41 + 180) % 360,
+      });
+      await prisma.productImage.create({
+        data: { productId: product.id, fileId, reviewStatus: 'APPROVED', reviewedAt: new Date() },
+      });
+    }
+  }
+  console.warn('Seeded factory photos and product images (processed renditions in MinIO).');
 }
 
 function message(senderId: string, text: string, days: number) {

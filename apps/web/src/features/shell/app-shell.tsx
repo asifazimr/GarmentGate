@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { Logo } from '@/components/logo';
-import { PageTransition } from '@/components/patterns/page-transition';
 import { useLocalFlag } from '@/lib/client-hooks';
 import { BottomNav } from './bottom-nav';
 import { CommandMenu } from './command-menu';
@@ -54,9 +53,7 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
           </div>
         </header>
         <main id="main" className="flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
-          <div className="mx-auto w-full max-w-6xl">
-            <PageTransition>{children}</PageTransition>
-          </div>
+          <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
       </div>
       <BottomNav role={role} />

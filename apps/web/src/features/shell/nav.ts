@@ -1,5 +1,6 @@
 import type { Role } from '@garmentgate/shared';
 import {
+  CalendarRange,
   Factory,
   FileText,
   Gauge,
@@ -14,6 +15,7 @@ import {
   Settings,
   ShieldAlert,
   ShieldCheck,
+  Shirt,
 } from 'lucide-react';
 
 export type NavLabel =
@@ -29,7 +31,9 @@ export type NavLabel =
   | 'verification'
   | 'disputes'
   | 'moderation'
-  | 'margins';
+  | 'margins'
+  | 'products'
+  | 'capacity';
 
 export interface NavItem {
   href: string;
@@ -37,6 +41,8 @@ export interface NavItem {
   icon: LucideIcon;
   /** Shown in the mobile bottom bar; the rest go under "More". */
   primary?: boolean;
+  /** Has its own route; otherwise the section renders the "coming soon" page. */
+  built?: boolean;
 }
 
 /**
@@ -56,9 +62,11 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/manufacturer', label: 'dashboard', icon: LayoutDashboard, primary: true },
     { href: '/manufacturer/rfqs', label: 'invitations', icon: Inbox, primary: true },
     { href: '/manufacturer/orders', label: 'orders', icon: Package, primary: true },
-    { href: '/manufacturer/messages', label: 'messages', icon: MessageSquare, primary: true },
+    { href: '/manufacturer/products', label: 'products', icon: Shirt, primary: true, built: true },
+    { href: '/manufacturer/capacity', label: 'capacity', icon: CalendarRange, built: true },
+    { href: '/manufacturer/profile', label: 'profile', icon: Factory, built: true },
+    { href: '/manufacturer/messages', label: 'messages', icon: MessageSquare },
     { href: '/manufacturer/quotes', label: 'quotes', icon: Receipt },
-    { href: '/manufacturer/profile', label: 'profile', icon: Factory },
     { href: '/manufacturer/settings', label: 'settings', icon: Settings },
   ],
   ADMIN: [
@@ -76,6 +84,7 @@ export const NAV: Record<Role, NavItem[]> = {
 export function comingSoonSections(role: Role): string[] {
   const base = NAV[role][0]?.href ?? '';
   return NAV[role]
+    .filter((item) => !item.built)
     .map((item) => item.href)
     .filter((href) => href !== base)
     .map((href) => href.slice(base.length + 1));

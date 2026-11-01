@@ -30,6 +30,13 @@ Buyers and manufacturers must **never** be able to identify or contact each othe
 
 When adding any endpoint, socket event, email, notification, export, or search index field, ask: _could this reveal who the other side is or how to reach them?_
 
+### How the rule is enforced in code
+
+- **Buyer-facing data goes through `apps/api/src/modules/catalog/public.serializer.ts` only** (`toPublicManufacturer`, `toPublicProduct`). They copy an explicit allowlist, re-filter free text and scrub the company's own names, website and owners' names (`scrubText`), then parse with **strict** schemas (`PublicManufacturerSchema`, `PublicProductSchema` in `packages/shared`) that throw on any extra key. Load data with the selects in `catalog.queries.ts`. To expose a new field to buyers, add it to the strict schema and the serializer, and extend `public.serializer.spec.ts` (sentinel tests assert nothing identifying leaks).
+- **Margin stays hidden both ways.** Buyers only get `buyerUnitPriceMinor`; manufacturers only get `manufacturerUnitPriceMinor` (their queries don't even select buyer prices). Catalog buyer prices come from `pickCatalogRule` + `applyMarkup` in `modules/pricing/margin.ts`.
+- **Images**: uploads land privately under `originals/`; the BullMQ `media` worker (`modules/media`) decodes with Sharp, bakes in orientation, **drops all metadata** (EXIF/GPS/XMP/IPTC/ICC) and writes WebP renditions (320/800/1600) under `renditions/`. Browsers only ever get signed URLs to renditions. Factory photos and product images also need **admin approval** (`/admin/media/*`) before buyers see them (logos, signage, faces).
+- Factories can check all of this themselves: **Factory profile → Buyer preview** renders `/manufacturer/profile/preview`, which uses the same serializer as buyers.
+
 ## Tech stack
 
 Turborepo + pnpm workspaces monorepo.
