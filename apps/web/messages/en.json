@@ -1,0 +1,333 @@
+{
+  "common": {
+    "appName": "GarmentGate",
+    "continue": "Continue",
+    "back": "Back",
+    "cancel": "Cancel",
+    "retry": "Try again",
+    "saving": "Saving…",
+    "loading": "Loading…",
+    "optional": "Optional",
+    "remove": "Remove",
+    "signOut": "Sign out",
+    "somethingWentWrong": "Something went wrong",
+    "networkError": "We couldn’t reach GarmentGate. Check your connection and try again."
+  },
+  "brand": {
+    "headline": "Source garments from verified factories, without the risk.",
+    "subhead": "GarmentGate manages every quote, sample, order and payment between you and the factory.",
+    "points": {
+      "verified": {
+        "title": "Verified manufacturers",
+        "body": "Every factory is audited and certificate-checked before it can quote."
+      },
+      "escrow": {
+        "title": "Protected payments",
+        "body": "Your money is held in escrow and released as production milestones are met."
+      },
+      "managed": {
+        "title": "One point of contact",
+        "body": "Our sourcing team handles quality, timelines and logistics for you."
+      }
+    },
+    "stat": "Factories in Bangladesh, Vietnam, India and Türkiye"
+  },
+  "landing": {
+    "title": "Managed garment sourcing",
+    "body": "Request quotes from verified factories, follow production, and pay safely, all through GarmentGate.",
+    "getStarted": "Get started",
+    "signIn": "Sign in"
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your GarmentGate account.",
+      "email": "Work email",
+      "password": "Password",
+      "forgot": "Forgot password?",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "noAccount": "New to GarmentGate?",
+      "createAccount": "Create an account",
+      "sessionExpired": "Your session expired. Please sign in again."
+    },
+    "register": {
+      "chooseTitle": "How will you use GarmentGate?",
+      "chooseSubtitle": "Pick one. You can’t switch later, so choose the one that fits your company.",
+      "buyer": {
+        "title": "I want to source products",
+        "body": "Brands, retailers and importers looking for manufacturing."
+      },
+      "manufacturer": {
+        "title": "I manufacture products",
+        "body": "Factories that want qualified orders from global buyers."
+      },
+      "formTitleBuyer": "Create your buyer account",
+      "formTitleManufacturer": "Create your manufacturer account",
+      "formSubtitle": "Takes about a minute. You’ll add company details next.",
+      "change": "Change",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Work email",
+      "password": "Password",
+      "passwordHint": "At least 10 characters with a letter and a number.",
+      "acceptTerms": "I agree to the Terms of Service and Privacy Policy.",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "password": {
+      "show": "Show password",
+      "hide": "Hide password"
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "subtitle": "Enter your account email and we’ll send you a reset link.",
+      "email": "Work email",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "sentTitle": "Check your inbox",
+      "sentBody": "If an account exists for {email}, a reset link is on its way. It expires in 60 minutes.",
+      "backToLogin": "Back to sign in"
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "subtitle": "This signs you out on all other devices.",
+      "password": "New password",
+      "submit": "Update password",
+      "submitting": "Updating…",
+      "doneTitle": "Password updated",
+      "doneBody": "You can now sign in with your new password.",
+      "signIn": "Sign in",
+      "missingToken": "This reset link is incomplete. Request a new one."
+    },
+    "verify": {
+      "verifyingTitle": "Confirming your email…",
+      "successTitle": "Email confirmed",
+      "successBody": "Thanks! You can now submit your company for verification.",
+      "continue": "Continue",
+      "failedTitle": "This link has expired",
+      "failedBody": "Verification links work once and expire after 24 hours. Sign in to request a new one.",
+      "signIn": "Sign in"
+    }
+  },
+  "onboarding": {
+    "title": "Set up your company",
+    "saveAndExit": "Save & finish later",
+    "savedForLater": "Progress saved. Sign in any time to pick up where you left off.",
+    "stepOf": "Step {current} of {total}",
+    "steps": {
+      "company": "Company",
+      "capabilities": "Capabilities",
+      "sourcing": "Sourcing needs",
+      "documents": "Documents"
+    },
+    "draftRestored": "We restored what you typed last time.",
+    "saved": "Saved",
+    "rejected": {
+      "title": "We need a few changes",
+      "body": "Update the items below and submit again."
+    },
+    "emailBanner": {
+      "title": "Confirm your email",
+      "body": "We sent a link to {email}. You need a confirmed email to submit for verification.",
+      "resend": "Resend email",
+      "resent": "Sent! Check your inbox."
+    },
+    "company": {
+      "title": "Tell us about your company",
+      "subtitle": "These details are only seen by GarmentGate’s verification team. Other users never see your company name or contact details.",
+      "legalName": "Registered company name",
+      "tradeName": "Trading name",
+      "country": "Country",
+      "countryPlaceholder": "Select a country",
+      "city": "City",
+      "addressLine1": "Street address",
+      "addressLine2": "Address line 2",
+      "postalCode": "Postal code",
+      "registrationNumber": "Company registration number",
+      "website": "Website",
+      "phone": "Company phone",
+      "yearEstablished": "Year established"
+    },
+    "capabilities": {
+      "title": "What can your factory make?",
+      "subtitle": "Buyers see this anonymously under your factory code. Don’t include contact details: they’ll be removed.",
+      "categories": "Product categories",
+      "headline": "One-line summary",
+      "headlinePlaceholder": "e.g. Vertical knit composite for basics and streetwear",
+      "about": "About your factory",
+      "aboutPlaceholder": "Processes, specialities, brands you’ve worked with (no names or contact details)…",
+      "monthlyCapacity": "Monthly capacity (pieces)",
+      "moq": "Minimum order (pieces)",
+      "sampleLeadTime": "Sample lead time (days)",
+      "leadTimeMin": "Production lead time from (days)",
+      "leadTimeMax": "Production lead time to (days)",
+      "workforce": "Workforce size",
+      "factorySize": "Factory size (m²)",
+      "machinery": "Machinery",
+      "machineType": "Machine type",
+      "machineCount": "Count",
+      "addMachine": "Add machine",
+      "exportMarkets": "Export markets"
+    },
+    "sourcing": {
+      "title": "What are you looking to source?",
+      "subtitle": "This helps us match you with the right factories.",
+      "businessType": "Your business",
+      "businessTypes": {
+        "BRAND": "Brand",
+        "RETAILER": "Retailer",
+        "IMPORTER": "Importer",
+        "WHOLESALER": "Wholesaler",
+        "SOURCING_AGENT": "Sourcing agent",
+        "OTHER": "Other"
+      },
+      "categories": "Product categories",
+      "annualVolume": "Annual volume (pieces)",
+      "typicalOrder": "Typical order size (pieces)",
+      "targetMarkets": "Markets you sell into",
+      "needs": "Anything else we should know?",
+      "needsPlaceholder": "Fabrics, certifications, price points, timelines…"
+    },
+    "documents": {
+      "title": "Verification documents",
+      "subtitleBuyer": "Upload your business license. We check it within 1–2 business days.",
+      "subtitleManufacturer": "Upload your business license and export registration. Certifications help you win more orders.",
+      "required": "Required",
+      "types": {
+        "BUSINESS_LICENSE": "Business license",
+        "EXPORT_REGISTRATION": "Export registration",
+        "TAX_CERTIFICATE": "Tax certificate",
+        "OTHER": "Other document"
+      },
+      "upload": "Upload file",
+      "uploadHint": "PDF, JPG, PNG or WebP, up to 10 MB",
+      "uploading": "Uploading… {percent}%",
+      "replace": "Add another",
+      "certifications": "Certifications",
+      "certificationsHint": "BSCI, WRAP, GOTS, OEKO-TEX… Buyers see that you hold them, never the certificate numbers.",
+      "addCertification": "Add certification",
+      "certType": "Certification",
+      "certTypePlaceholder": "Select a certification",
+      "certName": "Certification name",
+      "certNumber": "Certificate number",
+      "certExpires": "Expiry date",
+      "certFile": "Certificate file",
+      "noCertifications": "No certifications added yet.",
+      "expires": "Expires {date}",
+      "submit": "Submit for verification",
+      "submitting": "Submitting…",
+      "submitHintEmail": "Confirm your email to submit.",
+      "submitHintDocs": "Upload the required documents to submit."
+    },
+    "errors": {
+      "fileType": "Upload a PDF, JPG, PNG or WebP file.",
+      "fileSize": "Files can be at most 10 MB.",
+      "uploadFailed": "Upload failed. Please try again."
+    }
+  },
+  "certifications": {
+    "BSCI_AMFORI": "amfori BSCI",
+    "WRAP": "WRAP",
+    "SEDEX_SMETA": "Sedex SMETA",
+    "OEKO_TEX_100": "OEKO-TEX Standard 100",
+    "GOTS": "GOTS",
+    "GRS": "GRS",
+    "BCI": "BCI (Better Cotton)",
+    "ISO_9001": "ISO 9001",
+    "ISO_14001": "ISO 14001",
+    "SA8000": "SA8000",
+    "FAIR_TRADE": "Fair Trade",
+    "HIGG_FEM": "Higg FEM",
+    "OTHER": "Other"
+  },
+  "pending": {
+    "title": "We’re verifying your company",
+    "body": "Our team is reviewing your documents. This usually takes 1–2 business days. We’ll email you as soon as you’re approved.",
+    "code": "Your GarmentGate code",
+    "codeHint": "This is how {audience} will see you. Your company name stays private.",
+    "audienceBuyers": "buyers",
+    "audienceManufacturers": "manufacturers",
+    "timeline": {
+      "account": "Account created",
+      "submitted": "Documents submitted",
+      "review": "Verification review",
+      "ready": "Dashboard unlocked"
+    },
+    "checking": "We’ll update this page automatically.",
+    "help": "Questions? Message our team from your dashboard once you’re verified, or reply to any GarmentGate email."
+  },
+  "dashboard": {
+    "welcome": "Welcome, {name}",
+    "buyer": {
+      "subtitle": "Start sourcing from verified factories.",
+      "actions": {
+        "rfq": "Request a quote",
+        "rfqBody": "Describe what you need and get offers from matched factories.",
+        "orders": "Track orders",
+        "ordersBody": "Follow production milestones, samples and shipments.",
+        "messages": "Messages",
+        "messagesBody": "Talk to your GarmentGate sourcing team."
+      }
+    },
+    "manufacturer": {
+      "subtitle": "Respond to RFQs and manage your orders.",
+      "actions": {
+        "rfqs": "Open RFQs",
+        "rfqsBody": "Quote on requests matched to your capabilities.",
+        "orders": "Production orders",
+        "ordersBody": "Update milestones and upload progress photos.",
+        "profile": "Factory profile",
+        "profileBody": "Keep capabilities and certifications up to date."
+      }
+    },
+    "comingSoon": "Coming soon"
+  },
+  "admin": {
+    "title": "Verification queue",
+    "subtitle": "Review companies waiting for KYC approval.",
+    "tabs": {
+      "PENDING_REVIEW": "Pending",
+      "REJECTED": "Sent back",
+      "VERIFIED": "Verified"
+    },
+    "empty": "No companies here.",
+    "emptyPending": "All caught up: nobody is waiting for review.",
+    "columns": {
+      "company": "Company",
+      "type": "Type",
+      "submitted": "Submitted",
+      "documents": "Documents"
+    },
+    "types": {
+      "BUYER": "Buyer",
+      "MANUFACTURER": "Manufacturer"
+    },
+    "emailUnverified": "Email not confirmed",
+    "review": "Review",
+    "detail": {
+      "identity": "Company (admin only)",
+      "profile": "Profile",
+      "documents": "Documents",
+      "certifications": "Certifications",
+      "open": "Open",
+      "owner": "Account owner",
+      "approve": "Approve",
+      "approving": "Approving…",
+      "reject": "Send back",
+      "rejectReason": "What needs fixing?",
+      "rejectPlaceholder": "e.g. The business license is cropped; please upload all pages.",
+      "rejectConfirm": "Send back to company",
+      "approved": "{code} approved",
+      "rejected": "{code} sent back"
+    }
+  },
+  "status": {
+    "PENDING": "Pending",
+    "VERIFIED": "Verified",
+    "REJECTED": "Rejected",
+    "EXPIRED": "Expired"
+  }
+}

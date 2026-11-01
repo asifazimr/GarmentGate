@@ -33,7 +33,9 @@ export const RegisterSchema = z.object({
   email: EmailSchema,
   password: PasswordSchema,
   locale: z.string().min(2).max(10).default('en'),
-  acceptTerms: z.literal(true, { error: 'Please accept the terms to continue' }),
+  acceptTerms: z
+    .boolean()
+    .refine((accepted) => accepted, { error: 'Please accept the terms to continue' }),
 });
 export type RegisterInput = z.input<typeof RegisterSchema>;
 export type RegisterDto = z.output<typeof RegisterSchema>;

@@ -4,6 +4,8 @@ packages:
 
 # pnpm only runs dependency install scripts that are explicitly allowed here.
 allowBuilds:
+  '@parcel/watcher': false
+  '@swc/core': false
   '@nestjs/core': false
   '@prisma/engines': true
   '@scarf/scarf': false

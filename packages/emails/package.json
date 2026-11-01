@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev:build": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "preview": "email dev --dir src/templates --port 3030",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

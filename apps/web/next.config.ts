@@ -1,9 +1,13 @@
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+/** Server-only: where the NestJS API listens. The browser always calls same-origin /api/*. */
+const apiUrl = process.env.API_URL ?? 'http://localhost:4000';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  transpilePackages: ['@garmentgate/shared'],
   turbopack: {
     rules: {
       '*.css': {
@@ -12,6 +16,10 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  // Same-origin API: auth cookies stay first-party, httpOnly and SameSite=Lax, with no CORS.
+  rewrites() {
+    return Promise.resolve([{ source: '/api/:path*', destination: `${apiUrl}/:path*` }]);
+  },
 };
 
-export default nextConfig;
+export default createNextIntlPlugin('./src/i18n/request.ts')(nextConfig);

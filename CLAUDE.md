@@ -43,6 +43,7 @@ apps/
 packages/
   shared/     Zod schemas + inferred TypeScript types used by both web and api
   config/     Shared ESLint (base/nest/next), tsconfig (base/library/nestjs/nextjs) and Prettier configs
+  emails/     React Email templates + renderEmail(); preview with `pnpm --filter @garmentgate/emails preview`
 ```
 
 Current versions: Node 22 LTS, pnpm 12, Turborepo 2, Next.js 16 (Turbopack, React 19), NestJS 12 (ESM), Tailwind 4, shadcn/ui (base-nova style, Base UI primitives), Zod 4, Vitest 5.
@@ -54,6 +55,17 @@ Current versions: Node 22 LTS, pnpm 12, Turborepo 2, Next.js 16 (Turbopack, Reac
 - **Swagger** reads Zod schemas directly: `@ApiOkResponse({ standardSchema: SomeSchema })`.
 - **Rate limiting**: a global `ThrottlerGuard` applies to every route. Opt out with `@SkipThrottle()` (health checks only).
 - **pnpm only runs dependency install scripts listed in `allowBuilds`** in `pnpm-workspace.yaml`. Review any new entry before allowing it.
+- **Prisma 7** (`apps/api/prisma/schema.prisma`, config in `apps/api/prisma.config.ts`) generates an ESM client into `apps/api/src/generated/prisma` (git-ignored, regenerated on install/build). Import from `../generated/prisma/client.js`. Rules Prisma can't express live as hand-written SQL in the first migration: positive amounts, buyer price ≥ manufacturer price, **ledger transactions must balance (checked at commit) and are append-only**, and **a buyer and a manufacturer can never be in the same conversation**. Keep them when you add migrations.
+- **BullMQ 6** needs an `ioredis` client instance (see `src/common/queue/queue.module.ts`); passing connection options under ESM makes it loop and run out of memory.
+
+### Auth and routing
+
+- The browser only ever calls same-origin `/api/*`; `apps/web/next.config.ts` rewrites it to the API. Auth lives in **httpOnly, SameSite=Lax cookies**: `gg_at` (15-min JWT access token: `sub`, `role`, `ev` email-verified, `kyc` status) and `gg_rt` (30-day opaque refresh token, stored hashed, **rotated on every use**; replaying a rotated token outside a 30 s grace window revokes the whole session family).
+- API: `JwtAuthGuard` and `RolesGuard` are global. Every route requires a signed-in user unless marked `@Public()`; restrict with `@Roles('ADMIN')`; read the user with `@CurrentUser()`. Validate bodies with `new ZodValidationPipe(SharedSchema)`.
+- Web: `apps/web/src/proxy.ts` (Next 16's replacement for `middleware.ts`) decides which page each user sees using `homePathFor()` from `packages/shared`: admins → `/admin`; buyers/manufacturers → `/onboarding` until submitted, `/pending` while under review, then `/buyer` or `/manufacturer`. It refreshes expired sessions server-side. It only decodes the JWT for routing; the API is the security boundary.
+- After anything that changes claims (onboarding submit, KYC decision, email verification) call `POST /api/auth/refresh` (`refreshUser()` on the web) so routing picks it up.
+- KYC files go **browser → MinIO/S3 directly** via presigned POST (`POST /kyc/uploads`), then are attached with `POST /kyc/documents` or `/kyc/certifications`; the API checks the object exists with the declared type and size. Downloads are 5-minute presigned GETs for the owning company or admins only.
+- Emails are queued (BullMQ) and rendered from `packages/emails`. **Without `RESEND_API_KEY` they are logged to the API console instead of sent**: copy verification and reset links from there in development.
 
 - **apps/web**: server components by default; client components only where interactivity is needed. Server state goes through TanStack Query; forms use React Hook Form with `zodResolver` and the schema from `packages/shared`. All user-facing strings go through next-intl; no hard-coded copy. UI primitives come from shadcn/ui; animations use Motion and respect `prefers-reduced-motion`.
 - **apps/api**: NestJS modules per feature. Prisma is the only DB access layer. Long-running or retryable work (emails, media processing, search indexing, payouts) runs as BullMQ jobs. Real-time chat and notifications go over Socket.io, which needs the same auth and contact filtering as HTTP. Meilisearch indexes contain only anonymized, buyer-safe fields. Files go to S3-compatible storage through signed URLs; never serve them from a public bucket.
@@ -105,19 +117,35 @@ pnpm dev --filter web        # one app only (web | api); shared is built first
 
 pnpm db:up                   # start Postgres, Redis, Meilisearch, MinIO (+ bucket) and wait until healthy
 pnpm db:down                 # stop the containers (data is kept)
-pnpm db:reset                # stop, DELETE all local data volumes, start fresh
+pnpm db:reset                # DELETE all local data volumes, recreate, migrate and seed
 pnpm db:logs                 # follow container logs
+
+pnpm db:migrate              # create + apply a migration after editing schema.prisma (prisma migrate dev)
+pnpm db:deploy               # apply pending migrations (CI / production)
+pnpm db:generate             # regenerate the Prisma client
+pnpm db:seed                 # WIPE app tables and load demo data (logins printed at the end)
+pnpm db:studio               # browse the database in Prisma Studio
 
 pnpm build                   # build all packages and apps
 pnpm start                   # run the production builds
 pnpm lint                    # ESLint (type-aware) everywhere
 pnpm typecheck               # tsc --noEmit everywhere
 pnpm test                    # unit tests (Vitest)
-pnpm test:e2e                # API e2e tests (Vitest + supertest; no containers needed yet)
+pnpm test:e2e                # API e2e tests against real Postgres/Redis/MinIO (needs `pnpm db:up`);
+                             # uses its own `garmentgate_test` database, reset on every run
 pnpm format                  # Prettier write; `pnpm format:check` to verify
 ```
 
-Database migrations (`pnpm db:migrate`, `db:deploy`, `db:generate`, `db:seed`, `db:studio`) will be added together with Prisma.
+### Demo logins (after `pnpm db:seed`, password `Password123!` for all)
+
+| Role                       | Email                              | State                       |
+| -------------------------- | ---------------------------------- | --------------------------- |
+| Admin                      | `admin@garmentgate.example`        |                             |
+| Buyer (US)                 | `jordan@northboundsupply.example`  | verified, order in progress |
+| Buyer (DE)                 | `lena@gruenfeld-basics.example`    | verified, open RFQ          |
+| Buyer (GB)                 | `oliver@thamesandhart.example`     | pending review              |
+| Manufacturer (MFR-BD-0421) | `rafiq.hossain@meghnaknit.example` | verified, order in progress |
+| Manufacturer (MFR-TR-0078) | `emre@bosphorusouterwear.example`  | pending review              |
 
 ### Local URLs
 
