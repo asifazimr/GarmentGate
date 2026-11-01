@@ -6,6 +6,8 @@ const apiUrl = process.env.API_URL ?? 'http://localhost:4000';
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  // The floating dev badge sits on top of the sidebar's collapse button; errors still open the overlay.
+  devIndicators: false,
   partialPrefetching: true,
   transpilePackages: ['@garmentgate/shared'],
   turbopack: {

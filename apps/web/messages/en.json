@@ -32,12 +32,6 @@
     },
     "stat": "Factories in Bangladesh, Vietnam, India and Türkiye"
   },
-  "landing": {
-    "title": "Managed garment sourcing",
-    "body": "Request quotes from verified factories, follow production, and pay safely, all through GarmentGate.",
-    "getStarted": "Get started",
-    "signIn": "Sign in"
-  },
   "auth": {
     "login": {
       "title": "Welcome back",
@@ -260,9 +254,14 @@
     "help": "Questions? Message our team from your dashboard once you’re verified, or reply to any GarmentGate email."
   },
   "dashboard": {
-    "welcome": "Welcome, {name}",
+    "welcome": "Welcome back, {name}",
+    "quickActions": "Quick actions",
+    "recentActivity": "Recent activity",
+    "noActivity": "Nothing here yet",
+    "noActivityBuyer": "Create your first request for quote and matched factories will start sending offers.",
+    "noActivityManufacturer": "When buyers request quotes that match your capabilities, they’ll appear here.",
     "buyer": {
-      "subtitle": "Start sourcing from verified factories.",
+      "subtitle": "Source from verified factories, with GarmentGate managing every step.",
       "actions": {
         "rfq": "Request a quote",
         "rfqBody": "Describe what you need and get offers from matched factories.",
@@ -273,7 +272,7 @@
       }
     },
     "manufacturer": {
-      "subtitle": "Respond to RFQs and manage your orders.",
+      "subtitle": "Quote on matched requests and keep buyers updated on production.",
       "actions": {
         "rfqs": "Open RFQs",
         "rfqsBody": "Quote on requests matched to your capabilities.",
@@ -283,7 +282,7 @@
         "profileBody": "Keep capabilities and certifications up to date."
       }
     },
-    "comingSoon": "Coming soon"
+    "comingSoon": "Soon"
   },
   "admin": {
     "title": "Verification queue",
@@ -329,5 +328,283 @@
     "VERIFIED": "Verified",
     "REJECTED": "Rejected",
     "EXPIRED": "Expired"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "rfqs": "Requests for quote",
+    "orders": "Orders",
+    "messages": "Messages",
+    "factories": "Factories",
+    "settings": "Settings",
+    "invitations": "RFQ invitations",
+    "quotes": "Quotes",
+    "profile": "Factory profile",
+    "verification": "Verification",
+    "disputes": "Disputes",
+    "moderation": "Moderation",
+    "margins": "Margins",
+    "more": "More",
+    "mainNavigation": "Main navigation",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "skipToContent": "Skip to content"
+  },
+  "shell": {
+    "search": "Search…",
+    "searchShort": "Search",
+    "searchHint": "Search pages and actions",
+    "commandTitle": "Command menu",
+    "noResults": "No results found.",
+    "groups": {
+      "navigate": "Go to",
+      "actions": "Actions",
+      "theme": "Theme",
+      "account": "Account"
+    },
+    "actions": {
+      "newRfq": "Create a request for quote",
+      "signOut": "Sign out"
+    },
+    "theme": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "open": "Open notifications",
+      "unread": "{count, plural, one {# unread} other {# unread}}",
+      "markAllRead": "Mark all as read",
+      "empty": "You’re all caught up",
+      "emptyBody": "New quotes, order updates and messages will show up here.",
+      "error": "Couldn’t load notifications"
+    },
+    "profile": {
+      "open": "Open account menu",
+      "signedInAs": "Signed in as",
+      "settings": "Account settings"
+    },
+    "roles": {
+      "BUYER": "Buyer",
+      "MANUFACTURER": "Manufacturer",
+      "ADMIN": "Admin"
+    }
+  },
+  "patterns": {
+    "error": {
+      "title": "Something went wrong",
+      "body": "We couldn’t load this. Check your connection and try again.",
+      "retry": "Try again"
+    },
+    "dropzone": {
+      "cta": "Click to upload",
+      "or": "or drag and drop",
+      "hint": "PDF, JPG, PNG or WebP · up to {size}",
+      "uploading": "Uploading… {percent}%",
+      "fileType": "This file type isn’t supported.",
+      "fileSize": "This file is larger than {size}."
+    },
+    "comingSoon": {
+      "title": "Coming soon",
+      "body": "We’re building this part of GarmentGate. It will appear here as soon as it’s ready.",
+      "back": "Back to dashboard"
+    },
+    "stat": {
+      "vsLastPeriod": "vs last 30 days"
+    }
+  },
+  "statuses": {
+    "order": {
+      "PENDING_DEPOSIT": "Awaiting deposit",
+      "CONFIRMED": "Confirmed",
+      "IN_PRODUCTION": "In production",
+      "QUALITY_CHECK": "Quality check",
+      "READY_TO_SHIP": "Ready to ship",
+      "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled",
+      "DISPUTED": "Disputed"
+    },
+    "rfq": {
+      "DRAFT": "Draft",
+      "OPEN": "Open",
+      "CLOSED": "Closed",
+      "AWARDED": "Awarded",
+      "CANCELLED": "Cancelled"
+    },
+    "quote": {
+      "SUBMITTED": "Submitted",
+      "UNDER_REVIEW": "Under review",
+      "OFFERED": "Offered",
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Rejected",
+      "WITHDRAWN": "Withdrawn",
+      "EXPIRED": "Expired"
+    },
+    "kyc": {
+      "NOT_SUBMITTED": "Not submitted",
+      "PENDING_REVIEW": "Pending review",
+      "VERIFIED": "Verified",
+      "REJECTED": "Changes needed"
+    },
+    "payment": {
+      "PENDING": "Pending",
+      "PROCESSING": "Processing",
+      "SUCCEEDED": "Paid",
+      "FAILED": "Failed",
+      "CANCELLED": "Cancelled"
+    },
+    "shipment": {
+      "PENDING": "Not booked",
+      "BOOKED": "Booked",
+      "IN_TRANSIT": "In transit",
+      "AT_PORT": "At port",
+      "CUSTOMS": "In customs",
+      "DELIVERED": "Delivered",
+      "EXCEPTION": "Exception"
+    },
+    "sample": {
+      "REQUESTED": "Requested",
+      "IN_PROGRESS": "In progress",
+      "SHIPPED": "Shipped",
+      "RECEIVED": "Received",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "inspection": {
+      "PENDING": "Scheduled",
+      "PASS": "Passed",
+      "FAIL": "Failed",
+      "ON_HOLD": "On hold"
+    },
+    "dispute": {
+      "OPEN": "Open",
+      "UNDER_REVIEW": "Under review",
+      "RESOLVED_FOR_BUYER": "Resolved for buyer",
+      "RESOLVED_FOR_MANUFACTURER": "Resolved for manufacturer",
+      "SETTLED": "Settled",
+      "CLOSED": "Closed"
+    },
+    "milestone": {
+      "PENDING": "Upcoming",
+      "IN_PROGRESS": "In progress",
+      "COMPLETED": "Done",
+      "DELAYED": "Delayed"
+    }
+  },
+  "marketing": {
+    "nav": {
+      "how": "How it works",
+      "trust": "Why GarmentGate",
+      "categories": "Categories",
+      "signIn": "Sign in",
+      "getStarted": "Get started"
+    },
+    "hero": {
+      "eyebrow": "Managed garment sourcing",
+      "titleStart": "Source garments from",
+      "titleAccent": "verified factories,",
+      "titleEnd": "without the risk.",
+      "body": "GarmentGate is your contracting partner for apparel manufacturing. We match you with audited factories, hold your payment in escrow, and inspect every order before it ships.",
+      "primary": "Start sourcing",
+      "secondary": "Join as a manufacturer",
+      "proof": "Factories in Bangladesh, Vietnam, India and Türkiye",
+      "countries": "Bangladesh · Vietnam · India · Türkiye"
+    },
+    "mock": {
+      "order": "Order",
+      "factory": "Factory",
+      "quantity": "12,000 pcs · Heavyweight tee",
+      "escrow": "Held in escrow",
+      "nextQc": "Inline QC in 3 days",
+      "milestones": {
+        "confirmed": "Order confirmed",
+        "fabric": "Fabric sourced",
+        "cutting": "Cutting",
+        "sewing": "Sewing · 62%",
+        "shipping": "Ship"
+      },
+      "progress": "Production progress"
+    },
+    "how": {
+      "eyebrow": "How it works",
+      "title": "From tech pack to delivery in three steps",
+      "steps": {
+        "request": {
+          "title": "Request a quote",
+          "body": "Share your tech pack, quantities and target price. We route it to factories that fit your product and certifications."
+        },
+        "compare": {
+          "title": "Compare and confirm",
+          "body": "Review anonymised offers side by side, approve samples, and pay a deposit into escrow when you’re ready."
+        },
+        "track": {
+          "title": "Track to your door",
+          "body": "Follow every milestone with photos, independent QC reports and shipping documents, all in one place."
+        }
+      }
+    },
+    "trust": {
+      "eyebrow": "Why GarmentGate",
+      "title": "Built so you never have to take a factory’s word for it",
+      "items": {
+        "verified": {
+          "title": "Verified factories",
+          "body": "Every manufacturer passes business and export checks, and their BSCI, WRAP, GOTS or OEKO-TEX certificates are verified before they can quote."
+        },
+        "escrow": {
+          "title": "Escrow-protected payments",
+          "body": "You pay GarmentGate, not the factory. Funds are released in stages as production milestones are approved."
+        },
+        "qc": {
+          "title": "Independent QC inspection",
+          "body": "AQL inspections during and after production. Nothing ships until it passes, and you get the full report."
+        }
+      },
+      "stats": {
+        "countries": {
+          "value": "4",
+          "label": "Sourcing countries"
+        },
+        "aql": {
+          "value": "AQL 2.5",
+          "label": "Inspection standard"
+        },
+        "escrow": {
+          "value": "100%",
+          "label": "Orders paid through escrow"
+        },
+        "certs": {
+          "value": "13",
+          "label": "Certifications we verify"
+        }
+      }
+    },
+    "categories": {
+      "eyebrow": "Categories",
+      "title": "Whatever you make, there’s a factory for it",
+      "items": {
+        "tees": "T-shirts & polos",
+        "hoodies": "Hoodies & sweatshirts",
+        "denim": "Denim",
+        "activewear": "Activewear",
+        "outerwear": "Outerwear",
+        "knitwear": "Knitwear",
+        "kidswear": "Kidswear",
+        "workwear": "Workwear"
+      }
+    },
+    "cta": {
+      "title": "Ready to source with confidence?",
+      "body": "Create a free account in a minute. Our team will help you place your first order.",
+      "primary": "Create a free account",
+      "secondary": "Sign in"
+    },
+    "footer": {
+      "tagline": "Managed garment sourcing between global buyers and verified factories.",
+      "rights": "© {year} GarmentGate. All rights reserved."
+    }
   }
 }

@@ -6,6 +6,8 @@ import {
   type KycDocumentType,
   type OnboardingState,
   REQUIRED_KYC_DOCUMENTS,
+  UPLOAD_CONTENT_TYPES,
+  UPLOAD_MAX_BYTES,
 } from '@garmentgate/shared';
 import { CheckCircle2, FileText, Plus, Trash2 } from 'lucide-react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
@@ -39,7 +41,8 @@ import {
   useRemoveDocument,
   useSubmitOnboarding,
 } from '../api';
-import { FileDrop, formatBytes } from './file-drop';
+import { FileDropzone } from '@/components/patterns/file-dropzone';
+import { formatBytes } from '@/lib/format';
 import { OptionalTag, StepHeader } from './step-layout';
 
 export function DocumentsStep({
@@ -178,7 +181,9 @@ function DocumentSlot({
           ))}
         </ul>
       ) : null}
-      <FileDrop
+      <FileDropzone
+        accept={UPLOAD_CONTENT_TYPES}
+        maxBytes={UPLOAD_MAX_BYTES}
         compact={docs.length > 0}
         progress={progress}
         label={docs.length > 0 ? t('documents.replace') : t('documents.upload')}
@@ -388,7 +393,14 @@ function AddCertificationDialog({
                 </Button>
               </p>
             ) : (
-              <FileDrop compact progress={progress} label={t('upload')} onFile={setFile} />
+              <FileDropzone
+                compact
+                accept={UPLOAD_CONTENT_TYPES}
+                maxBytes={UPLOAD_MAX_BYTES}
+                progress={progress}
+                label={t('upload')}
+                onFile={setFile}
+              />
             )}
           </Field>
         </FieldGroup>

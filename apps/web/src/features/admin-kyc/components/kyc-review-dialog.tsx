@@ -19,7 +19,7 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { FormAlert } from '@/features/auth/components/form-alert';
-import { formatBytes } from '@/features/onboarding/components/file-drop';
+import { formatBytes } from '@/lib/format';
 import { ApiError } from '@/lib/api';
 import { countryName } from '@/lib/countries';
 import { openFile, useKycDecision, useKycDetail } from '../api';
@@ -84,9 +84,7 @@ export function KycReviewDialog({
           <DialogDescription>
             {data ? (
               <span className="inline-flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" className="font-mono">
-                  {data.publicCode ?? '—'}
-                </Badge>
+                <Badge variant="code">{data.publicCode ?? '—'}</Badge>
                 <span>{countryName(data.country, locale)}</span>
               </span>
             ) : null}
@@ -260,14 +258,14 @@ function FileList({
 }) {
   if (files.length === 0) return <p className="text-muted-foreground">—</p>;
   return (
-    <ul className="divide-y rounded-xl border">
+    <ul className="bg-card divide-y rounded-xl border">
       {files.map((f) => (
         <li key={f.id} className="flex items-center gap-3 p-3">
           <div className="min-w-0 flex-1">
             <p className="font-medium">{f.title}</p>
             <p className="text-muted-foreground truncate">{f.meta}</p>
           </div>
-          <Badge variant="outline">{f.status}</Badge>
+          <Badge variant="neutral">{f.status}</Badge>
           {f.fileId ? (
             <Button variant="ghost" size="sm" onClick={() => void openFile(f.fileId ?? '')}>
               <ExternalLink className="size-4" aria-hidden="true" />

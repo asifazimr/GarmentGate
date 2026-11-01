@@ -4,3 +4,5 @@ export * from './auth/routing.js';
 export * from './health/health.schema.js';
 export * from './moderation/contact-filter.js';
 export * from './onboarding/onboarding.schema.js';
+export * from './status/statuses.js';
+export * from './notifications/notification.schema.js';

@@ -95,6 +95,20 @@ Current versions: Node 22 LTS, pnpm 12, Turborepo 2, Next.js 16 (Turbopack, Reac
 - Accessible by default: semantic HTML, labelled form fields, keyboard navigable, WCAG AA contrast.
 - All copy goes through next-intl; layouts must survive longer translations and RTL where supported.
 
+## Design system
+
+Browse everything at **http://localhost:3000/dev/ui** (dev only; 404 in production). Aim: calm, precise, trustworthy B2B (Linear/Stripe), not an admin template.
+
+- **Tokens** live in `apps/web/src/app/globals.css` with full light and dark values. Use semantic classes only (`bg-card`, `bg-surface`, `text-muted-foreground`, `text-subtle-foreground`, `border-border-strong`, `bg-primary-soft text-primary-ink`), never raw palette colours or hex. Brand: deep "loom" teal (`primary`), `brand-deep` for dark marketing panels and `brand-gold` as a sparing accent.
+- **Status tones**: `success`, `warning`, `info`, `progress`, `danger`, `neutral`, each with `-soft` (background) and `-ink` (text). **Always show a status with `<StatusBadge domain="order" status={…} />`**. Tones come from `STATUS_TONES` in `packages/shared/src/status/statuses.ts`, labels from `statuses.<domain>.<STATUS>` in messages. Add new statuses to both.
+- **Type**: Instrument Sans for UI, **Instrument Serif (`font-display`, `text-display*`) only for marketing headlines**, Geist Mono for codes (`MFR-BD-0421`, order numbers; use `<Badge variant="code">`). Numbers in tables and stats use `tabular`. Money is formatted with `formatMoney(minor, currency, locale)` from `@/lib/format`.
+- **Elevation**: `shadow-xs` on resting surfaces, `shadow-md` on hover, `shadow-lg/xl` for popovers and dialogs. Radius base is 10px (`rounded-lg`); cards use `rounded-xl`.
+- **Components** in `src/components/ui` are shadcn (Base UI) restyled to these tokens. Buttons and inputs are 44px on mobile, compact from `md`. A Button with `render={<Link …/>}` keeps link semantics automatically. Dialogs become bottom sheets on mobile.
+- **Patterns** in `src/components/patterns`: `PageHeader`, `EmptyState`, `ErrorState`, `StatCard`, `StatusBadge`, `FileDropzone`, `Timeline`, `PageTransition`. Every list uses skeleton → `EmptyState` (with the next action) / `ErrorState` (with retry).
+- **App shell** (`src/features/shell`): each role's `layout.tsx` wraps pages in `<AppShell role=…>` (collapsible sidebar, mobile bottom nav with "More" sheet, ⌘K command menu, notifications bell, profile menu with theme switch). Navigation is defined once in `nav.ts`; sections not built yet render a "Coming soon" page from `[section]/page.tsx`. When you build a section, add its own route folder and it takes precedence.
+- **Motion**: use Motion with the `ease-out-expo` curve, short durations (150–300 ms for UI, ≤ 600 ms for marketing reveals). `MotionConfig reducedMotion="user"` and a global CSS rule disable motion for users who ask.
+- **Cache Components gotchas**: read `params`/`searchParams` inside `<Suspense>`; no `new Date()` in prerendered server output (use a `'use cache'` function); use `useSyncExternalStore` (see `@/lib/client-hooks`) instead of setting state in an effect for client-only values.
+
 ## Commands
 
 Run from the repo root (Turborepo fans out to the workspaces). Requires Node 22+, pnpm 12 and Docker.

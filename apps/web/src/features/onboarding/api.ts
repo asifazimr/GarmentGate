@@ -10,8 +10,6 @@ import {
   type OnboardingState,
   OnboardingStateSchema,
   PresignUploadResponseSchema,
-  UPLOAD_CONTENT_TYPES,
-  UPLOAD_MAX_BYTES,
 } from '@garmentgate/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -114,14 +112,6 @@ export function useRemoveCertification() {
 }
 
 // ── Direct-to-storage upload ────────────────────────────────────────────────
-
-export type UploadProblem = 'fileType' | 'fileSize';
-
-export function checkFile(file: File): UploadProblem | null {
-  if (!(UPLOAD_CONTENT_TYPES as readonly string[]).includes(file.type)) return 'fileType';
-  if (file.size > UPLOAD_MAX_BYTES) return 'fileSize';
-  return null;
-}
 
 /** Presign with the API, then send the bytes straight to object storage with progress. */
 async function uploadFile(

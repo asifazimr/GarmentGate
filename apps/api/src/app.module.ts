@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { KycModule } from './modules/kyc/kyc.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
 import { StorageModule } from './modules/storage/storage.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -36,6 +37,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     AuthModule,
     OnboardingModule,
     KycModule,
+    NotificationsModule,
   ],
   // Global rate limit; auth routes tighten it with @Throttle.
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

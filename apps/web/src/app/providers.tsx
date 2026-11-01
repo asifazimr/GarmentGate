@@ -2,8 +2,10 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MotionConfig } from 'motion/react';
+import { ThemeProvider } from 'next-themes';
 import { type ReactNode, useState } from 'react';
 import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { ApiError } from '@/lib/api';
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -23,10 +25,14 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {/* Honour prefers-reduced-motion for every Motion animation. */}
-      <MotionConfig reducedMotion="user">{children}</MotionConfig>
-      <Toaster position="top-center" richColors closeButton />
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider delay={300}>
+          {/* Honour prefers-reduced-motion for every Motion animation. */}
+          <MotionConfig reducedMotion="user">{children}</MotionConfig>
+        </TooltipProvider>
+        <Toaster position="top-center" closeButton />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
