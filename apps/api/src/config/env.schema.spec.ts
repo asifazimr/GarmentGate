@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { EnvSchema } from './env.schema.js';
+import { EnvSchema, ProductionEnvSchema } from './env.schema.js';
 
 const validEnv = {
   CORS_ORIGINS: 'http://localhost:3000, https://app.garmentgate.com',
+  WEB_APP_URL: 'http://localhost:3000',
+  JWT_ACCESS_SECRET: 'x'.repeat(32),
   DATABASE_URL: 'postgresql://u:p@localhost:5432/db',
   REDIS_URL: 'redis://localhost:6379',
   MEILISEARCH_HOST: 'http://localhost:7700',
@@ -34,5 +36,19 @@ describe('EnvSchema', () => {
 
   it('rejects a malformed CORS origin', () => {
     expect(EnvSchema.safeParse({ ...validEnv, CORS_ORIGINS: 'not a url' }).success).toBe(false);
+  });
+
+  it('requires secure cookies and a mail key in production', () => {
+    expect(ProductionEnvSchema.safeParse({ ...validEnv, NODE_ENV: 'production' }).success).toBe(
+      false,
+    );
+    expect(
+      ProductionEnvSchema.safeParse({
+        ...validEnv,
+        NODE_ENV: 'production',
+        COOKIE_SECURE: 'true',
+        RESEND_API_KEY: 're_123',
+      }).success,
+    ).toBe(true);
   });
 });

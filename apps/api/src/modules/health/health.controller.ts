@@ -8,12 +8,14 @@ import {
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
 import { type HealthResponse, HealthResponseSchema } from '@garmentgate/shared';
+import { Public } from '../auth/auth.decorators.js';
 import { DependencyHealthIndicator } from './dependency.health.js';
 
 const SERVICE_NAME = 'api';
 const VERSION = process.env.npm_package_version ?? '0.0.0';
 
 @ApiTags('health')
+@Public()
 @SkipThrottle()
 @Controller('health')
 export class HealthController {

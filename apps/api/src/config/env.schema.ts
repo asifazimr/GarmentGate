@@ -21,11 +21,25 @@ export const EnvSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 
+  /** Express "trust proxy" setting; the web app proxies /api/* to us from localhost. */
+  TRUST_PROXY: z.string().default('loopback'),
   CORS_ORIGINS: commaSeparatedUrls,
+  /** Public URL of the web app, used in email links. */
+  WEB_APP_URL: z.url(),
   SWAGGER_ENABLED: booleanString.default(true),
 
   THROTTLE_TTL_MS: z.coerce.number().int().positive().default(60_000),
   THROTTLE_LIMIT: z.coerce.number().int().positive().default(100),
+
+  JWT_ACCESS_SECRET: z.string().min(32, { error: 'Use at least 32 random characters' }),
+  JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  /** Mark auth cookies Secure. Must be true anywhere served over HTTPS. */
+  COOKIE_SECURE: booleanString.default(false),
+
+  /** Without a key, emails are logged instead of sent (development only). */
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().min(3).default('GarmentGate <onboarding@resend.dev>'),
 
   DATABASE_URL: z.url(),
   REDIS_URL: z.url(),
@@ -42,3 +56,9 @@ export const EnvSchema = z.object({
 });
 
 export type Env = z.infer<typeof EnvSchema>;
+
+/** Production must send real email and use secure cookies. */
+export const ProductionEnvSchema = EnvSchema.refine(
+  (env) => env.NODE_ENV !== 'production' || (env.COOKIE_SECURE && env.RESEND_API_KEY),
+  { error: 'In production set COOKIE_SECURE=true and RESEND_API_KEY' },
+);

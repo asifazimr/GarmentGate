@@ -3,13 +3,23 @@ import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggingModule } from './common/logging/logging.module.js';
+import { QueueModule } from './common/queue/queue.module.js';
 import { AppConfigModule, type AppConfigService } from './config/config.module.js';
+import { AuditModule } from './modules/audit/audit.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { KycModule } from './modules/kyc/kyc.module.js';
+import { MailModule } from './modules/mail/mail.module.js';
+import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
+import { StorageModule } from './modules/storage/storage.module.js';
+import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
   imports: [
     AppConfigModule,
     LoggingModule,
+    PrismaModule,
+    QueueModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: AppConfigService) => [
@@ -19,8 +29,15 @@ import { HealthModule } from './modules/health/health.module.js';
         },
       ],
     }),
+    AuditModule,
+    MailModule,
+    StorageModule,
     HealthModule,
+    AuthModule,
+    OnboardingModule,
+    KycModule,
   ],
+  // Global rate limit; auth routes tighten it with @Throttle.
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

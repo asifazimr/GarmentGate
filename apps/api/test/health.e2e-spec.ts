@@ -1,13 +1,17 @@
 import { Controller, Get, type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { Throttle } from '@nestjs/throttler';
 import request from 'supertest';
 import { type App } from 'supertest/types.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { HealthResponseSchema } from '@garmentgate/shared';
 import { AppModule } from '../src/app.module.js';
 import { configureApp } from '../src/bootstrap.js';
+import { Public } from '../src/modules/auth/auth.decorators.js';
 
-/** A plain route that inherits the global throttler guard. */
+/** A plain route under the throttler guard, limited to 5 requests per minute. */
+@Public()
+@Throttle({ default: { limit: 5, ttl: 60_000 } })
 @Controller('throttle-probe')
 class ThrottleProbeController {
   @Get()
@@ -62,7 +66,7 @@ describe('Health (e2e)', () => {
     }
   });
 
-  it('throttles other routes past THROTTLE_LIMIT', async () => {
+  it('throttles routes past their limit', async () => {
     const statuses: number[] = [];
     for (let i = 0; i < 6; i++) {
       const res = await request(app.getHttpServer()).get('/throttle-probe');

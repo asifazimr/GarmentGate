@@ -12,9 +12,10 @@ export const SignupRoleSchema = z.enum(['BUYER', 'MANUFACTURER']);
 export type SignupRole = z.infer<typeof SignupRoleSchema>;
 
 export const EmailSchema = z
-  .email({ error: 'Enter a valid email address' })
-  .max(254)
-  .transform((value) => value.trim().toLowerCase());
+  .string()
+  .trim()
+  .toLowerCase()
+  .pipe(z.email({ error: 'Enter a valid email address' }).max(254));
 
 export const PasswordSchema = z
   .string()

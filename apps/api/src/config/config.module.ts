@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { type Env, EnvSchema } from './env.schema.js';
+import { type Env, ProductionEnvSchema } from './env.schema.js';
 
 /** Typed accessor: `config.get('PORT', { infer: true })` returns `number`. */
 export type AppConfigService = ConfigService<Env, true>;
@@ -11,7 +11,7 @@ export type AppConfigService = ConfigService<Env, true>;
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      validationSchema: EnvSchema,
+      validationSchema: ProductionEnvSchema,
     }),
   ],
 })

@@ -1,0 +1,12 @@
+{
+  "extends": "@garmentgate/config/tsconfig/library.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM"],
+    "types": []
+  },
+  "include": ["src", "*.ts", "*.js"],
+  "exclude": ["node_modules", "dist"]
+}

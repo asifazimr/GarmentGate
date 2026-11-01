@@ -273,3 +273,14 @@ export const AdminKycCompanySchema = z.object({
   certificationCount: z.number().int(),
 });
 export type AdminKycCompany = z.infer<typeof AdminKycCompanySchema>;
+
+/** Full submission as an admin reviews it. ADMIN-ONLY: contains the real identity. */
+export const AdminKycCompanyDetailSchema = AdminKycCompanySchema.extend({
+  rejectionReason: z.string().nullable(),
+  company: CompanyInfoSchema,
+  categories: z.array(z.string()),
+  profileSummary: z.record(z.string(), z.union([z.string(), z.number(), z.null()])),
+  documents: z.array(CompanyDocumentSchema.extend({ fileId: z.uuid() })),
+  certifications: z.array(CertificationSchema.extend({ fileId: z.uuid().nullable() })),
+});
+export type AdminKycCompanyDetail = z.infer<typeof AdminKycCompanyDetailSchema>;
