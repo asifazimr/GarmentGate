@@ -4,6 +4,7 @@ import { KycStatusSchema } from '../auth/auth.schema.js';
 // Mirrors of the Prisma enums, so web and api share one vocabulary for every lifecycle.
 
 export const OrderStatusSchema = z.enum([
+  'DRAFT',
   'PENDING_DEPOSIT',
   'CONFIRMED',
   'IN_PRODUCTION',
@@ -108,6 +109,7 @@ export type StatusTone = 'neutral' | 'info' | 'progress' | 'warning' | 'success'
 
 export const STATUS_TONES: { [D in StatusDomain]: Record<StatusOf<D>, StatusTone> } = {
   order: {
+    DRAFT: 'neutral',
     PENDING_DEPOSIT: 'warning',
     CONFIRMED: 'info',
     IN_PRODUCTION: 'progress',

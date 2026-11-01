@@ -10,3 +10,5 @@ export * from './catalog/product.schema.js';
 export * from './manufacturer/manufacturer.schema.js';
 export * from './media/media.schema.js';
 export * from './discovery/discovery.schema.js';
+export * from './rfq/rfq.schema.js';
+export * from './rfq/quote-ranking.js';

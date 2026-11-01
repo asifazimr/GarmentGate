@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyMarkup, type MarginRuleLike, pickCatalogRule } from './margin.js';
+import { applyMarkup, type MarginRuleLike, pickCatalogRule, pickQuoteRule } from './margin.js';
 
 const rule = (id: string, over: Partial<MarginRuleLike>): MarginRuleLike => ({
   id,
@@ -47,5 +47,31 @@ describe('applyMarkup', () => {
 
   it('returns the manufacturer price when there is no rule', () => {
     expect(applyMarkup(500, null)).toBe(500);
+  });
+});
+
+describe('pickQuoteRule', () => {
+  const rules = [
+    rule('default', {}),
+    rule('activewear', { categoryId: 'cat-activewear', markupBps: 1800 }),
+    rule('buyer-any', { companyId: 'buyer-1', markupBps: 1200 }),
+    rule('buyer-leggings', { companyId: 'buyer-1', categoryId: 'cat-leggings', markupBps: 900 }),
+    rule('other-buyer', { companyId: 'buyer-2', markupBps: 100 }),
+  ];
+  const leggings = { id: 'cat-leggings', parentId: 'cat-activewear' };
+  const tees = { id: 'cat-tees', parentId: 'cat-tops' };
+
+  it("prefers the buyer's negotiated rule, most specific category first", () => {
+    expect(pickQuoteRule(rules, leggings, 'buyer-1')?.id).toBe('buyer-leggings');
+    expect(pickQuoteRule(rules, tees, 'buyer-1')?.id).toBe('buyer-any');
+  });
+
+  it('falls back to the generic category rules for other buyers', () => {
+    expect(pickQuoteRule(rules, leggings, 'buyer-3')?.id).toBe('activewear');
+    expect(pickQuoteRule(rules, tees, 'buyer-3')?.id).toBe('default');
+  });
+
+  it("never applies another buyer's rate", () => {
+    expect(pickQuoteRule(rules, tees, 'buyer-3')?.id).not.toBe('other-buyer');
   });
 });

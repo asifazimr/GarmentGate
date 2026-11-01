@@ -3,7 +3,9 @@
  * the real image pipeline, and uploaded to MinIO so the demo shows true renditions.
  */
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { PDFDocument, StandardFonts } from 'pdf-lib';
 import sharp from 'sharp';
+import { sanitizePdf } from '../../src/modules/media/document-processor.js';
 import { processImage } from '../../src/modules/media/image-processor.js';
 import type { PrismaClient } from '../../src/generated/prisma/client.js';
 
@@ -108,5 +110,64 @@ export async function seedImage(
       },
     });
   }
+  return file.id;
+}
+
+/**
+ * A plain tech-pack PDF (spec text only, nothing identifying), stored like a real upload: the
+ * original under originals/ and the sanitized copy the pipeline would write.
+ */
+export async function seedDocument(
+  prisma: PrismaClient,
+  opts: { companyId: string; userId: string; fileName: string; title: string; lines: string[] },
+): Promise<string> {
+  counter += 1;
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const page = doc.addPage([595, 842]);
+  page.drawText(opts.title, { x: 56, y: 770, size: 20, font: bold });
+  opts.lines.forEach((line, i) => {
+    page.drawText(line, { x: 56, y: 730 - i * 22, size: 12, font });
+  });
+  const original = Buffer.from(await doc.save());
+  const { data } = await sanitizePdf(original);
+
+  const storageKey = `originals/${opts.companyId}/seed-doc-${String(counter).padStart(3, '0')}.pdf`;
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: storageKey,
+      Body: original,
+      ContentType: 'application/pdf',
+    }),
+  );
+  const file = await prisma.fileAsset.create({
+    data: {
+      bucket,
+      storageKey,
+      originalFilename: opts.fileName,
+      mimeType: 'application/pdf',
+      sizeBytes: original.length,
+      purpose: 'TECH_PACK',
+      status: 'UPLOADED',
+      scanStatus: 'CLEAN',
+      processingStatus: 'READY',
+      processedAt: new Date(),
+      uploadedById: opts.userId,
+      ownerCompanyId: opts.companyId,
+      uploadedAt: new Date(),
+    },
+  });
+  const sanitizedKey = `sanitized/${file.id}.pdf`;
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: sanitizedKey,
+      Body: data,
+      ContentType: 'application/pdf',
+    }),
+  );
+  await prisma.fileAsset.update({ where: { id: file.id }, data: { sanitizedKey } });
   return file.id;
 }

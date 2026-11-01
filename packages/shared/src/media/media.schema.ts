@@ -61,3 +61,30 @@ export const OwnedImageSchema = z.object({
   sortOrder: z.number().int(),
 });
 export type OwnedImage = z.infer<typeof OwnedImageSchema>;
+
+// ── Admin review queue ─────────────────────────────────────────────────────
+
+export const MediaReviewKindSchema = z.enum([
+  'factory-photos',
+  'product-images',
+  'rfq-attachments',
+]);
+export type MediaReviewKind = z.infer<typeof MediaReviewKindSchema>;
+
+/** A sanitized file waiting for a human check before the other side sees it. */
+export const MediaReviewItemSchema = z.object({
+  kind: MediaReviewKindSchema,
+  id: z.uuid(),
+  /** Who uploaded it: an MFR- or BYR- code. */
+  ownerCode: z.string(),
+  /** What it belongs to: a product title, an RFQ code, a photo caption. */
+  context: z.string().nullable(),
+  contentType: z.string(),
+  urls: ImageUrlsSchema.nullable(),
+  /** Sanitized PDFs: a short-lived link to the copy the other side would get. */
+  documentUrl: z.url().nullable(),
+});
+export type MediaReviewItem = z.infer<typeof MediaReviewItemSchema>;
+
+export const MediaReviewDecisionSchema = z.object({ note: z.string().trim().max(300).optional() });
+export type MediaReviewDecisionDto = z.output<typeof MediaReviewDecisionSchema>;

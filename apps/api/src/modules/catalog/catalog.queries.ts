@@ -5,7 +5,7 @@ import { fileWithRenditions } from '../media/media.service.js';
  * Query shapes for buyer-facing reads. They select only what the public serializers need:
  * identity fields are loaded solely so the serializer can scrub them out of free text.
  */
-const identityForScrubbing = {
+export const identityForScrubbing = {
   select: {
     country: true,
     legalName: true,

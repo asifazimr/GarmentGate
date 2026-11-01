@@ -22,7 +22,7 @@ export class MediaService {
     @InjectQueue(MEDIA_QUEUE) private readonly queue: Queue<MediaJob>,
   ) {}
 
-  /** Marks an uploaded image for processing and queues it (idempotent per file). */
+  /** Marks an uploaded image or PDF for processing and queues it (idempotent per file). */
   async enqueue(fileId: string): Promise<void> {
     await this.prisma.fileAsset.update({
       where: { id: fileId },
@@ -30,7 +30,7 @@ export class MediaService {
     });
     try {
       await this.queue.add(
-        'process-image',
+        'process-file',
         { fileId },
         {
           jobId: `image-${fileId}`,

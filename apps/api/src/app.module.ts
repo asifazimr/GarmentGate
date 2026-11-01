@@ -16,6 +16,7 @@ import { ManufacturerModule } from './modules/manufacturer/manufacturer.module.j
 import { MediaModule } from './modules/media/media.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
+import { RfqModule } from './modules/rfq/rfq.module.js';
 import { SearchModule } from './modules/search/search.module.js';
 import { StorageModule } from './modules/storage/storage.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -48,6 +49,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     ManufacturerModule,
     CatalogModule,
     BuyerModule,
+    RfqModule,
   ],
   // Global rate limit; auth routes tighten it with @Throttle.
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

@@ -202,6 +202,8 @@ enum ModerationStatus {
 }
 
 enum OrderStatus {
+  /// Created when the buyer accepts a quote; GarmentGate confirms terms before the deposit.
+  DRAFT
   PENDING_DEPOSIT
   CONFIRMED
   IN_PRODUCTION
@@ -812,6 +814,8 @@ model Rfq {
   createdById          String    @db.Uuid
   categoryId           String    @db.Uuid
   title                String
+  /// Contact-filtered title: what factories see.
+  titleFiltered        String?
   description          String
   descriptionFiltered  String
   quantity             Int
@@ -866,10 +870,15 @@ model RfqInvitation {
 }
 
 model RfqAttachment {
-  id     String            @id @default(uuid(7)) @db.Uuid
-  rfqId  String            @db.Uuid
-  fileId String            @unique @db.Uuid
-  kind   RfqAttachmentKind
+  id           String            @id @default(uuid(7)) @db.Uuid
+  rfqId        String            @db.Uuid
+  fileId       String            @unique @db.Uuid
+  kind         RfqAttachmentKind
+  /// Factories only get a file once it is sanitized AND an admin approved it (logos, labels).
+  reviewStatus MediaReviewStatus @default(PENDING)
+  reviewNote   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime          @default(now())
 
   rfq  Rfq       @relation(fields: [rfqId], references: [id], onDelete: Cascade)
   file FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)

@@ -70,6 +70,7 @@ export class ProductRequestsService {
           categoryId: product.categoryId,
           productId: product.id,
           title: sample ? `Sample: ${product.title}` : product.title,
+          titleFiltered: sample ? `Sample: ${product.title}` : product.title,
           description,
           descriptionFiltered: filtered.filtered,
           quantity: dto.quantity,

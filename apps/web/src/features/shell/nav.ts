@@ -57,7 +57,7 @@ export const NAV: Record<Role, NavItem[]> = {
   BUYER: [
     { href: '/buyer', label: 'dashboard', icon: LayoutDashboard, primary: true, built: true },
     { href: '/buyer/search', label: 'discover', icon: Search, primary: true, built: true },
-    { href: '/buyer/rfqs', label: 'rfqs', icon: FileText, primary: true },
+    { href: '/buyer/rfqs', label: 'rfqs', icon: FileText, primary: true, built: true },
     { href: '/buyer/orders', label: 'orders', icon: Package, primary: true },
     { href: '/buyer/messages', label: 'messages', icon: MessageSquare },
     { href: '/buyer/factories', label: 'factories', icon: Factory, built: true },
@@ -66,7 +66,7 @@ export const NAV: Record<Role, NavItem[]> = {
   ],
   MANUFACTURER: [
     { href: '/manufacturer', label: 'dashboard', icon: LayoutDashboard, primary: true },
-    { href: '/manufacturer/rfqs', label: 'invitations', icon: Inbox, primary: true },
+    { href: '/manufacturer/rfqs', label: 'invitations', icon: Inbox, primary: true, built: true },
     { href: '/manufacturer/orders', label: 'orders', icon: Package, primary: true },
     { href: '/manufacturer/products', label: 'products', icon: Shirt, primary: true, built: true },
     { href: '/manufacturer/capacity', label: 'capacity', icon: CalendarRange, built: true },
@@ -80,8 +80,8 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/admin/rfqs', label: 'rfqs', icon: FileText, primary: true },
     { href: '/admin/orders', label: 'orders', icon: Package, primary: true },
     { href: '/admin/disputes', label: 'disputes', icon: Scale, primary: true },
-    { href: '/admin/moderation', label: 'moderation', icon: ShieldAlert },
-    { href: '/admin/margins', label: 'margins', icon: Percent },
+    { href: '/admin/moderation', label: 'moderation', icon: ShieldAlert, built: true },
+    { href: '/admin/margins', label: 'margins', icon: Percent, built: true },
     { href: '/admin/settings', label: 'settings', icon: Gauge },
   ],
 };

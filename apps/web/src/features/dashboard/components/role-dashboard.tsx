@@ -20,6 +20,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMe } from '@/features/auth/api';
+import { NAV } from '@/features/shell/nav';
+
+const BUILT = new Set(
+  [...NAV.BUYER, ...NAV.MANUFACTURER].filter((i) => i.built).map((i) => i.href),
+);
 
 type DashboardRole = 'buyer' | 'manufacturer';
 
@@ -109,7 +114,7 @@ export function RoleDashboard({ role }: { role: DashboardRole }) {
                     </div>
                     <CardTitle className="flex items-center gap-2">
                       {title}
-                      <Badge variant="neutral">{t('comingSoon')}</Badge>
+                      {BUILT.has(href) ? null : <Badge variant="neutral">{t('comingSoon')}</Badge>}
                     </CardTitle>
                     <CardDescription>{body}</CardDescription>
                   </CardHeader>

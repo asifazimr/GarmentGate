@@ -15,11 +15,37 @@ export function pickCatalogRule<R extends MarginRuleLike>(
   rules: R[],
   category: { id: string; parentId: string | null },
 ): R | null {
-  const generic = rules.filter((r) => r.companyId === null);
+  return mostSpecific(
+    rules.filter((r) => r.companyId === null),
+    category,
+  );
+}
+
+/**
+ * Picks the rule for a quote to a specific buyer: a rule negotiated with that buyer beats the
+ * generic rules; within each group, category beats parent category beats "any category".
+ */
+export function pickQuoteRule<R extends MarginRuleLike>(
+  rules: R[],
+  category: { id: string; parentId: string | null },
+  buyerCompanyId: string,
+): R | null {
   return (
-    generic.find((r) => r.categoryId === category.id) ??
-    (category.parentId ? generic.find((r) => r.categoryId === category.parentId) : undefined) ??
-    generic.find((r) => r.categoryId === null) ??
+    mostSpecific(
+      rules.filter((r) => r.companyId === buyerCompanyId),
+      category,
+    ) ?? pickCatalogRule(rules, category)
+  );
+}
+
+function mostSpecific<R extends MarginRuleLike>(
+  rules: R[],
+  category: { id: string; parentId: string | null },
+): R | null {
+  return (
+    rules.find((r) => r.categoryId === category.id) ??
+    (category.parentId ? rules.find((r) => r.categoryId === category.parentId) : undefined) ??
+    rules.find((r) => r.categoryId === null) ??
     null
   );
 }

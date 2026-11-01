@@ -10,7 +10,7 @@ import type { Currency, Prisma } from '../../src/generated/prisma/client.js';
 import { ADMIN, BUYERS, CATEGORIES, DEMO_PASSWORD, MANUFACTURERS } from './data.js';
 import { Meilisearch } from 'meilisearch';
 import { SearchIndexer } from '../../src/modules/search/search-indexer.js';
-import { seedImage } from './media.js';
+import { seedDocument, seedImage } from './media.js';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
 const databaseUrl = process.env.DATABASE_URL;
@@ -263,6 +263,7 @@ async function main(): Promise<void> {
       createdById: gruenfeld.userId,
       categoryId: cat('hoodies-sweatshirts'),
       title: 'Organic cotton pullover hoodie, 340 GSM',
+      titleFiltered: 'Organic cotton pullover hoodie, 340 GSM',
       description: rfqDescription,
       descriptionFiltered: filterContactDetails(rfqDescription).filtered,
       quantity: 6000,
@@ -295,14 +296,38 @@ async function main(): Promise<void> {
       },
     },
   });
-  const techPack = await createFile(
-    gruenfeld.companyId,
-    gruenfeld.userId,
-    'TECH_PACK',
-    'hoodie_techpack_v3.pdf',
-  );
+  const techPackId =
+    process.env.SEED_SKIP_MEDIA === '1'
+      ? (
+          await createFile(
+            gruenfeld.companyId,
+            gruenfeld.userId,
+            'TECH_PACK',
+            'hoodie_techpack_v3.pdf',
+          )
+        ).id
+      : await seedDocument(prisma, {
+          companyId: gruenfeld.companyId,
+          userId: gruenfeld.userId,
+          fileName: 'hoodie_techpack_v3.pdf',
+          title: 'Pullover hoodie: tech pack v3',
+          lines: [
+            'Fabric: 340 GSM organic cotton brushed-back fleece (GOTS)',
+            'Fit: relaxed, dropped shoulder. Sizes XS to XXL',
+            'Hood: self-fabric lined, no drawcord',
+            'Trims: 2x2 rib cuffs and hem, 7 cm',
+            'Colours: Oat, Forest, Charcoal (lab dips to approve)',
+            'Labels: woven main label + care label (artwork to follow)',
+          ],
+        });
   await prisma.rfqAttachment.create({
-    data: { rfqId: rfq.id, fileId: techPack.id, kind: 'TECH_PACK' },
+    data: {
+      rfqId: rfq.id,
+      fileId: techPackId,
+      kind: 'TECH_PACK',
+      reviewStatus: 'APPROVED',
+      reviewedAt: daysFromNow(-6),
+    },
   });
 
   const markup = (price: number, bps: number) => Math.round((price * (10_000 + bps)) / 10_000);
@@ -338,8 +363,10 @@ async function main(): Promise<void> {
       validUntil: daysFromNow(30),
       notes: 'Fair Trade cotton option available at +EUR 0.40/pc.',
       notesFiltered: 'Fair Trade cotton option available at +EUR 0.40/pc.',
-      status: 'UNDER_REVIEW',
+      status: 'OFFERED',
       marginRuleId: defaultRule.id,
+      pricedAt: daysFromNow(-1),
+      offeredAt: daysFromNow(-1),
     },
   });
   await prisma.quote.create({
@@ -359,6 +386,33 @@ async function main(): Promise<void> {
     },
   });
 
+  // ── Open RFQ waiting for Meghna's quote (their inbox) ───────────────────────
+  const poloDescription =
+    'Piqué polo, 220 GSM combed cotton, 2-button placket, flat-knit collar and cuffs. ' +
+    'Embroidered chest logo (artwork via GarmentGate). 4 colours, sizes S–XXL, individually polybagged.';
+  await prisma.rfq.create({
+    data: {
+      code: 'RFQ-2026-00039',
+      buyerCompanyId: northbound.companyId,
+      createdById: northbound.userId,
+      categoryId: cat('polo-shirts'),
+      title: 'Piqué polo shirt, 220 GSM, embroidered',
+      titleFiltered: 'Piqué polo shirt, 220 GSM, embroidered',
+      description: poloDescription,
+      descriptionFiltered: filterContactDetails(poloDescription).filtered,
+      quantity: 8000,
+      targetUnitPriceMinor: 520,
+      currency: 'USD',
+      deadline: daysFromNow(12),
+      requiredDeliveryDate: daysFromNow(120),
+      incoterm: 'FOB',
+      destinationCountry: 'US',
+      status: 'OPEN',
+      publishedAt: daysFromNow(-1),
+      invitations: { create: [{ manufacturerProfileId: meghna.profileId }] },
+    },
+  });
+
   // ── Awarded RFQ → order in production ─────────────────────────────────────
   const awardedRfq = await prisma.rfq.create({
     data: {
@@ -367,6 +421,7 @@ async function main(): Promise<void> {
       createdById: northbound.userId,
       categoryId: cat('t-shirts'),
       title: 'Heavyweight boxy tee, 240 GSM, garment dyed',
+      titleFiltered: 'Heavyweight boxy tee, 240 GSM, garment dyed',
       description:
         'Boxy fit heavyweight tee, 240 GSM combed cotton, garment dyed, 1x1 rib neck, 3 colours.',
       descriptionFiltered:
