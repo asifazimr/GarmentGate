@@ -327,7 +327,11 @@
       "company": "Company",
       "type": "Type",
       "submitted": "Submitted",
-      "documents": "Documents"
+      "documents": "Documents",
+      "code": "Code",
+      "country": "Country",
+      "owner": "Owner",
+      "status": "Status"
     },
     "types": {
       "BUYER": "Buyer",
@@ -349,8 +353,12 @@
       "rejectPlaceholder": "e.g. The business license is cropped; please upload all pages.",
       "rejectConfirm": "Send back to company",
       "approved": "{code} approved",
-      "rejected": "{code} sent back"
-    }
+      "rejected": "{code} sent back",
+      "approveNote": "Internal note (optional)",
+      "approveNotePlaceholder": "e.g. Registration checked against the trade register.",
+      "approveNoteHint": "Staff only: kept in the audit log, never shown to the company."
+    },
+    "emptyBody": "Companies appear here when they submit onboarding for review."
   },
   "status": {
     "PENDING": "Pending",
@@ -368,7 +376,7 @@
     "invitations": "RFQ invitations",
     "quotes": "Quotes",
     "profile": "Factory profile",
-    "verification": "Verification",
+    "verification": "KYC verification",
     "disputes": "Disputes",
     "moderation": "Moderation",
     "margins": "Margins",
@@ -382,7 +390,12 @@
     "discover": "Discover",
     "shortlists": "Shortlists",
     "inspections": "Inspections",
-    "inspectors": "Inspectors"
+    "inspectors": "Inspectors",
+    "overview": "Overview",
+    "certifications": "Certifications",
+    "payments": "Payments",
+    "users": "Users",
+    "audit": "Audit log"
   },
   "shell": {
     "search": "Search…",
@@ -450,6 +463,17 @@
     },
     "stat": {
       "vsLastPeriod": "vs last 30 days"
+    },
+    "dataTable": {
+      "search": "Search…",
+      "all": "All: {label}",
+      "export": "Export CSV",
+      "loading": "Loading",
+      "noMatches": "Nothing matches these filters.",
+      "count": "{shown, number} of {total, number}",
+      "page": "Page {page} of {pages}",
+      "previous": "Previous page",
+      "next": "Next page"
     }
   },
   "statuses": {
@@ -1212,7 +1236,21 @@
       "buyerHint": "Optional: a negotiated rate for one buyer.",
       "active": "Active",
       "save": "Save rule",
-      "saved": "Rule saved"
+      "saved": "Rule saved",
+      "columns": {
+        "name": "Rule",
+        "category": "Category",
+        "buyer": "Buyer",
+        "markup": "Markup",
+        "commission": "Commission",
+        "repeat": "Repeat orders",
+        "quotes": "Quotes priced"
+      },
+      "commission": "Commission (%)",
+      "repeatCommission": "Repeat-order commission (%)",
+      "repeatPlaceholder": "Same as commission",
+      "commissionHint": "Withheld from the factory’s payouts, as a share of the factory total. The repeat rate applies once the buyer has completed an order with that factory. Both are fixed on an order when it’s confirmed.",
+      "repeatTooHigh": "The repeat-order rate can’t be above the normal commission."
     },
     "review": {
       "title": "File review",
@@ -1304,7 +1342,14 @@
       "release": "Release (false positive)",
       "confirm": "Keep hidden",
       "released": "Released: the original text was delivered",
-      "confirmed": "Kept hidden"
+      "confirmed": "Kept hidden",
+      "suspended": "Suspended",
+      "context": "{count, plural, one {Show the message before it} other {Show the # messages before it}}",
+      "from": {
+        "SENDER": "sender",
+        "COMPANY": "same company",
+        "GARMENTGATE": "GarmentGate"
+      }
     },
     "thread": "Conversation"
   },
@@ -1352,7 +1397,12 @@
       "factoryPrice": "Factory price / pc",
       "buyerTotal": "Buyer total",
       "factoryTotal": "Factory total",
-      "margin": "Margin"
+      "margin": "Platform revenue",
+      "markup": "Markup",
+      "commission": "Commission ({percent}%)",
+      "repeat": "repeat order",
+      "atConfirmation": "Set at confirmation",
+      "youReceive": "You receive"
     },
     "actions": {
       "requestSample": "Request a sample",
@@ -2119,7 +2169,16 @@
         "assignFailed": "Couldn’t take on the dispute",
         "resolve": "Resolve",
         "buyerThread": "Buyer thread",
-        "factoryThread": "Factory thread"
+        "factoryThread": "Factory thread",
+        "columns": {
+          "order": "Order",
+          "reason": "Reason",
+          "status": "Status",
+          "parties": "Buyer → factory",
+          "evidence": "Evidence",
+          "assignee": "Handled by",
+          "opened": "Opened"
+        }
       }
     },
     "reviews": {
@@ -2161,6 +2220,325 @@
       "publicEmpty": "No reviews yet",
       "publicEmptyBody": "Reviews appear here after buyers complete orders with this factory.",
       "byBuyerFrom": "Buyer from {country}"
+    }
+  },
+  "adminPanel": {
+    "overview": {
+      "title": "Overview",
+      "description": "How the marketplace is doing, and what’s waiting for the team.",
+      "range": "Last {months} months",
+      "rangeLabel": "Period",
+      "kpis": {
+        "gmv": "GMV",
+        "gmvHint": "{count, plural, one {# confirmed order} other {# confirmed orders}}, at buyer prices",
+        "revenue": "Revenue",
+        "revenueHint": "Markup {markup} + commission {commission}",
+        "active": "Active orders",
+        "activeHint": "From sampling to delivery, incl. disputes",
+        "conversion": "RFQ → order",
+        "conversionHint": "{converted, number} of {rfqs, number} RFQs became an order"
+      },
+      "skipped": "Orders in {currencies} are left out of the USD totals: they have no exchange rate yet.",
+      "setRates": "Set exchange rates",
+      "queues": {
+        "title": "Waiting for the team",
+        "kyc": "KYC reviews",
+        "certifications": "Certificates",
+        "flaggedMessages": "Flagged messages",
+        "paymentsToConfirm": "Payments to confirm",
+        "releasesDue": "Releases due",
+        "openDisputes": "Open disputes"
+      },
+      "charts": {
+        "gmv": "GMV by month",
+        "gmvBody": "Confirmed orders at the buyer price, in USD, by month of confirmation.",
+        "gmvSeries": "GMV",
+        "revenue": "Revenue by month",
+        "revenueBody": "Markup paid by buyers plus commission withheld from factories, in USD.",
+        "markup": "Markup",
+        "commission": "Commission",
+        "total": "Total",
+        "conversion": "RFQ → order conversion",
+        "conversionBody": "Share of RFQs published each month that became an order.",
+        "conversionSeries": "Conversion",
+        "rfqs": "RFQs",
+        "rfqsValue": "{converted, number} of {rfqs, number}"
+      },
+      "byStatus": "Orders by status",
+      "topCategories": "Top categories by GMV",
+      "uncategorised": "Uncategorised (reorders)",
+      "noOrders": "No orders yet.",
+      "table": {
+        "show": "Show the monthly figures as a table",
+        "month": "Month",
+        "gmv": "GMV",
+        "markup": "Markup",
+        "commission": "Commission",
+        "orders": "Orders",
+        "rfqs": "RFQs → orders"
+      }
+    },
+    "orders": {
+      "title": "Orders",
+      "description": "Every order with both sides’ prices and the platform’s revenue.",
+      "empty": "No orders yet",
+      "emptyBody": "Orders appear here when a buyer accepts a quote.",
+      "columns": {
+        "code": "Order",
+        "title": "Title",
+        "buyer": "Buyer",
+        "factory": "Factory",
+        "status": "Status",
+        "quantity": "Qty",
+        "currency": "Currency",
+        "buyerTotal": "Buyer total",
+        "factoryTotal": "Factory total",
+        "margin": "Revenue",
+        "shipBy": "Ship by",
+        "created": "Created"
+      },
+      "override": {
+        "action": "Override status",
+        "title": "Override the status of {code}",
+        "body": "It’s {status} now. This skips the normal checks, so only use it to fix a mistake or record something agreed outside the platform. Both sides are notified.",
+        "to": "New status",
+        "pickStatus": "Pick a status",
+        "reason": "Reason",
+        "reasonHint": "Saved in the order history and the audit log.",
+        "confirm": "Override",
+        "done": "Status set to {status}"
+      },
+      "finance": {
+        "title": "Money",
+        "received": "Received from buyer",
+        "escrow": "In escrow",
+        "released": "Released to factory",
+        "paidOut": "Paid out",
+        "refunded": "Refunded",
+        "revenueBooked": "Revenue booked",
+        "refund": "Refund the buyer"
+      },
+      "refund": {
+        "title": "Refund on {code}",
+        "body": "Refunds come out of escrow that hasn’t been released yet: up to {max}.",
+        "amount": "Amount ({currency})",
+        "reason": "Reason",
+        "invalid": "Enter an amount like 250.00",
+        "tooHigh": "Only {max} is left in escrow",
+        "action": "Refund",
+        "done": "Refund recorded"
+      }
+    },
+    "payments": {
+      "title": "Payments",
+      "description": "Confirm buyer transfers, release escrow to factories and record payouts.",
+      "tabs": {
+        "confirm": "To confirm",
+        "release": "To release",
+        "pay": "To pay out",
+        "ledger": "Ledger"
+      },
+      "columns": {
+        "reference": "Reference",
+        "order": "Order",
+        "buyer": "Buyer",
+        "factory": "Factory",
+        "purpose": "For",
+        "method": "Method",
+        "amount": "Amount",
+        "currency": "Currency",
+        "payerRef": "Payer’s reference",
+        "status": "Status",
+        "created": "Started",
+        "trigger": "Milestone",
+        "factoryAmount": "To factory",
+        "fromEscrow": "From escrow",
+        "funded": "Funded",
+        "due": "Due since",
+        "releasedAt": "Released"
+      },
+      "purpose": {
+        "DEPOSIT": "Deposit",
+        "BALANCE": "Balance",
+        "REFUND": "Refund",
+        "PAYOUT": "Payout"
+      },
+      "method": {
+        "BANK_TRANSFER": "Bank transfer",
+        "LETTER_OF_CREDIT": "Letter of credit",
+        "CARD": "Card"
+      },
+      "trigger": {
+        "PRODUCTION_START": "Production start",
+        "QC_PASSED": "QC passed",
+        "SHIPPED": "Shipped",
+        "DELIVERED": "Delivered",
+        "COMPLETED": "Completed"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "notFunded": "Escrow short",
+      "confirm": "Confirm",
+      "reject": "Reject",
+      "release": "Release",
+      "released": "Tranche released to the factory’s payable",
+      "payOut": "Record payout",
+      "failed": "That didn’t work. Try again.",
+      "empty": {
+        "confirm": "No payments to confirm",
+        "confirmBody": "Bank transfers and LCs appear here once a buyer marks them as sent.",
+        "release": "Nothing to release",
+        "releaseBody": "Tranches become due as orders reach their milestones.",
+        "pay": "No payouts due",
+        "payBody": "Released tranches wait here until the bank transfer to the factory is recorded."
+      },
+      "confirmDialog": {
+        "title": "Confirm {reference}",
+        "body": "{amount} from {buyer}. Check it against the bank statement before confirming.",
+        "proof": "Proof of payment",
+        "upload": "Upload the statement, SWIFT copy or LC",
+        "replace": "Replace the file",
+        "uploadFailed": "Upload failed. Try again.",
+        "bankReference": "Bank reference",
+        "bankReferenceHint": "As it appears on the statement.",
+        "action": "Confirm payment",
+        "done": "Payment confirmed: escrow updated"
+      },
+      "rejectDialog": {
+        "title": "Reject {reference}",
+        "body": "The buyer is told the payment couldn’t be matched and can try again.",
+        "reason": "Reason",
+        "action": "Reject payment",
+        "done": "Payment rejected"
+      },
+      "payoutDialog": {
+        "title": "Payout for {order}",
+        "body": "{amount} to {factory}. Record it once the bank transfer has gone out.",
+        "bankReference": "Bank reference",
+        "settlement": "Paid in",
+        "sameCurrency": "{currency} (same as the order)",
+        "settlementHint": "Pick another currency if the factory was paid in it; today’s stored rate converts it.",
+        "action": "Record payout",
+        "done": "Payout recorded"
+      },
+      "ledger": {
+        "title": "Ledger by currency",
+        "currency": "Currency",
+        "cash": "Cash",
+        "escrow": "Buyer escrow",
+        "payable": "Owed to factories",
+        "revenue": "Revenue",
+        "checks": "Checks",
+        "ok": "Reconciled",
+        "mismatch": "Check needed",
+        "explain": "Reconciled means debits equal credits, cash equals escrow + payables + revenue, and cash matches the payments recorded in and out. Totals above are in USD at the stored rates."
+      }
+    },
+    "users": {
+      "title": "Users",
+      "description": "Every account, with its company and moderation record.",
+      "empty": "No users yet",
+      "emptyBody": "People appear here when they sign up.",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "company": "Company",
+        "status": "Status",
+        "moderation": "Moderation",
+        "lastLogin": "Last sign-in",
+        "joined": "Joined"
+      },
+      "status": {
+        "ACTIVE": "Active",
+        "SUSPENDED": "Suspended",
+        "DEACTIVATED": "Deactivated"
+      },
+      "violations": "{count, plural, one {# hit} other {# hits}} (30 days)",
+      "warnings": "{count, plural, one {# warning} other {# warnings}}",
+      "actions": {
+        "warn": "Warn",
+        "suspend": "Suspend",
+        "reactivate": "Reactivate",
+        "reactivated": "{name} can sign in again",
+        "failed": "That didn’t work. Try again."
+      },
+      "warn": {
+        "title": "Warn {name}",
+        "body": "They see the warning in the app with your note.",
+        "level": "Level",
+        "levels": {
+          "WARNING": "Warning",
+          "FINAL_WARNING": "Final warning"
+        },
+        "note": "Note to the user",
+        "placeholder": "e.g. Please keep phone numbers and emails out of messages: GarmentGate relays everything.",
+        "action": "Send warning",
+        "done": "Warning sent"
+      },
+      "suspend": {
+        "title": "Suspend {name}",
+        "body": "They are signed out everywhere within minutes and can’t sign in until reactivated. Their company and orders are unaffected.",
+        "reason": "Reason (staff only)",
+        "action": "Suspend account",
+        "done": "{name} is suspended"
+      }
+    },
+    "audit": {
+      "title": "Audit log",
+      "description": "Everything staff and the platform did: who, what and on which record.",
+      "empty": "Nothing logged in this period",
+      "emptyBody": "Pick a longer period to see older entries.",
+      "window": "{days, plural, one {Last 24 hours} other {Last # days}}",
+      "windowLabel": "Period",
+      "system": "GarmentGate (system)",
+      "capped": "Showing the latest 2,000 entries. Pick a shorter period to see everything in it.",
+      "columns": {
+        "at": "When",
+        "action": "Action",
+        "actor": "By",
+        "entity": "Record",
+        "entityId": "Record ID",
+        "details": "Details",
+        "ip": "IP"
+      }
+    },
+    "certifications": {
+      "title": "Certifications",
+      "description": "Certificates factories added after verification. Buyers only see verified ones.",
+      "tabs": {
+        "PENDING": "To review",
+        "VERIFIED": "Verified",
+        "REJECTED": "Rejected",
+        "ALL": "All"
+      },
+      "status": {
+        "PENDING": "To review",
+        "VERIFIED": "Verified",
+        "REJECTED": "Rejected",
+        "EXPIRED": "Expired"
+      },
+      "columns": {
+        "certificate": "Certificate",
+        "number": "Number",
+        "factory": "Factory",
+        "kyc": "KYC",
+        "expires": "Expires",
+        "submitted": "Added",
+        "status": "Status"
+      },
+      "open": "Open",
+      "verify": "Verify",
+      "reject": "Reject",
+      "verified": "Certificate verified: buyers can see it now",
+      "rejected": "Certificate rejected: the factory has been told why",
+      "failed": "That didn’t work. Try again.",
+      "rejectTitle": "Reject this certificate",
+      "rejectBody": "The factory sees your reason and can upload a new copy.",
+      "reason": "Reason",
+      "empty": "No certificates here",
+      "emptyPending": "All caught up",
+      "emptyBody": "Certificates appear here when factories add them from their profile."
     }
   }
 }

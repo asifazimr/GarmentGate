@@ -37,14 +37,17 @@ export function useKycDecision() {
       id,
       decision,
       reason,
+      note,
     }: {
       id: string;
       decision: 'approve' | 'reject';
       reason?: string;
+      /** Internal note on an approval (audit log only). */
+      note?: string;
     }) =>
       apiSend(`/admin/kyc/companies/${id}/${decision}`, {
         method: 'POST',
-        ...(decision === 'reject' && { body: { reason } }),
+        body: decision === 'reject' ? { reason } : { note },
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
   });

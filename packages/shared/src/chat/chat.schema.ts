@@ -153,7 +153,21 @@ export const FlaggedMessageSchema = z.object({
   conversationId: z.uuid(),
   thread: z.string(),
   company: z.object({ code: z.string(), name: z.string() }),
-  sender: z.object({ name: z.string(), email: z.string() }),
+  sender: z.object({
+    id: z.uuid(),
+    name: z.string(),
+    email: z.string(),
+    status: z.enum(['ACTIVE', 'SUSPENDED', 'DEACTIVATED']),
+  }),
+  /** The messages just before it in the thread, oldest first, as delivered. */
+  context: z.array(
+    z.object({
+      from: z.enum(['SENDER', 'COMPANY', 'GARMENTGATE']),
+      name: z.string(),
+      content: z.string(),
+      createdAt: z.iso.datetime(),
+    }),
+  ),
   original: z.string(),
   delivered: z.string(),
   reasons: z.array(ContactFlagSchema),

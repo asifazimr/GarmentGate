@@ -276,6 +276,10 @@ export const MarginRuleSchema = z.object({
   /** Basis points over the factory price (1500 = 15%). */
   markupBps: z.number().int(),
   minMarginPerUnitMinor: z.number().int().nullable(),
+  /** Withheld from the factory's payouts: basis points of the factory total. */
+  commissionBps: z.number().int(),
+  /** Lower rate when the buyer has completed an order with the factory before. */
+  repeatCommissionBps: z.number().int().nullable(),
   category: z.object({ id: z.uuid(), name: z.string() }).nullable(),
   buyerCode: z.string().nullable(),
   active: z.boolean(),
@@ -284,22 +288,32 @@ export const MarginRuleSchema = z.object({
 });
 export type MarginRule = z.infer<typeof MarginRuleSchema>;
 
-export const MarginRuleInputSchema = z.object({
-  name: z.string().trim().min(2).max(80),
-  markupBps: z.coerce.number().int().min(0).max(10_000, { error: 'At most 100%' }),
-  minMarginPerUnitMinor: z.preprocess(
-    (v) => (v === '' || v === null ? undefined : v),
-    z.coerce.number().int().min(0).optional(),
-  ),
-  categoryId: z.uuid().nullable().default(null),
-  buyerCode: z
-    .string()
-    .trim()
-    .regex(/^BYR-[A-Z]{2}-\d{4,}$/, { error: 'Use a buyer code like BYR-US-0012' })
-    .nullable()
-    .default(null),
-  active: z.boolean().default(true),
-});
+export const MarginRuleInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(80),
+    markupBps: z.coerce.number().int().min(0).max(10_000, { error: 'At most 100%' }),
+    minMarginPerUnitMinor: z.preprocess(
+      (v) => (v === '' || v === null ? undefined : v),
+      z.coerce.number().int().min(0).optional(),
+    ),
+    commissionBps: z.coerce.number().int().min(0).max(10_000, { error: 'At most 100%' }).default(0),
+    repeatCommissionBps: z.preprocess(
+      (v) => (v === '' || v === null ? null : v),
+      z.coerce.number().int().min(0).max(10_000).nullable().default(null),
+    ),
+    categoryId: z.uuid().nullable().default(null),
+    buyerCode: z
+      .string()
+      .trim()
+      .regex(/^BYR-[A-Z]{2}-\d{4,}$/, { error: 'Use a buyer code like BYR-US-0012' })
+      .nullable()
+      .default(null),
+    active: z.boolean().default(true),
+  })
+  .refine((r) => r.repeatCommissionBps === null || r.repeatCommissionBps <= r.commissionBps, {
+    error: 'The repeat-order rate can’t be above the normal commission',
+    path: ['repeatCommissionBps'],
+  });
 export type MarginRuleInput = z.input<typeof MarginRuleInputSchema>;
 export type MarginRuleDto = z.output<typeof MarginRuleInputSchema>;
 

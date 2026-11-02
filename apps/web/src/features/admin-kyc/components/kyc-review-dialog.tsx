@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { FormAlert } from '@/features/auth/components/form-alert';
@@ -42,12 +42,14 @@ export function KycReviewDialog({
   const decide = useKycDecision();
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
+  const [note, setNote] = useState('');
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const close = () => {
     setRejecting(false);
     setReason('');
+    setNote('');
     setReasonError(null);
     setError(null);
     onClose();
@@ -64,7 +66,7 @@ export function KycReviewDialog({
       }
     }
     try {
-      await decide.mutateAsync({ id: companyId, decision, reason });
+      await decide.mutateAsync({ id: companyId, decision, reason, note });
       const code = detail.data.publicCode ?? detail.data.legalName;
       toast.success(decision === 'approve' ? t('approved', { code }) : t('rejected', { code }));
       close();
@@ -186,6 +188,19 @@ export function KycReviewDialog({
                   }}
                 />
                 <FieldError>{reasonError}</FieldError>
+              </Field>
+            ) : pending ? (
+              <Field>
+                <FieldLabel htmlFor="approve-note">{t('approveNote')}</FieldLabel>
+                <Textarea
+                  id="approve-note"
+                  rows={2}
+                  value={note}
+                  maxLength={1000}
+                  placeholder={t('approveNotePlaceholder')}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+                <FieldDescription>{t('approveNoteHint')}</FieldDescription>
               </Field>
             ) : null}
           </div>

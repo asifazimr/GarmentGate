@@ -260,6 +260,21 @@ export const RejectKycSchema = z.object({
 });
 export type RejectKycDto = z.infer<typeof RejectKycSchema>;
 
+/** An optional internal note on an approval: staff only, kept in the audit log. */
+export const ApproveKycSchema = z.preprocess(
+  (v) => v ?? {},
+  z.object({
+    note: z
+      .string()
+      .trim()
+      .max(1000)
+      .optional()
+      .transform((v) => (v === '' ? undefined : v)),
+  }),
+);
+export type ApproveKycInput = z.input<typeof ApproveKycSchema>;
+export type ApproveKycDto = z.output<typeof ApproveKycSchema>;
+
 export const AdminKycCompanySchema = z.object({
   id: z.uuid(),
   type: z.enum(['BUYER', 'MANUFACTURER']),

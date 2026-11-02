@@ -10,9 +10,13 @@ import { ErrorState } from '@/components/patterns/error-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { UserActions } from '@/features/admin/components/user-actions';
 import { useDecideFlagged, useFlaggedMessages } from '../api';
 
-/** Messages where contact details were hidden, for staff to confirm or release. */
+/**
+ * Messages where contact details were hidden, for staff to confirm or release, with the thread
+ * leading up to them and the sender's track record so staff can warn or suspend the account.
+ */
 export function FlaggedMessages() {
   const t = useTranslations('chat.moderation');
   const queue = useFlaggedMessages();
@@ -49,6 +53,7 @@ function Item({ message: m }: { message: FlaggedMessage }) {
         <span className="text-muted-foreground">
           · {m.sender.name} ({m.sender.email})
         </span>
+        {m.sender.status !== 'ACTIVE' ? <Badge variant="danger">{t('suspended')}</Badge> : null}
         <span className="text-subtle-foreground ms-auto text-xs">
           {format.relativeTime(new Date(Math.min(Date.parse(m.createdAt), now.getTime())), now)}
         </span>
@@ -61,6 +66,27 @@ function Item({ message: m }: { message: FlaggedMessage }) {
           {m.thread}
         </Link>
       </p>
+      {m.context.length > 0 ? (
+        <details className="text-sm">
+          <summary className="text-muted-foreground cursor-pointer text-xs font-medium">
+            {t('context', { count: m.context.length })}
+          </summary>
+          <ol className="mt-2 space-y-1.5 border-s-2 ps-3">
+            {m.context.map((c, i) => (
+              <li key={`${c.createdAt}-${String(i)}`}>
+                <p className="text-muted-foreground text-xs">
+                  {c.name} · {t(`from.${c.from}`)} ·{' '}
+                  {format.dateTime(new Date(c.createdAt), {
+                    dateStyle: 'short',
+                    timeStyle: 'short',
+                  })}
+                </p>
+                <p className="break-words whitespace-pre-wrap">{c.content || '—'}</p>
+              </li>
+            ))}
+          </ol>
+        </details>
+      ) : null}
       <div className="grid gap-2 text-sm sm:grid-cols-2">
         <div className="bg-danger-soft/40 rounded-lg p-3">
           <p className="text-danger-ink mb-1 text-xs font-medium">{t('original')}</p>
@@ -88,7 +114,8 @@ function Item({ message: m }: { message: FlaggedMessage }) {
         {m.senderWarnings > 0 ? (
           <Badge variant="warning">{t('warnings', { count: m.senderWarnings })}</Badge>
         ) : null}
-        <div className="ms-auto flex gap-2">
+        <div className="ms-auto flex flex-wrap justify-end gap-2">
+          <UserActions user={{ id: m.sender.id, name: m.sender.name, status: m.sender.status }} />
           <Button
             variant="outline"
             size="sm"

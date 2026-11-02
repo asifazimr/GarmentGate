@@ -16,6 +16,8 @@ import {
   AdminKycCompanyDetailSchema,
   type KycStatus,
   KycStatusSchema,
+  type ApproveKycDto,
+  ApproveKycSchema,
   type RejectKycDto,
   RejectKycSchema,
 } from '@garmentgate/shared';
@@ -51,8 +53,9 @@ export class AdminKycController {
   approve(
     @CurrentUser() admin: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(ApproveKycSchema)) dto: ApproveKycDto,
   ): Promise<void> {
-    return this.adminKyc.approve(admin.id, id);
+    return this.adminKyc.approve(admin.id, id, dto.note);
   }
 
   @Post(':id/reject')

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatMoney } from '@/lib/format';
-import { type OrderRole, useAdminOrders, useBuyerOrders, useFactoryOrders } from '../api';
+import { useBuyerOrders, useFactoryOrders } from '../api';
 
 interface Row {
   code: string;
@@ -28,28 +28,23 @@ interface Row {
   currentStage: MilestoneStage | null;
 }
 
-const BASE: Record<OrderRole, string> = {
+const BASE: Record<ListRole, string> = {
   BUYER: '/buyer',
   MANUFACTURER: '/manufacturer',
-  ADMIN: '/admin',
 };
 
-export function OrderList({ role }: { role: OrderRole }) {
+/** Staff use the admin orders table instead. */
+type ListRole = 'BUYER' | 'MANUFACTURER';
+
+export function OrderList({ role }: { role: ListRole }) {
   const t = useTranslations('orders.list');
-  const buyer = useBuyerOrders();
-  const factory = useFactoryOrders();
-  const admin = useAdminOrders();
-  const query = role === 'BUYER' ? buyer : role === 'MANUFACTURER' ? factory : admin;
+  const buyer = useBuyerOrders(role === 'BUYER');
+  const factory = useFactoryOrders(role === 'MANUFACTURER');
+  const query = role === 'BUYER' ? buyer : factory;
   const rows: Row[] | undefined =
     role === 'BUYER'
       ? buyer.data?.map((o) => ({ ...o, party: o.manufacturerCode }))
-      : role === 'MANUFACTURER'
-        ? factory.data?.map((o) => ({ ...o, party: o.buyerCode }))
-        : admin.data?.map((o) => ({
-            ...o,
-            party: `${o.buyer.code} → ${o.manufacturer.code}`,
-            totalMinor: o.buyerTotalMinor,
-          }));
+      : factory.data?.map((o) => ({ ...o, party: o.buyerCode }));
 
   return (
     <div className="space-y-6">
@@ -70,11 +65,11 @@ export function OrderList({ role }: { role: OrderRole }) {
           action={
             role === 'BUYER' ? (
               <Button render={<Link href="/buyer/rfqs/new" />}>{t('newRfq')}</Button>
-            ) : role === 'MANUFACTURER' ? (
+            ) : (
               <Button variant="outline" render={<Link href="/manufacturer/rfqs" />}>
                 {t('inbox')}
               </Button>
-            ) : null
+            )
           }
         />
       ) : (

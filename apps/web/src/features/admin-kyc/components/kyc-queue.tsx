@@ -2,15 +2,13 @@
 
 import type { AdminKycCompany, KycStatus } from '@garmentgate/shared';
 import { CheckCheck, Inbox } from 'lucide-react';
-import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
-import { useState } from 'react';
-import { EmptyState } from '@/components/patterns/empty-state';
-import { ErrorState } from '@/components/patterns/error-state';
+import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
+import { type DataColumn, DataTable } from '@/components/patterns/data-table';
 import { PageHeader } from '@/components/patterns/page-header';
 import { StatusBadge } from '@/components/patterns/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { countryName } from '@/lib/countries';
 import { useKycQueue } from '../api';
@@ -18,11 +16,99 @@ import { KycReviewDialog } from './kyc-review-dialog';
 
 const TABS = ['PENDING_REVIEW', 'REJECTED', 'VERIFIED'] as const satisfies readonly KycStatus[];
 
+/** Companies by KYC status: review documents, then approve (with a note) or reject. */
 export function KycQueue() {
   const t = useTranslations('admin');
+  const format = useFormatter();
+  const locale = useLocale();
   const [status, setStatus] = useState<(typeof TABS)[number]>('PENDING_REVIEW');
   const [selected, setSelected] = useState<string | null>(null);
   const queue = useKycQueue(status);
+
+  const columns = useMemo<DataColumn<AdminKycCompany>[]>(
+    () => [
+      {
+        id: 'company',
+        header: t('columns.company'),
+        value: (c) => c.legalName,
+        cell: (c) => (
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">{c.legalName}</span>
+            {c.publicCode ? <Badge variant="code">{c.publicCode}</Badge> : null}
+          </span>
+        ),
+      },
+      { id: 'code', header: t('columns.code'), value: (c) => c.publicCode, hideOnMobile: true },
+      {
+        id: 'type',
+        header: t('columns.type'),
+        value: (c) => t(`types.${c.type}`),
+        hideOnMobile: true,
+      },
+      {
+        id: 'country',
+        header: t('columns.country'),
+        value: (c) => countryName(c.country, locale),
+        hideOnMobile: true,
+      },
+      {
+        id: 'owner',
+        header: t('columns.owner'),
+        value: (c) => (c.owner ? `${c.owner.name} <${c.owner.email}>` : null),
+        cell: (c) =>
+          c.owner ? (
+            <span className="text-muted-foreground">
+              {c.owner.name}
+              <span className="block text-xs">
+                {c.owner.email}
+                {c.owner.emailVerified ? '' : ` · ${t('emailUnverified')}`}
+              </span>
+            </span>
+          ) : (
+            '—'
+          ),
+        hideOnMobile: true,
+      },
+      {
+        id: 'submitted',
+        header: t('columns.submitted'),
+        value: (c) => c.submittedAt,
+        cell: (c) =>
+          c.submittedAt ? format.dateTime(new Date(c.submittedAt), { dateStyle: 'medium' }) : '—',
+        searchable: false,
+      },
+      {
+        id: 'documents',
+        header: t('columns.documents'),
+        value: (c) => c.documentCount + c.certificationCount,
+        align: 'end',
+        searchable: false,
+        hideOnMobile: true,
+      },
+      {
+        id: 'status',
+        header: t('columns.status'),
+        value: (c) => c.kycStatus,
+        cell: (c) => <StatusBadge domain="kyc" status={c.kycStatus} />,
+        searchable: false,
+      },
+      {
+        id: 'actions',
+        header: '',
+        value: () => null,
+        cell: (c) => (
+          <Button variant="outline" size="sm" onClick={() => setSelected(c.id)}>
+            {t('review')}
+          </Button>
+        ),
+        sortable: false,
+        searchable: false,
+        csv: false,
+        align: 'end',
+      },
+    ],
+    [t, format, locale],
+  );
 
   return (
     <div className="space-y-6">
@@ -44,83 +130,28 @@ export function KycQueue() {
         </TabsList>
       </Tabs>
 
-      <section aria-busy={queue.isPending} aria-live="polite">
-        {queue.isPending ? (
-          <QueueSkeleton />
-        ) : queue.isError ? (
-          <ErrorState
-            description={queue.error.message}
-            onRetry={() => void queue.refetch()}
-            retrying={queue.isFetching}
-          />
-        ) : queue.data.length === 0 ? (
-          <EmptyState
-            icon={status === 'PENDING_REVIEW' ? CheckCheck : Inbox}
-            title={status === 'PENDING_REVIEW' ? t('emptyPending') : t('empty')}
-          />
-        ) : (
-          <ul className="bg-card divide-y rounded-xl border shadow-xs">
-            {queue.data.map((company) => (
-              <QueueRow
-                key={company.id}
-                company={company}
-                onReview={() => setSelected(company.id)}
-              />
-            ))}
-          </ul>
-        )}
-      </section>
+      <DataTable
+        // A fresh table per tab, so filters and paging don't carry over.
+        key={status}
+        data={queue.data}
+        columns={columns}
+        loading={queue.isPending}
+        error={queue.isError}
+        onRetry={() => void queue.refetch()}
+        retrying={queue.isFetching}
+        filters={[
+          { column: 'type', label: t('columns.type') },
+          { column: 'country', label: t('columns.country') },
+        ]}
+        initialSort={{ id: 'submitted', desc: status !== 'PENDING_REVIEW' }}
+        csvName={`kyc-${status.toLowerCase()}`}
+        empty={{
+          icon: status === 'PENDING_REVIEW' ? CheckCheck : Inbox,
+          title: status === 'PENDING_REVIEW' ? t('emptyPending') : t('empty'),
+          description: t('emptyBody'),
+        }}
+      />
       <KycReviewDialog companyId={selected} onClose={() => setSelected(null)} />
     </div>
-  );
-}
-
-function QueueRow({ company, onReview }: { company: AdminKycCompany; onReview: () => void }) {
-  const t = useTranslations('admin');
-  const format = useFormatter();
-  const locale = useLocale();
-  // Re-renders every minute so "3 minutes ago" stays true.
-  const now = useNow({ updateInterval: 60_000 });
-  return (
-    <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-6">
-      <div className="min-w-0 flex-1 space-y-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate font-medium">{company.legalName}</p>
-          <Badge variant="code">{company.publicCode ?? '—'}</Badge>
-          <Badge variant="neutral">{t(`types.${company.type}`)}</Badge>
-          <StatusBadge domain="kyc" status={company.kycStatus} />
-        </div>
-        <p className="text-muted-foreground text-sm">
-          {countryName(company.country, locale)}
-          {company.owner ? ` · ${company.owner.name} · ${company.owner.email}` : ''}
-          {company.owner && !company.owner.emailVerified ? ` · ${t('emailUnverified')}` : ''}
-        </p>
-        <p className="text-muted-foreground text-sm">
-          {company.submittedAt
-            ? `${t('columns.submitted')}: ${format.relativeTime(new Date(company.submittedAt), now)}`
-            : null}
-          {` · ${t('columns.documents')}: ${company.documentCount + company.certificationCount}`}
-        </p>
-      </div>
-      <Button variant="outline" onClick={onReview} className="w-full sm:w-auto">
-        {t('review')}
-      </Button>
-    </li>
-  );
-}
-
-function QueueSkeleton() {
-  return (
-    <ul className="bg-card divide-y rounded-xl border">
-      {Array.from({ length: 3 }, (_, i) => (
-        <li key={i} className="flex items-center gap-6 p-4">
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-5 w-64" />
-            <Skeleton className="h-4 w-80 max-w-full" />
-          </div>
-          <Skeleton className="h-9 w-24" />
-        </li>
-      ))}
-    </ul>
   );
 }

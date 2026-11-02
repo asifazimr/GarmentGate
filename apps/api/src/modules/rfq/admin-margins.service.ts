@@ -9,8 +9,9 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
 
 /**
- * GarmentGate's markup on factory quotes, per category (and optionally per buyer). Changing a
- * rule prices new quotes; quotes already offered keep the price the buyer saw.
+ * GarmentGate's markup on factory quotes and commission on factory payouts, per category (and
+ * optionally per buyer). Changing a rule prices new quotes and sets the commission of orders
+ * confirmed from then on; quotes already offered and confirmed orders keep what they had.
  */
 @Injectable()
 export class AdminMarginsService {
@@ -37,6 +38,8 @@ export class AdminMarginsService {
       name: r.name,
       markupBps: r.markupBps,
       minMarginPerUnitMinor: r.minMarginPerUnitMinor,
+      commissionBps: r.commissionBps,
+      repeatCommissionBps: r.repeatCommissionBps,
       category: r.category,
       buyerCode: r.company?.buyerProfile?.publicCode ?? null,
       active: r.active,
@@ -53,6 +56,8 @@ export class AdminMarginsService {
         name: dto.name,
         markupBps: dto.markupBps,
         minMarginPerUnitMinor: dto.minMarginPerUnitMinor ?? null,
+        commissionBps: dto.commissionBps,
+        repeatCommissionBps: dto.repeatCommissionBps,
         active: dto.active,
         ...scope,
       },
@@ -62,7 +67,11 @@ export class AdminMarginsService {
       action: 'margin.created',
       entityType: 'MarginRule',
       entityId: rule.id,
-      metadata: { markupBps: dto.markupBps },
+      metadata: {
+        markupBps: dto.markupBps,
+        commissionBps: dto.commissionBps,
+        repeatCommissionBps: dto.repeatCommissionBps,
+      },
     });
     return { id: rule.id };
   }
@@ -84,6 +93,8 @@ export class AdminMarginsService {
         name: dto.name,
         markupBps: dto.markupBps,
         minMarginPerUnitMinor: dto.minMarginPerUnitMinor ?? null,
+        commissionBps: dto.commissionBps,
+        repeatCommissionBps: dto.repeatCommissionBps,
         active: dto.active,
         ...scope,
       },
@@ -93,7 +104,18 @@ export class AdminMarginsService {
       action: 'margin.updated',
       entityType: 'MarginRule',
       entityId: id,
-      metadata: { from: existing.markupBps, to: dto.markupBps },
+      metadata: {
+        from: {
+          markupBps: existing.markupBps,
+          commissionBps: existing.commissionBps,
+          repeatCommissionBps: existing.repeatCommissionBps,
+        },
+        to: {
+          markupBps: dto.markupBps,
+          commissionBps: dto.commissionBps,
+          repeatCommissionBps: dto.repeatCommissionBps,
+        },
+      },
     });
   }
 

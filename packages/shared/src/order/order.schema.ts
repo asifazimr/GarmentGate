@@ -218,6 +218,10 @@ export const AdminOrderSchema = z.object({
   manufacturerUnitPriceMinor: z.number().int(),
   buyerTotalMinor: z.number().int(),
   manufacturerTotalMinor: z.number().int(),
+  /** Withheld from the factory's payouts; set when the order is confirmed. */
+  commissionBps: z.number().int(),
+  commissionMinor: z.number().int(),
+  repeatOrder: z.boolean(),
 });
 export type AdminOrder = z.infer<typeof AdminOrderSchema>;
 
@@ -251,5 +255,6 @@ export const AdminOrderSummarySchema = z.object({
   manufacturer: z.object({ code: z.string(), name: z.string() }),
   buyerTotalMinor: z.number().int(),
   manufacturerTotalMinor: z.number().int(),
+  commissionMinor: z.number().int(),
 });
 export type AdminOrderSummary = z.infer<typeof AdminOrderSummarySchema>;

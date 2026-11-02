@@ -7,6 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OpenThreadButton } from '@/features/chat/components/open-thread-button';
+import {
+  OrderFinanceCard,
+  OverrideStatusButton,
+} from '@/features/admin/components/order-admin-panels';
 import { formatMoney } from '@/lib/format';
 import { purchaseOrderUrl, useAdminOrder } from '../api';
 import { InspectionsPanel } from '@/features/qc/components/inspections-panel';
@@ -46,7 +50,7 @@ export function AdminOrderPage({ code }: { code: string }) {
     );
   const o = order.data;
   const money = (minor: number) => formatMoney(minor, o.currency, locale);
-  const margin = o.buyerTotalMinor - o.manufacturerTotalMinor;
+  const markup = o.buyerTotalMinor - o.manufacturerTotalMinor;
   const openDispute =
     dispute.data?.dispute?.status === 'OPEN' || dispute.data?.dispute?.status === 'UNDER_REVIEW';
   // Samples have their own flow (buyer requests / approves), disputes are opened by the buyer
@@ -89,6 +93,7 @@ export function AdminOrderPage({ code }: { code: string }) {
             />
             <PoButton href={purchaseOrderUrl(o.code, 'buyer')} label={t('poBuyer')} />
             <PoButton href={purchaseOrderUrl(o.code, 'manufacturer')} label={t('poFactory')} />
+            <OverrideStatusButton code={o.code} status={o.status} />
           </>
         }
       />
@@ -150,10 +155,18 @@ export function AdminOrderPage({ code }: { code: string }) {
               [t('fields.factoryPrice'), money(o.manufacturerUnitPriceMinor)],
               [t('fields.buyerTotal'), money(o.buyerTotalMinor)],
               [t('fields.factoryTotal'), money(o.manufacturerTotalMinor)],
-              [t('fields.margin'), money(margin)],
+              [t('fields.markup'), money(markup)],
+              [
+                t('fields.commission', { percent: o.commissionBps / 100 }),
+                o.commissionBps > 0 || o.commissionMinor > 0
+                  ? `${money(o.commissionMinor)}${o.repeatOrder ? ` · ${t('fields.repeat')}` : ''}`
+                  : t('fields.atConfirmation'),
+              ],
+              [t('fields.margin'), money(markup + o.commissionMinor)],
               [t('fields.terms'), o.incoterm],
             ]}
           />
+          <OrderFinanceCard code={o.code} />
           <Card size="sm">
             <CardHeader>
               <CardTitle>{t('history')}</CardTitle>

@@ -182,7 +182,8 @@
   --neutral-soft: oklch(0.955 0.005 252);
   --neutral-ink: oklch(0.42 0.016 258);
 
-  --chart-1: oklch(0.47 0.085 183);
+  /* chart-1 + chart-3: validated as a 2-series pair (lightness band, chroma, CVD, contrast). */
+  --chart-1: oklch(0.54 0.11 180);
   --chart-2: oklch(0.6 0.13 155);
   --chart-3: oklch(0.58 0.15 250);
   --chart-4: oklch(0.76 0.15 72);
@@ -254,9 +255,9 @@
   --neutral-soft: oklch(0.26 0.01 258);
   --neutral-ink: oklch(0.8 0.012 258);
 
-  --chart-1: oklch(0.76 0.115 178);
+  --chart-1: oklch(0.66 0.11 180);
   --chart-2: oklch(0.7 0.14 155);
-  --chart-3: oklch(0.7 0.13 248);
+  --chart-3: oklch(0.6 0.14 252);
   --chart-4: oklch(0.8 0.14 75);
   --chart-5: oklch(0.7 0.15 292);
 

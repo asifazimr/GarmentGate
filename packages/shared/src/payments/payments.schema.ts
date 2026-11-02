@@ -133,7 +133,13 @@ const ReleaseView = z.strictObject({
 export const ManufacturerPayoutsSchema = z.strictObject({
   orderCode: z.string(),
   currency: CurrencySchema,
+  /** At the factory's own prices. */
   totalMinor: z.number().int(),
+  /** GarmentGate's commission, withheld from the payouts (set when the order is confirmed). */
+  commissionBps: z.number().int(),
+  commissionMinor: z.number().int(),
+  /** What the factory receives: total less commission. */
+  netMinor: z.number().int(),
   releasedMinor: z.number().int(),
   paidMinor: z.number().int(),
   schedule: z.array(ReleaseView),
@@ -215,7 +221,14 @@ export const OrderFinanceSchema = z.object({
   manufacturer: Party,
   buyerTotalMinor: z.number().int(),
   manufacturerTotalMinor: z.number().int(),
+  /** Platform revenue on the order: markup + factory commission. */
   marginMinor: z.number().int(),
+  /** Buyer price over factory price. */
+  markupMinor: z.number().int(),
+  /** Withheld from the factory's payouts. */
+  factoryCommissionMinor: z.number().int(),
+  factoryCommissionBps: z.number().int(),
+  repeatOrder: z.boolean(),
   receivedMinor: z.number().int(),
   escrowMinor: z.number().int(),
   releasedMinor: z.number().int(),

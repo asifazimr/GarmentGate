@@ -4,7 +4,7 @@
  */
 import { existsSync } from 'node:fs';
 import { hash } from '@node-rs/argon2';
-import { filterContactDetails } from '@garmentgate/shared';
+import { commissionAmount, filterContactDetails } from '@garmentgate/shared';
 import { createPrismaClient } from '../../src/prisma/create-prisma-client.js';
 import type { Currency, Prisma } from '../../src/generated/prisma/client.js';
 import { ADMIN, BUYERS, CATEGORIES, DEMO_PASSWORD, INSPECTOR, MANUFACTURERS } from './data.js';
@@ -244,14 +244,27 @@ async function main(): Promise<void> {
   const gruenfeld = need(buyer.get('gruenfeld'), 'gruenfeld');
 
   // ── Margin rules ──────────────────────────────────────────────────────────
+  // Markup on the buyer side, commission withheld from factory payouts (lower on repeat orders).
   const defaultRule = await prisma.marginRule.create({
-    data: { name: 'Default markup', markupBps: 1500 },
+    data: { name: 'Default markup', markupBps: 1500, commissionBps: 500, repeatCommissionBps: 300 },
   });
   await prisma.marginRule.create({
-    data: { name: 'Activewear', markupBps: 1800, categoryId: cat('activewear') },
+    data: {
+      name: 'Activewear',
+      markupBps: 1800,
+      commissionBps: 500,
+      repeatCommissionBps: 300,
+      categoryId: cat('activewear'),
+    },
   });
   const northboundRule = await prisma.marginRule.create({
-    data: { name: 'Northbound negotiated rate', markupBps: 1200, companyId: northbound.companyId },
+    data: {
+      name: 'Northbound negotiated rate',
+      markupBps: 1200,
+      commissionBps: 400,
+      repeatCommissionBps: 250,
+      companyId: northbound.companyId,
+    },
   });
 
   // ── Open RFQ with three quotes in different states ────────────────────────
@@ -498,6 +511,9 @@ async function main(): Promise<void> {
       requestedShipDate: daysFromNow(21),
       status: 'IN_PRODUCTION',
       confirmedAt: daysFromNow(-42),
+      // Northbound's rate; ORD-2026-00009 hadn't completed yet, so not a repeat order.
+      commissionBps: 400,
+      commissionMinor: commissionAmount(manufacturerTotal, 400),
       items: {
         create: ['Black', 'Bone', 'Washed Navy'].flatMap((color) =>
           (
@@ -1024,6 +1040,8 @@ async function seedOrderLifecycle(p: {
       requestedShipDate: daysFromNow(-46),
       status: 'COMPLETED',
       confirmedAt: daysFromNow(-94),
+      commissionBps: 400,
+      commissionMinor: commissionAmount(2_400_000n, 400),
       completedAt: daysFromNow(-22),
       createdAt: daysFromNow(-130),
       milestones: {

@@ -17,6 +17,7 @@ import { PaymentsModule } from './modules/payments/payments.module.js';
 import { QcModule } from './modules/qc/qc.module.js';
 import { ShippingModule } from './modules/shipping/shipping.module.js';
 import { TrustModule } from './modules/trust/trust.module.js';
+import { AdminModule } from './modules/admin/admin.module.js';
 import { KycModule } from './modules/kyc/kyc.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
 import { ManufacturerModule } from './modules/manufacturer/manufacturer.module.js';
@@ -63,6 +64,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     QcModule,
     ShippingModule,
     TrustModule,
+    AdminModule,
   ],
   // Global rate limit; auth routes tighten it with @Throttle.
   providers: [{ provide: APP_GUARD, useClass: HttpThrottlerGuard }],

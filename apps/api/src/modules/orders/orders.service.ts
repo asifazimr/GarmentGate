@@ -18,11 +18,13 @@ import {
   type ManufacturerOrderSummary,
   type MilestoneUpdateDto,
   type NotificationLink,
+  ORDER_FLOW,
   ORDER_IMAGE_MAX_BYTES,
   ORDER_VIDEO_MAX_BYTES,
   type OrderActor,
   type OrderMedia,
   type OrderStatus,
+  type OverrideOrderStatusDto,
   type OrderTransitionDto,
   type PresignOrderMediaDto,
   type PresignUploadResponse,
@@ -184,6 +186,7 @@ export class OrdersService {
       },
       buyerTotalMinor: o.buyerUnitPriceMinor * o.quantity,
       manufacturerTotalMinor: o.manufacturerUnitPriceMinor * o.quantity,
+      commissionMinor: Number(o.commissionMinor),
     }));
   }
 
@@ -361,14 +364,16 @@ export class OrdersService {
     to: OrderStatus,
     note: string | undefined,
     effects: (tx: Prisma.TransactionClient) => Promise<Prisma.OrderUpdateManyMutationInput>,
+    options: { override?: boolean } = {},
   ): Promise<void> {
     const who = actor === 'SYSTEM' ? 'ADMIN' : actorOf(actor);
     const actorUserId = actor === 'SYSTEM' ? null : actor.userId;
-    if (!canTransition(order.status, to, who)) {
+    if (!options.override && !canTransition(order.status, to, who)) {
       throw new ForbiddenException(`An order can’t go from ${order.status} to ${to} that way`);
     }
     await this.hooks.before(order, to, who);
     if (
+      !options.override &&
       order.status === 'DISPUTED' &&
       to !== order.disputedFrom &&
       to !== 'COMPLETED' &&
@@ -398,13 +403,60 @@ export class OrdersService {
     });
     await this.audit.log({
       actorUserId,
-      action: filtered?.flagged ? 'moderation.contact_filtered' : `order.${to.toLowerCase()}`,
+      action: options.override
+        ? 'order.status_override'
+        : filtered?.flagged
+          ? 'moderation.contact_filtered'
+          : `order.${to.toLowerCase()}`,
       entityType: 'Order',
       entityId: order.id,
-      metadata: { from: order.status, to },
+      metadata: { from: order.status, to, ...(options.override && { reason: note }) },
     });
     await this.announce(order, to);
     await this.hooks.after(order, to);
+  }
+
+  /**
+   * Staff override: move an order to any status outside the normal flow, with a reason that
+   * goes to the order history and the audit log. Disputes keep their own flow, and an order
+   * can't skip confirmation, since that is where its payment schedule and commission are set.
+   */
+  async override(actor: ChatActor, code: string, dto: OverrideOrderStatusDto): Promise<void> {
+    if (actorOf(actor) !== 'ADMIN') throw new ForbiddenException('Staff only');
+    const order = await this.load(actor, code);
+    if (order.status === dto.to) throw new BadRequestException(`The order is already ${dto.to}`);
+    if (order.status === 'DISPUTED') {
+      const open = await this.prisma.dispute.count({
+        where: { orderId: order.id, status: { in: ['OPEN', 'UNDER_REVIEW'] } },
+      });
+      if (open > 0) throw new ConflictException('Resolve the dispute to move the order on');
+    }
+    const flow: readonly OrderStatus[] = ORDER_FLOW;
+    const past = flow.indexOf(dto.to) > flow.indexOf('DEPOSIT_PENDING');
+    if (past && (await this.prisma.orderRelease.count({ where: { orderId: order.id } })) === 0)
+      throw new ConflictException(
+        'Confirm the order first (deposit pending): that sets its payment schedule',
+      );
+    await this.move(
+      actor,
+      order,
+      dto.to,
+      `Status override: ${dto.reason}`,
+      async (tx) => {
+        const now = new Date();
+        if (dto.to === 'COMPLETED') return { completedAt: now, disputedFrom: null };
+        if (dto.to === 'CANCELLED') return { cancelledAt: now, disputedFrom: null };
+        if (flow.indexOf(dto.to) >= flow.indexOf('IN_PRODUCTION'))
+          await this.planMilestones(tx, order, now);
+        return {
+          disputedFrom: null,
+          ...(flow.indexOf(dto.to) >= flow.indexOf('DEPOSIT_PENDING') && {
+            confirmedAt: order.confirmedAt ?? now,
+          }),
+        };
+      },
+      { override: true },
+    );
   }
 
   /** A status change the platform makes itself (e.g. production starts when the deposit lands). */

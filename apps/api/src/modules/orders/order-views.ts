@@ -400,5 +400,8 @@ export function adminOrderView(order: OrderRow, links: MediaLinks): AdminOrder {
     manufacturerUnitPriceMinor: order.manufacturerUnitPriceMinor,
     buyerTotalMinor: order.buyerUnitPriceMinor * order.quantity,
     manufacturerTotalMinor: order.manufacturerUnitPriceMinor * order.quantity,
+    commissionBps: order.commissionBps,
+    commissionMinor: Number(order.commissionMinor),
+    repeatOrder: order.repeatOrder,
   };
 }

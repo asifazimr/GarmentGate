@@ -21,6 +21,6 @@ import { STRIPE_CLIENT, StripeProvider, stripeClientFactory } from './providers/
     FxService,
     PaymentsService,
   ],
-  exports: [PaymentsService, LedgerService],
+  exports: [PaymentsService, LedgerService, FxService],
 })
 export class PaymentsModule {}

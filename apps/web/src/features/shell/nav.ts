@@ -1,11 +1,13 @@
 import type { Role } from '@garmentgate/shared';
 import {
+  BadgeCheck,
   CalendarRange,
   ClipboardCheck,
   Factory,
   FileText,
   Gauge,
   Heart,
+  History,
   Inbox,
   LayoutDashboard,
   type LucideIcon,
@@ -19,6 +21,8 @@ import {
   Search,
   ShieldCheck,
   Shirt,
+  Users,
+  Wallet,
 } from 'lucide-react';
 
 export type NavLabel =
@@ -40,7 +44,12 @@ export type NavLabel =
   | 'discover'
   | 'shortlists'
   | 'inspections'
-  | 'inspectors';
+  | 'inspectors'
+  | 'overview'
+  | 'certifications'
+  | 'payments'
+  | 'users'
+  | 'audit';
 
 export interface NavItem {
   href: string;
@@ -79,14 +88,19 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/manufacturer/settings', label: 'settings', icon: Settings, built: true },
   ],
   ADMIN: [
-    { href: '/admin', label: 'verification', icon: ShieldCheck, primary: true },
-    { href: '/admin/rfqs', label: 'rfqs', icon: FileText, primary: true },
+    { href: '/admin', label: 'overview', icon: LayoutDashboard, primary: true, built: true },
+    { href: '/admin/kyc', label: 'verification', icon: ShieldCheck, built: true },
+    { href: '/admin/certifications', label: 'certifications', icon: BadgeCheck, built: true },
     { href: '/admin/orders', label: 'orders', icon: Package, primary: true, built: true },
-    { href: '/admin/messages', label: 'messages', icon: MessageSquare, primary: true, built: true },
+    { href: '/admin/payments', label: 'payments', icon: Wallet, primary: true, built: true },
     { href: '/admin/disputes', label: 'disputes', icon: Scale, built: true },
+    { href: '/admin/messages', label: 'messages', icon: MessageSquare, primary: true, built: true },
     { href: '/admin/moderation', label: 'moderation', icon: ShieldAlert, built: true },
+    { href: '/admin/rfqs', label: 'rfqs', icon: FileText },
     { href: '/admin/margins', label: 'margins', icon: Percent, built: true },
     { href: '/admin/inspectors', label: 'inspectors', icon: ClipboardCheck, built: true },
+    { href: '/admin/users', label: 'users', icon: Users, built: true },
+    { href: '/admin/audit', label: 'audit', icon: History, built: true },
     { href: '/admin/settings', label: 'settings', icon: Gauge, built: true },
   ],
   INSPECTOR: [

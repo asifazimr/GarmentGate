@@ -7,6 +7,7 @@ import {
   BuyerOrderSummarySchema,
   ManufacturerOrderSchema,
   ManufacturerOrderSummarySchema,
+  ManufacturerPayoutsSchema,
   type MilestoneUpdateDto,
   OrderCreatedSchema,
   type OrderTransitionDto,
@@ -50,16 +51,18 @@ const pollWhileProcessing = (
     ? 3_000
     : false;
 
-export function useBuyerOrders() {
+export function useBuyerOrders(enabled = true) {
   return useQuery({
     queryKey: keys.list('BUYER'),
     queryFn: () => apiJson('/orders', z.array(BuyerOrderSummarySchema)),
+    enabled,
   });
 }
-export function useFactoryOrders() {
+export function useFactoryOrders(enabled = true) {
   return useQuery({
     queryKey: keys.list('MANUFACTURER'),
     queryFn: () => apiJson('/orders', z.array(ManufacturerOrderSummarySchema)),
+    enabled,
   });
 }
 export function useAdminOrders() {
@@ -81,6 +84,13 @@ export function useFactoryOrder(code: string) {
     queryKey: keys.order('MANUFACTURER', code),
     queryFn: () => apiJson(`/orders/${code}`, detailSchema.MANUFACTURER),
     refetchInterval: (q) => pollWhileProcessing(q.state.data),
+  });
+}
+/** The factory's own money on an order: commission withheld and what it receives. */
+export function useFactoryPayouts(code: string) {
+  return useQuery({
+    queryKey: ['payments', 'MANUFACTURER', code],
+    queryFn: () => apiJson(`/orders/${code}/payouts`, ManufacturerPayoutsSchema),
   });
 }
 export function useAdminOrder(code: string) {

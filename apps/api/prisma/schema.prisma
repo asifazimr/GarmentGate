@@ -471,6 +471,9 @@ model User {
   lastName        String
   emailVerifiedAt DateTime?
   lastLoginAt     DateTime?
+  /// Why staff suspended the account (shown to staff only).
+  suspendedReason String?
+  suspendedAt     DateTime?
   companyId       String?      @db.Uuid
   companyRole     CompanyRole?
   createdAt       DateTime     @default(now())
@@ -494,7 +497,8 @@ model User {
   disputeEvidence     DisputeEvidence[]
   notificationPrefs   NotificationPreference[]
   disputesAssigned    Dispute[]                 @relation("DisputeAssignedTo")
-  accountWarnings     AccountWarning[]
+  accountWarnings     AccountWarning[]          @relation("UserWarnings")
+  warningsIssued      AccountWarning[]          @relation("WarningIssuedBy")
   orderEvents         OrderEvent[]
   paymentsConfirmed   Payment[]                 @relation("PaymentConfirmedBy")
   releasesApproved    OrderRelease[]            @relation("ReleaseApprovedBy")
@@ -980,6 +984,10 @@ model MarginRule {
   markupBps             Int
   /// Optional floor per unit, in the quote's currency minor units.
   minMarginPerUnitMinor Int?
+  /// Commission withheld from the factory's payouts, basis points of the factory total.
+  commissionBps         Int      @default(0)
+  /// Lower commission when the buyer has ordered from that factory before (null: same rate).
+  repeatCommissionBps   Int?
   categoryId            String?  @db.Uuid
   /// Usually a buyer company with negotiated rates.
   companyId             String?  @db.Uuid
@@ -1120,6 +1128,11 @@ model Order {
   disputedFrom               OrderStatus?
   /// Set when the buyer reordered a completed order.
   reorderOfId                String?      @db.Uuid
+  /// Commission withheld from the factory, snapshotted when the order is confirmed.
+  commissionBps              Int          @default(0)
+  commissionMinor            BigInt       @default(0)
+  /// The buyer had completed an order with this factory before (reduced commission).
+  repeatOrder                Boolean      @default(false)
   confirmedAt                DateTime?
   completedAt                DateTime?
   cancelledAt                DateTime?
@@ -1700,10 +1713,14 @@ model AccountWarning {
   level          WarningLevel
   /// Contact-filter hits in the window that triggered it.
   violations     Int
+  /// Set when staff issued it by hand (automatic warnings have none).
+  issuedById     String?      @db.Uuid
+  note           String?
   createdAt      DateTime     @default(now())
   acknowledgedAt DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User  @relation("UserWarnings", fields: [userId], references: [id], onDelete: Cascade)
+  issuedBy User? @relation("WarningIssuedBy", fields: [issuedById], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@map("account_warnings")

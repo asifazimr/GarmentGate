@@ -141,7 +141,7 @@ export class AdminKycService {
     };
   }
 
-  async approve(adminId: string, companyId: string): Promise<void> {
+  async approve(adminId: string, companyId: string, note?: string): Promise<void> {
     const company = await this.pending(companyId);
     const now = new Date();
     await this.prisma.$transaction([
@@ -181,6 +181,7 @@ export class AdminKycService {
       action: 'kyc.approved',
       entityType: 'Company',
       entityId: company.id,
+      ...(note && { metadata: { note } }),
     });
     for (const user of company.users) {
       await this.mail.send('kyc-decision', user.email, {

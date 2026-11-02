@@ -10,6 +10,8 @@ import {
 import {
   type BuyerPaymentPurpose,
   type BuyerPayments,
+  commissionAmount,
+  commissionRate,
   type ConfirmPaymentDto,
   convertMinor,
   type Currency,
@@ -41,6 +43,7 @@ import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import type { ChatActor } from '../chat/chat-actor.service.js';
 import { OrderHooks } from '../orders/order-hooks.js';
+import { pickQuoteRule } from '../pricing/margin.js';
 import type { OrderRow } from '../orders/order-views.js';
 import { actorOf, OrdersService } from '../orders/orders.service.js';
 import { FilesService } from '../storage/files.service.js';
@@ -165,6 +168,65 @@ export class PaymentsService implements OnModuleInit {
     }
   }
 
+  /**
+   * The commission for an order: the margin rule that prices the order's category for this
+   * buyer, at its repeat rate when the buyer has completed an order with this factory before
+   * (a reorder always counts).
+   */
+  private async commissionFor(
+    tx: Prisma.TransactionClient,
+    order: OrderRow,
+    factoryTotal: bigint,
+  ): Promise<{ commissionBps: number; commissionMinor: bigint; repeatOrder: boolean }> {
+    const [category, rules, previous] = await Promise.all([
+      this.orderCategory(tx, order.id),
+      tx.marginRule.findMany({ where: { active: true } }),
+      tx.order.count({
+        where: {
+          id: { not: order.id },
+          buyerCompanyId: order.buyerCompanyId,
+          manufacturerProfileId: order.manufacturerProfileId,
+          status: 'COMPLETED',
+        },
+      }),
+    ]);
+    const rule = category
+      ? pickQuoteRule(rules, category, order.buyerCompanyId)
+      : (rules.find((r) => r.categoryId === null && r.companyId === order.buyerCompanyId) ??
+        rules.find((r) => r.categoryId === null && r.companyId === null) ??
+        null);
+    const repeatOrder = order.reorderOfId !== null || previous > 0;
+    const commissionBps = commissionRate(rule, repeatOrder);
+    return {
+      commissionBps,
+      commissionMinor: commissionAmount(factoryTotal, commissionBps),
+      repeatOrder,
+    };
+  }
+
+  /** The order's category: from its RFQ, or for a reorder from the order it repeats. */
+  private async orderCategory(
+    tx: Prisma.TransactionClient,
+    orderId: string,
+  ): Promise<{ id: string; parentId: string | null } | null> {
+    let id: string | null = orderId;
+    for (let depth = 0; id && depth < 10; depth++) {
+      const row: {
+        reorderOfId: string | null;
+        rfq: { category: { id: string; parentId: string | null } } | null;
+      } | null = await tx.order.findUnique({
+        where: { id },
+        select: {
+          reorderOfId: true,
+          rfq: { select: { category: { select: { id: true, parentId: true } } } },
+        },
+      });
+      if (row?.rfq) return row.rfq.category;
+      id = row?.reorderOfId ?? null;
+    }
+    return null;
+  }
+
   private async onTransition(
     tx: Prisma.TransactionClient,
     order: OrderRow,
@@ -175,11 +237,15 @@ export class PaymentsService implements OnModuleInit {
       to === 'DEPOSIT_PENDING' &&
       (await tx.orderRelease.count({ where: { orderId: order.id } })) === 0
     ) {
-      // Snapshot the schedule: later edits don't change a confirmed order.
+      // Snapshot the schedule and the commission: later edits don't change a confirmed order.
       const schedule = await this.releaseSchedule(tx);
+      const factoryTotal = BigInt(order.manufacturerUnitPriceMinor) * BigInt(order.quantity);
+      const commission = await this.commissionFor(tx, order, factoryTotal);
+      await tx.order.update({ where: { id: order.id }, data: commission });
+      // The factory is owed its total less the commission; the platform keeps markup + commission.
       const tranches = releaseTranches(
         BigInt(order.buyerUnitPriceMinor) * BigInt(order.quantity),
-        BigInt(order.manufacturerUnitPriceMinor) * BigInt(order.quantity),
+        factoryTotal - commission.commissionMinor,
         schedule.map((s) => s.bps),
       );
       await tx.orderRelease.createMany({
@@ -965,6 +1031,8 @@ export class PaymentsService implements OnModuleInit {
       currency: Currency;
       manufacturerUnitPriceMinor: number;
       quantity: number;
+      commissionBps: number;
+      commissionMinor: bigint;
     },
     releases: Prisma.OrderReleaseGetPayload<{ include: { payout: true } }>[],
   ): ManufacturerPayouts {
@@ -973,6 +1041,11 @@ export class PaymentsService implements OnModuleInit {
       orderCode: order.code,
       currency: order.currency,
       totalMinor: n(BigInt(order.manufacturerUnitPriceMinor) * BigInt(order.quantity)),
+      commissionBps: order.commissionBps,
+      commissionMinor: n(order.commissionMinor),
+      netMinor: n(
+        BigInt(order.manufacturerUnitPriceMinor) * BigInt(order.quantity) - order.commissionMinor,
+      ),
       releasedMinor: n(released.reduce((a, r) => a + r.manufacturerMinor, 0n)),
       paidMinor: n(
         releases.filter((r) => r.status === 'PAID').reduce((a, r) => a + r.manufacturerMinor, 0n),
@@ -1035,6 +1108,8 @@ export class PaymentsService implements OnModuleInit {
         currency: true,
         manufacturerUnitPriceMinor: true,
         quantity: true,
+        commissionBps: true,
+        commissionMinor: true,
         releases: this.releaseOrder,
       },
     });
@@ -1084,7 +1159,11 @@ export class PaymentsService implements OnModuleInit {
       },
       buyerTotalMinor: n(buyerTotal),
       manufacturerTotalMinor: n(manufacturerTotal),
-      marginMinor: n(buyerTotal - manufacturerTotal),
+      marginMinor: n(buyerTotal - manufacturerTotal + order.commissionMinor),
+      markupMinor: n(buyerTotal - manufacturerTotal),
+      factoryCommissionMinor: n(order.commissionMinor),
+      factoryCommissionBps: order.commissionBps,
+      repeatOrder: order.repeatOrder,
       receivedMinor: n(sumPayments(['DEPOSIT', 'BALANCE'])),
       escrowMinor: n(position.escrow),
       releasedMinor: n(position.releasedToPayable),

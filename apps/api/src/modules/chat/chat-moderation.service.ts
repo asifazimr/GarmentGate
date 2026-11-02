@@ -109,7 +109,9 @@ export class ChatModerationService {
       orderBy: { createdAt: 'desc' },
       take: 200,
       include: {
-        sender: { select: { id: true, firstName: true, lastName: true, email: true } },
+        sender: {
+          select: { id: true, firstName: true, lastName: true, email: true, status: true },
+        },
         attachments: {
           where: { flagged: true },
           select: {
@@ -147,6 +149,9 @@ export class ChatModerationService {
         ),
       ),
     );
+    const context = new Map(
+      await Promise.all(rows.map(async (m) => [m.id, await this.context(m)] as const)),
+    );
     return rows.map((m) => {
       const company = m.conversation.company;
       return {
@@ -157,7 +162,13 @@ export class ChatModerationService {
           code: company.buyerProfile?.publicCode ?? company.manufacturerProfile?.publicCode ?? '—',
           name: company.legalName,
         },
-        sender: { name: `${m.sender.firstName} ${m.sender.lastName}`, email: m.sender.email },
+        sender: {
+          id: m.sender.id,
+          name: `${m.sender.firstName} ${m.sender.lastName}`,
+          email: m.sender.email,
+          status: m.sender.status,
+        },
+        context: context.get(m.id) ?? [],
         original: m.originalContent,
         delivered: m.filteredContent,
         reasons: m.flagReasons,
@@ -170,6 +181,36 @@ export class ChatModerationService {
         senderWarnings: stats.get(m.sender.id)?.warnings ?? 0,
       };
     });
+  }
+
+  /** The few messages before a flagged one, so staff can judge it in context. */
+  private async context(message: {
+    conversationId: string;
+    createdAt: Date;
+    senderId: string;
+  }): Promise<FlaggedMessage['context']> {
+    const before = await this.prisma.message.findMany({
+      where: { conversationId: message.conversationId, createdAt: { lt: message.createdAt } },
+      orderBy: { createdAt: 'desc' },
+      take: 4,
+      select: {
+        senderId: true,
+        filteredContent: true,
+        createdAt: true,
+        sender: { select: { firstName: true, lastName: true, role: true } },
+      },
+    });
+    return before.reverse().map((b) => ({
+      from:
+        b.senderId === message.senderId
+          ? 'SENDER'
+          : b.sender.role === 'ADMIN'
+            ? 'GARMENTGATE'
+            : 'COMPANY',
+      name: `${b.sender.firstName} ${b.sender.lastName}`,
+      content: b.filteredContent,
+      createdAt: b.createdAt.toISOString(),
+    }));
   }
 
   /**

@@ -3,10 +3,9 @@
 import type { MarginRule } from '@garmentgate/shared';
 import { Pencil, Percent, Plus, Trash2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { EmptyState } from '@/components/patterns/empty-state';
-import { ErrorState } from '@/components/patterns/error-state';
+import { type DataColumn, DataTable } from '@/components/patterns/data-table';
 import { PageHeader } from '@/components/patterns/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useCategories } from '@/features/onboarding/api';
 import { ApiError } from '@/lib/api';
 import { formString } from '@/lib/form-data';
@@ -36,15 +34,115 @@ import { useDeleteMarginRule, useMarginRules, useSaveMarginRule } from '../api';
 
 const isDefault = (r: MarginRule) => r.category === null && r.buyerCode === null;
 
-/** GarmentGate's markup: buyers see factory price + markup; factories never see it. */
+/**
+ * GarmentGate's pricing rules: the markup buyers pay over the factory price (factories never see
+ * it) and the commission withheld from the factory's payouts, lower for repeat orders.
+ */
 export function AdminMargins() {
   const t = useTranslations('rfq.margins');
   const format = useFormatter();
   const rules = useMarginRules();
   const remove = useDeleteMarginRule();
   const [editing, setEditing] = useState<MarginRule | 'new' | null>(null);
-  const percent = (bps: number) =>
-    format.number(bps / 10_000, { style: 'percent', maximumFractionDigits: 2 });
+
+  const columns = useMemo<DataColumn<MarginRule>[]>(() => {
+    const percent = (bps: number) =>
+      format.number(bps / 10_000, { style: 'percent', maximumFractionDigits: 2 });
+    return [
+      {
+        id: 'name',
+        header: t('columns.name'),
+        value: (r) => r.name,
+        cell: (r) => (
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">{r.name}</span>
+            {isDefault(r) ? <Badge variant="brand">{t('default')}</Badge> : null}
+            {!r.active ? <Badge variant="neutral">{t('inactive')}</Badge> : null}
+          </span>
+        ),
+      },
+      {
+        id: 'category',
+        header: t('columns.category'),
+        value: (r) => r.category?.name ?? t('allCategories'),
+      },
+      {
+        id: 'buyer',
+        header: t('columns.buyer'),
+        value: (r) => r.buyerCode ?? t('allBuyers'),
+        hideOnMobile: true,
+      },
+      {
+        id: 'markup',
+        header: t('columns.markup'),
+        value: (r) => r.markupBps,
+        cell: (r) => percent(r.markupBps),
+        align: 'end',
+        searchable: false,
+      },
+      {
+        id: 'commission',
+        header: t('columns.commission'),
+        value: (r) => r.commissionBps,
+        cell: (r) => percent(r.commissionBps),
+        align: 'end',
+        searchable: false,
+      },
+      {
+        id: 'repeat',
+        header: t('columns.repeat'),
+        value: (r) => r.repeatCommissionBps,
+        cell: (r) => (r.repeatCommissionBps === null ? '—' : percent(r.repeatCommissionBps)),
+        align: 'end',
+        searchable: false,
+        hideOnMobile: true,
+      },
+      {
+        id: 'quotes',
+        header: t('columns.quotes'),
+        value: (r) => r.quotesPriced,
+        align: 'end',
+        searchable: false,
+        hideOnMobile: true,
+      },
+      {
+        id: 'actions',
+        header: '',
+        value: () => null,
+        cell: (r) => (
+          <span className="flex justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t('edit', { name: r.name })}
+              onClick={() => setEditing(r)}
+            >
+              <Pencil />
+            </Button>
+            {!isDefault(r) ? (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t('delete', { name: r.name })}
+                onClick={() =>
+                  remove.mutate(r.id, {
+                    onSuccess: () => toast.success(t('deleted')),
+                    onError: (e) => toast.error(e instanceof ApiError ? e.message : t('failed')),
+                  })
+                }
+              >
+                <Trash2 />
+              </Button>
+            ) : null}
+          </span>
+        ),
+        sortable: false,
+        searchable: false,
+        csv: false,
+        align: 'end',
+      },
+    ];
+  }, [t, format, remove]);
 
   return (
     <div className="space-y-6">
@@ -58,70 +156,34 @@ export function AdminMargins() {
           </Button>
         }
       />
-      {rules.isPending ? (
-        <Skeleton className="h-64 rounded-xl" />
-      ) : rules.isError ? (
-        <ErrorState onRetry={() => void rules.refetch()} retrying={rules.isFetching} />
-      ) : rules.data.length === 0 ? (
-        <EmptyState
-          icon={Percent}
-          title={t('empty')}
-          description={t('emptyBody')}
-          action={<Button onClick={() => setEditing('new')}>{t('add')}</Button>}
-        />
-      ) : (
-        <ul className="bg-card divide-y overflow-hidden rounded-xl border shadow-xs">
-          {rules.data.map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-medium">{r.name}</p>
-                  {isDefault(r) ? <Badge variant="brand">{t('default')}</Badge> : null}
-                  {!r.active ? <Badge variant="neutral">{t('inactive')}</Badge> : null}
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  {[
-                    r.category?.name ?? t('allCategories'),
-                    r.buyerCode ?? t('allBuyers'),
-                    t('quotesPriced', { count: r.quotesPriced }),
-                  ].join(' · ')}
-                </p>
-              </div>
-              <p className="tabular text-lg font-semibold">{percent(r.markupBps)}</p>
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t('edit', { name: r.name })}
-                  onClick={() => setEditing(r)}
-                >
-                  <Pencil />
-                </Button>
-                {!isDefault(r) ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={t('delete', { name: r.name })}
-                    onClick={() =>
-                      remove.mutate(r.id, {
-                        onSuccess: () => toast.success(t('deleted')),
-                        onError: (e) =>
-                          toast.error(e instanceof ApiError ? e.message : t('failed')),
-                      })
-                    }
-                  >
-                    <Trash2 />
-                  </Button>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      <DataTable
+        data={rules.data}
+        columns={columns}
+        loading={rules.isPending}
+        error={rules.isError}
+        onRetry={() => void rules.refetch()}
+        retrying={rules.isFetching}
+        filters={[{ column: 'category', label: t('columns.category') }]}
+        csvName="pricing-rules"
+        empty={{
+          icon: Percent,
+          title: t('empty'),
+          description: t('emptyBody'),
+          action: <Button onClick={() => setEditing('new')}>{t('add')}</Button>,
+        }}
+      />
       <p className="text-subtle-foreground text-xs">{t('note')}</p>
       <RuleDialog rule={editing} onClose={() => setEditing(null)} />
     </div>
   );
+}
+
+/** "12.5" → 1250 basis points; null when it isn't a percentage. */
+function toBps(value: string): number | null {
+  const pct = Number(value.trim().replace(',', '.'));
+  return value.trim() !== '' && Number.isFinite(pct) && pct >= 0 && pct <= 100
+    ? Math.round(pct * 100)
+    : null;
 }
 
 function RuleDialog({ rule, onClose }: { rule: MarginRule | 'new' | null; onClose: () => void }) {
@@ -152,9 +214,20 @@ function RuleDialog({ rule, onClose }: { rule: MarginRule | 'new' | null; onClos
           onSubmit={(event) => {
             event.preventDefault();
             const data = new FormData(event.currentTarget);
-            const pct = Number(formString(data, 'percent').replace(',', '.'));
-            if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
+            const markupBps = toBps(formString(data, 'percent'));
+            const commissionBps = toBps(formString(data, 'commission'));
+            const repeatRaw = formString(data, 'repeatCommission');
+            const repeatCommissionBps = repeatRaw.trim() === '' ? null : toBps(repeatRaw);
+            if (markupBps === null || commissionBps === null) {
               setError(t('percentInvalid'));
+              return;
+            }
+            if (repeatRaw.trim() !== '' && repeatCommissionBps === null) {
+              setError(t('percentInvalid'));
+              return;
+            }
+            if (repeatCommissionBps !== null && repeatCommissionBps > commissionBps) {
+              setError(t('repeatTooHigh'));
               return;
             }
             const buyerCode = formString(data, 'buyerCode').trim().toUpperCase();
@@ -163,7 +236,11 @@ function RuleDialog({ rule, onClose }: { rule: MarginRule | 'new' | null; onClos
                 id: existing?.id ?? null,
                 dto: {
                   name: formString(data, 'name').trim(),
-                  markupBps: Math.round(pct * 100),
+                  markupBps,
+                  commissionBps,
+                  repeatCommissionBps,
+                  // Not editable here: keep whatever floor the rule already has.
+                  minMarginPerUnitMinor: existing?.minMarginPerUnitMinor ?? undefined,
                   categoryId: categoryId === 'any' ? null : categoryId,
                   buyerCode: buyerCode === '' ? null : buyerCode,
                   active: defaultRule || data.get('active') === 'on',
@@ -205,6 +282,35 @@ function RuleDialog({ rule, onClose }: { rule: MarginRule | 'new' | null; onClos
                 defaultValue={existing ? String(existing.markupBps / 100) : '15'}
               />
               <FieldDescription>{t('markupHint')}</FieldDescription>
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="rule-commission">{t('commission')}</FieldLabel>
+                <Input
+                  id="rule-commission"
+                  name="commission"
+                  inputMode="decimal"
+                  required
+                  defaultValue={existing ? String(existing.commissionBps / 100) : '0'}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="rule-repeat">{t('repeatCommission')}</FieldLabel>
+                <Input
+                  id="rule-repeat"
+                  name="repeatCommission"
+                  inputMode="decimal"
+                  placeholder={t('repeatPlaceholder')}
+                  defaultValue={
+                    existing && existing.repeatCommissionBps !== null
+                      ? String(existing.repeatCommissionBps / 100)
+                      : ''
+                  }
+                />
+              </Field>
+            </div>
+            <Field data-invalid={!!error}>
+              <FieldDescription>{t('commissionHint')}</FieldDescription>
               <FieldError>{error}</FieldError>
             </Field>
             {!defaultRule ? (

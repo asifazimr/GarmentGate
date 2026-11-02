@@ -25,6 +25,7 @@ import {
   uploadOrderMedia,
   useAddMilestoneMedia,
   useFactoryOrder,
+  useFactoryPayouts,
   useUpdateMilestone,
 } from '../api';
 import { NextAction } from './next-action';
@@ -48,6 +49,7 @@ export function FactoryOrderPage({ code }: { code: string }) {
   const locale = useLocale();
   const format = useFormatter();
   const order = useFactoryOrder(code);
+  const payouts = useFactoryPayouts(code);
   const [shipping, setShipping] = useState(false);
   const [moving, setMoving] = useState<OrderStatus | null>(null);
 
@@ -161,6 +163,19 @@ export function FactoryOrderPage({ code }: { code: string }) {
               [t('fields.quantity'), `${format.number(o.quantity)} pcs`],
               [t('fields.yourPrice'), formatMoney(o.unitPriceMinor, o.currency, locale)],
               [t('fields.yourTotal'), formatMoney(o.totalMinor, o.currency, locale)],
+              // Commission is fixed when the order is confirmed; shown once it applies.
+              ...(payouts.data && payouts.data.commissionMinor > 0
+                ? ([
+                    [
+                      t('fields.commission', { percent: payouts.data.commissionBps / 100 }),
+                      `− ${formatMoney(payouts.data.commissionMinor, o.currency, locale)}`,
+                    ],
+                    [
+                      t('fields.youReceive'),
+                      formatMoney(payouts.data.netMinor, o.currency, locale),
+                    ],
+                  ] as [string, string][])
+                : []),
               [
                 t('fields.terms'),
                 `${o.incoterm}${o.destinationPort ? ` ${o.destinationPort}` : ''}`,
