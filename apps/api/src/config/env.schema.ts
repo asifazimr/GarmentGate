@@ -46,6 +46,19 @@ export const EnvSchema = z.object({
   PLATFORM_ADDRESS: z.string().min(2).default('1 Sourcing Way, London EC2A 1AA, United Kingdom'),
   PLATFORM_EMAIL: z.email().default('orders@garmentgate.example'),
 
+  /** Where buyers send bank transfers; lines separated by "|". */
+  PLATFORM_BANK_DETAILS: z
+    .string()
+    .min(5)
+    .default(
+      'Bank: Example Bank plc|Account name: GarmentGate Trading Ltd.|IBAN: GB00 EXAM 0000 0000 0000 00|SWIFT/BIC: EXAMGB2L',
+    ),
+
+  /** Card payments (optional): without these, buyers pay by bank transfer or LC. */
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
   DATABASE_URL: z.url(),
   REDIS_URL: z.url(),
 

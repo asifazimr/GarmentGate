@@ -28,4 +28,7 @@ Object.assign(process.env, {
   S3_ACCESS_KEY_ID: 'garmentgate',
   S3_SECRET_ACCESS_KEY: 'garmentgate-dev-secret',
   S3_FORCE_PATH_STYLE: 'true',
+  STRIPE_SECRET_KEY: 'sk_test_offline',
+  STRIPE_PUBLISHABLE_KEY: 'pk_test_offline',
+  STRIPE_WEBHOOK_SECRET: 'whsec_test_offline',
 });

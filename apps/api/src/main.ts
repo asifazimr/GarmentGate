@@ -6,7 +6,7 @@ import { configureApp } from './bootstrap.js';
 import type { AppConfigService } from './config/config.module.js';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
   configureApp(app);
 
   const port = app.get<AppConfigService>(ConfigService).get('PORT', { infer: true });

@@ -1,5 +1,5 @@
 import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { Test, type TestingModuleBuilder } from '@nestjs/testing';
 import { hash } from '@node-rs/argon2';
 import type { EmailTemplateName, EmailTemplates } from '@garmentgate/emails';
 import request from 'supertest';
@@ -46,13 +46,16 @@ export interface TestContext {
   prisma: PrismaService;
 }
 
-export async function createTestApp(): Promise<TestContext> {
+export async function createTestApp(
+  override: (builder: TestingModuleBuilder) => TestingModuleBuilder = (b) => b,
+): Promise<TestContext> {
   const mail = new FakeMailService();
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-    .overrideProvider(MailService)
-    .useValue(mail)
-    .compile();
-  const app = moduleRef.createNestApplication<INestApplication<App>>();
+  const moduleRef = await override(
+    Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(MailService)
+      .useValue(mail),
+  ).compile();
+  const app = moduleRef.createNestApplication<INestApplication<App>>({ rawBody: true });
   configureApp(app);
   await app.init();
   return { app, mail, prisma: app.get(PrismaService) };

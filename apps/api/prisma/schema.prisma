@@ -393,6 +393,7 @@ enum FilePurpose {
   MESSAGE_ATTACHMENT
   MILESTONE_PHOTO
   SAMPLE_PHOTO
+  PAYMENT_PROOF
   INSPECTION_REPORT
   SHIPMENT_DOCUMENT
   DISPUTE_EVIDENCE
@@ -464,6 +465,8 @@ model User {
   disputesAssigned    Dispute[]                 @relation("DisputeAssignedTo")
   accountWarnings     AccountWarning[]
   orderEvents         OrderEvent[]
+  paymentsConfirmed   Payment[]                 @relation("PaymentConfirmedBy")
+  releasesApproved    OrderRelease[]            @relation("ReleaseApprovedBy")
 
   @@index([companyId])
   @@index([role, status])
@@ -1093,6 +1096,7 @@ model Order {
   reviews            Review[]
   disputes           Dispute[]
   conversations      Conversation[]
+  releases           OrderRelease[]
   events             OrderEvent[]
   reorderOf          Order?              @relation("Reorders", fields: [reorderOfId], references: [id], onDelete: SetNull)
   reorders           Order[]             @relation("Reorders")
@@ -1194,23 +1198,40 @@ model Sample {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Payment {
-  id            String           @id @default(uuid(7)) @db.Uuid
-  orderId       String           @db.Uuid
-  direction     PaymentDirection
-  purpose       PaymentPurpose
-  amountMinor   BigInt
-  currency      Currency
-  method        PaymentMethod
-  provider      String?
-  providerRef   String?          @unique
-  status        PaymentStatus    @default(PENDING)
-  paidAt        DateTime?
-  failureReason String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id                    String           @id @default(uuid(7)) @db.Uuid
+  orderId               String           @db.Uuid
+  /// Human reference the payer quotes, e.g. PAY-ORD-2026-00017-D1.
+  reference             String?          @unique
+  /// What the payer says they used (their bank reference); unverified.
+  payerReference        String?
+  /// Admin-only proof of receipt (bank statement, SWIFT copy, LC).
+  proofFileId           String?          @unique @db.Uuid
+  confirmedById         String?          @db.Uuid
+  /// Units of `currency` per USD at the time the money moved.
+  unitsPerUsd           Decimal?         @db.Decimal(20, 10)
+  amountUsdMinor        BigInt?
+  /// Payouts in another currency: what was actually sent.
+  settlementCurrency    Currency?
+  settlementAmountMinor BigInt?
+  releaseId             String?          @unique @db.Uuid
+  direction             PaymentDirection
+  purpose               PaymentPurpose
+  amountMinor           BigInt
+  currency              Currency
+  method                PaymentMethod
+  provider              String?
+  providerRef           String?          @unique
+  status                PaymentStatus    @default(PENDING)
+  paidAt                DateTime?
+  failureReason         String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
   order        Order               @relation(fields: [orderId], references: [id], onDelete: Restrict)
   transactions LedgerTransaction[]
+  proofFile    FileAsset?          @relation(fields: [proofFileId], references: [id], onDelete: Restrict)
+  confirmedBy  User?               @relation("PaymentConfirmedBy", fields: [confirmedById], references: [id], onDelete: SetNull)
+  release      OrderRelease?       @relation(fields: [releaseId], references: [id], onDelete: Restrict)
 
   @@index([orderId, status])
   @@index([status, createdAt])
@@ -1242,6 +1263,9 @@ model LedgerTransaction {
   description    String
   idempotencyKey String                @unique
   postedAt       DateTime              @default(now())
+  /// Units of `currency` per USD when posted, and the USD value: for multi-currency reporting.
+  unitsPerUsd    Decimal               @default(1) @db.Decimal(20, 10)
+  amountUsdMinor BigInt                @default(0)
 
   order   Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
   payment Payment?            @relation(fields: [paymentId], references: [id], onDelete: Restrict)
@@ -1497,6 +1521,8 @@ model FileAsset {
 
   samplePhoto SamplePhoto?
 
+  paymentProof Payment?
+
   @@index([ownerCompanyId, purpose])
   @@index([status, createdAt])
   @@map("file_assets")
@@ -1608,4 +1634,69 @@ model SamplePhoto {
 
   @@index([sampleId])
   @@map("sample_photos")
+}
+
+enum ReleaseTrigger {
+  PRODUCTION_START
+  QC_PASSED
+  SHIPPED
+  DELIVERED
+  COMPLETED
+}
+
+enum ReleaseStatus {
+  /// Waiting for its trigger.
+  SCHEDULED
+  /// Trigger reached: waiting for an admin to release it.
+  DUE
+  /// Moved from escrow to the factory's payable (and commission to revenue).
+  RELEASED
+  /// Paid out to the factory.
+  PAID
+  CANCELLED
+}
+
+/// One tranche of an order's escrow, snapshotted from the release schedule when the order is confirmed.
+model OrderRelease {
+  id                String         @id @default(uuid(7)) @db.Uuid
+  orderId           String         @db.Uuid
+  trigger           ReleaseTrigger
+  bps               Int
+  currency          Currency
+  buyerMinor        BigInt
+  manufacturerMinor BigInt
+  commissionMinor   BigInt
+  status            ReleaseStatus  @default(SCHEDULED)
+  dueAt             DateTime?
+  releasedAt        DateTime?
+  approvedById      String?        @db.Uuid
+  paidAt            DateTime?
+  createdAt         DateTime       @default(now())
+
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  approvedBy User?    @relation("ReleaseApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  payout     Payment?
+
+  @@unique([orderId, trigger])
+  @@index([status])
+  @@map("order_releases")
+}
+
+/// Current exchange rates (units per USD). Every money movement stores the rate it used.
+model ExchangeRate {
+  currency    Currency @id
+  unitsPerUsd Decimal  @db.Decimal(20, 10)
+  updatedAt   DateTime @updatedAt
+  updatedById String?  @db.Uuid
+
+  @@map("exchange_rates")
+}
+
+/// Platform-wide settings editable by admins (e.g. the default release schedule).
+model PlatformSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("platform_settings")
 }

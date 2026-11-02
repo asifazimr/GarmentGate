@@ -51,6 +51,7 @@ import {
   type OrderRow,
   progressOf,
 } from './order-views.js';
+import { OrderHooks } from './order-hooks.js';
 import { renderPurchaseOrder } from './purchase-order.js';
 
 /** When each production stage is planned, as a share of the time to the ship date. */
@@ -82,6 +83,7 @@ export class OrdersService {
     private readonly codes: PublicCodeService,
     private readonly audit: AuditService,
     private readonly config: ConfigService<Env, true>,
+    private readonly hooks: OrderHooks,
   ) {}
 
   // ── Reading ───────────────────────────────────────────────────────────────
@@ -266,16 +268,18 @@ export class OrdersService {
    * moved it meanwhile, records the event, then notifies both sides and staff.
    */
   private async move(
-    actor: ChatActor,
+    actor: ChatActor | 'SYSTEM',
     order: OrderRow,
     to: OrderStatus,
     note: string | undefined,
     effects: (tx: Prisma.TransactionClient) => Promise<Prisma.OrderUpdateManyMutationInput>,
   ): Promise<void> {
-    const who = actorOf(actor);
+    const who = actor === 'SYSTEM' ? 'ADMIN' : actorOf(actor);
+    const actorUserId = actor === 'SYSTEM' ? null : actor.userId;
     if (!canTransition(order.status, to, who)) {
       throw new ForbiddenException(`An order can’t go from ${order.status} to ${to} that way`);
     }
+    await this.hooks.before(order, to, who);
     if (
       order.status === 'DISPUTED' &&
       to !== order.disputedFrom &&
@@ -293,24 +297,39 @@ export class OrdersService {
       });
       if (count !== 1)
         throw new ConflictException('The order changed meanwhile: reload and try again');
+      await this.hooks.within(tx, order, to);
       await tx.orderEvent.create({
         data: {
           orderId: order.id,
           fromStatus: order.status,
           toStatus: to,
-          actorUserId: actor.userId,
+          actorUserId,
           note: filtered?.filtered ?? null,
         },
       });
     });
     await this.audit.log({
-      actorUserId: actor.userId,
+      actorUserId,
       action: filtered?.flagged ? 'moderation.contact_filtered' : `order.${to.toLowerCase()}`,
       entityType: 'Order',
       entityId: order.id,
       metadata: { from: order.status, to },
     });
     await this.announce(order, to);
+  }
+
+  /** A status change the platform makes itself (e.g. production starts when the deposit lands). */
+  async advance(orderId: string, to: OrderStatus, note: string): Promise<void> {
+    const order = await this.prisma.order.findUniqueOrThrow({
+      where: { id: orderId },
+      include: orderInclude,
+    });
+    if (!canTransition(order.status, to, 'ADMIN')) return;
+    await this.move('SYSTEM', order, to, note, async (tx) =>
+      to === 'IN_PRODUCTION' && order.status === 'DEPOSIT_PENDING'
+        ? (await this.planMilestones(tx, order, new Date()), {})
+        : {},
+    );
   }
 
   private async planMilestones(
