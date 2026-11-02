@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { OpenThreadButton } from '@/features/chat/components/open-thread-button';
 import { countryName } from '@/lib/countries';
-import { formatMoney } from '@/lib/format';
+import { useMoney } from '@/lib/use-money';
 import {
   purchaseOrderUrl,
   uploadOrderMedia,
@@ -47,6 +47,7 @@ import { OrderTimeline } from './order-timeline';
 export function FactoryOrderPage({ code }: { code: string }) {
   const t = useTranslations('orders');
   const locale = useLocale();
+  const showMoney = useMoney();
   const format = useFormatter();
   const order = useFactoryOrder(code);
   const payouts = useFactoryPayouts(code);
@@ -161,19 +162,16 @@ export function FactoryOrderPage({ code }: { code: string }) {
           <SummaryCard
             rows={[
               [t('fields.quantity'), `${format.number(o.quantity)} pcs`],
-              [t('fields.yourPrice'), formatMoney(o.unitPriceMinor, o.currency, locale)],
-              [t('fields.yourTotal'), formatMoney(o.totalMinor, o.currency, locale)],
+              [t('fields.yourPrice'), showMoney(o.unitPriceMinor, o.currency)],
+              [t('fields.yourTotal'), showMoney(o.totalMinor, o.currency)],
               // Commission is fixed when the order is confirmed; shown once it applies.
               ...(payouts.data && payouts.data.commissionMinor > 0
                 ? ([
                     [
                       t('fields.commission', { percent: payouts.data.commissionBps / 100 }),
-                      `− ${formatMoney(payouts.data.commissionMinor, o.currency, locale)}`,
+                      `− ${showMoney(payouts.data.commissionMinor, o.currency)}`,
                     ],
-                    [
-                      t('fields.youReceive'),
-                      formatMoney(payouts.data.netMinor, o.currency, locale),
-                    ],
+                    [t('fields.youReceive'), showMoney(payouts.data.netMinor, o.currency)],
                   ] as [string, string][])
                 : []),
               [

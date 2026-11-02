@@ -3,7 +3,7 @@
 import type { MilestoneStage, OrderStatus } from '@garmentgate/shared';
 import { Package } from 'lucide-react';
 import Link from 'next/link';
-import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { EmptyState } from '@/components/patterns/empty-state';
 import { ErrorState } from '@/components/patterns/error-state';
 import { PageHeader } from '@/components/patterns/page-header';
@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatMoney } from '@/lib/format';
+import { useMoney } from '@/lib/use-money';
 import { useBuyerOrders, useFactoryOrders } from '../api';
 
 interface Row {
@@ -85,7 +85,7 @@ export function OrderList({ role }: { role: ListRole }) {
 
 function OrderRow({ row: o, href }: { row: Row; href: string }) {
   const t = useTranslations('orders');
-  const locale = useLocale();
+  const showMoney = useMoney();
   const format = useFormatter();
   return (
     <li>
@@ -103,7 +103,7 @@ function OrderRow({ row: o, href }: { row: Row; href: string }) {
           <p className="text-muted-foreground text-xs">
             {t('list.meta', {
               quantity: o.quantity,
-              total: formatMoney(o.totalMinor, o.currency, locale),
+              total: showMoney(o.totalMinor, o.currency),
               date: o.requestedShipDate
                 ? format.dateTime(new Date(o.requestedShipDate), { dateStyle: 'medium' })
                 : '—',

@@ -9,7 +9,7 @@ import {
   type ManufacturerDispute,
 } from '@garmentgate/shared';
 import { FileText, Loader2, Scale } from 'lucide-react';
-import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { ErrorState } from '@/components/patterns/error-state';
@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OpenThreadButton } from '@/features/chat/components/open-thread-button';
-import { formatMoney } from '@/lib/format';
+import { useMoney } from '@/lib/use-money';
 import {
   uploadEvidence,
   useAddEvidence,
@@ -206,10 +206,10 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function Refund({ minor, currency }: { minor: number; currency: string }) {
   const t = useTranslations('trust.disputes');
-  const locale = useLocale();
+  const showMoney = useMoney();
   return (
     <p className="bg-success-soft text-success-ink rounded-lg p-3 text-sm font-medium">
-      {t('refunded', { amount: formatMoney(minor, currency, locale) })}
+      {t('refunded', { amount: showMoney(minor, currency) })}
     </p>
   );
 }

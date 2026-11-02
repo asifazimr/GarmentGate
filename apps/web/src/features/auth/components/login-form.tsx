@@ -3,13 +3,14 @@
 import { type LoginInput, LoginSchema } from '@garmentgate/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { useClientSearchParam } from '@/lib/client-hooks';
 import { applyServerErrors } from '@/lib/form-errors';
 import { homeFor, useLogin } from '../api';
 import { FormAlert } from './form-alert';
@@ -19,11 +20,9 @@ export function LoginForm() {
   const t = useTranslations('auth.login');
   const tc = useTranslations('common');
   const router = useRouter();
-  const params = useSearchParams();
   const login = useLogin();
-  const [formError, setFormError] = useState<string | null>(
-    params.get('expired') ? t('sessionExpired') : null,
-  );
+  const expired = useClientSearchParam('expired') !== null;
+  const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(LoginSchema),
@@ -35,7 +34,8 @@ export function LoginForm() {
     setFormError(null);
     try {
       const user = await login.mutateAsync(values);
-      const next = params.get('next');
+      // Read at submit time, so the page itself stays static.
+      const next = new URLSearchParams(window.location.search).get('next');
       router.replace(next?.startsWith('/') && !next.startsWith('//') ? next : homeFor(user));
       router.refresh();
     } catch (error) {
@@ -52,7 +52,7 @@ export function LoginForm() {
         <p className="text-muted-foreground">{t('subtitle')}</p>
       </header>
 
-      <FormAlert message={formError} />
+      <FormAlert message={formError ?? (expired ? t('sessionExpired') : null)} />
 
       <FieldGroup>
         <Field data-invalid={!!errors.email}>

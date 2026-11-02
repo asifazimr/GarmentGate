@@ -205,7 +205,15 @@ function AssignInspector({ inspection }: { inspection: OrderInspection }) {
         }}
       >
         <SelectTrigger id={`assign-${inspection.id}`} size="sm" className="min-w-44">
-          <SelectValue placeholder={inspectors.isPending ? t('loading') : t('placeholder')} />
+          <SelectValue
+            placeholder={
+              inspectors.isPending
+                ? t('loading')
+                : inspectors.isError
+                  ? t('loadFailed')
+                  : t('placeholder')
+            }
+          />
         </SelectTrigger>
         <SelectContent>
           {active.map((i) => (

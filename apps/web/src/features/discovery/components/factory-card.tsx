@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { countryName } from '@/lib/countries';
 import { FavoriteButton } from './save-controls';
+import { Rendition } from '@/components/patterns/rendition';
 
 /** Anonymised factory tile: public code, country, headline, score. */
 export function FactoryCard({
@@ -29,8 +30,12 @@ export function FactoryCard({
       >
         <div className="bg-muted relative aspect-[16/9] overflow-hidden">
           {cover ? (
-            // eslint-disable-next-line @next/next/no-img-element -- short-lived signed rendition URLs
-            <img src={cover.medium} alt="" className="size-full object-cover" loading="lazy" />
+            <Rendition
+              urls={cover}
+              sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+              alt=""
+              className="size-full object-cover"
+            />
           ) : (
             <div className="text-subtle-foreground flex size-full items-center justify-center">
               <Factory className="size-6" aria-hidden="true" />

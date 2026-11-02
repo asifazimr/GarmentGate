@@ -22,11 +22,12 @@ import { FormAlert } from '@/features/auth/components/form-alert';
 import { ApiError } from '@/lib/api';
 import { countryName } from '@/lib/countries';
 import { applyServerErrors } from '@/lib/form-errors';
-import { formatMoney, fromMinor, toMinor } from '@/lib/format';
+import { fromMinor, toMinor } from '@/lib/format';
 import { useFactoryRfq, useSubmitQuote } from '../api';
 import { QUOTE_FIELDS, QuoteFormSchema, type QuoteFormValues } from '../forms';
 import { OpenThreadButton } from '@/features/chat/components/open-thread-button';
 import { AttachmentList } from './attachment-list';
+import { useMoney } from '@/lib/use-money';
 
 export function FactoryRfqDetail({ code }: { code: string }) {
   const t = useTranslations('rfq.factoryDetail');
@@ -145,6 +146,7 @@ function QuoteForm({ rfq }: { rfq: ManufacturerRfqDetail }) {
   const t = useTranslations('rfq.quoteForm');
   const tc = useTranslations('common');
   const locale = useLocale();
+  const showMoney = useMoney();
   const submit = useSubmitQuote(rfq.code);
   const [formError, setFormError] = useState<string | null>(null);
   const mine = rfq.myQuote;
@@ -253,7 +255,7 @@ function QuoteForm({ rfq }: { rfq: ManufacturerRfqDetail }) {
                 {t('total', { quantity: rfq.quantity.toLocaleString(locale) })}
               </span>
               <span className="tabular font-semibold">
-                {Number.isNaN(unit) ? '—' : formatMoney(unit * rfq.quantity, rfq.currency, locale)}
+                {Number.isNaN(unit) ? '—' : showMoney(unit * rfq.quantity, rfq.currency)}
               </span>
             </div>
             <p className="text-muted-foreground flex gap-2 text-xs leading-relaxed">

@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CATEGORY_ICONS } from '@/features/activity/notification-icons';
 import { useNotificationPreferences, useSaveNotificationPreferences } from './api';
+import { PreferencesCard } from './preferences';
 
 /** Which categories reach the person in the app (bell, live) and by email. Saves on toggle. */
 export function NotificationSettings({ categories }: { categories: NotificationCategory[] }) {
@@ -34,6 +35,7 @@ export function NotificationSettings({ categories }: { categories: NotificationC
   return (
     <div className="space-y-6">
       <PageHeader title={t('title')} description={t('description')} />
+      <PreferencesCard />
       <Card>
         <CardHeader>
           <CardTitle>{t('notifications.title')}</CardTitle>

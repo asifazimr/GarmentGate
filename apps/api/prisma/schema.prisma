@@ -467,6 +467,8 @@ model User {
   role            Role
   status          UserStatus   @default(ACTIVE)
   locale          String       @default("en")
+  /// Show amounts converted to this currency too (null: only the transaction's own currency).
+  displayCurrency Currency?
   firstName       String
   lastName        String
   emailVerifiedAt DateTime?
@@ -901,6 +903,8 @@ model Rfq {
   @@index([buyerCompanyId, status])
   @@index([status, deadline])
   @@index([categoryId])
+  /// Admin overview: RFQ → order conversion by publication month.
+  @@index([publishedAt])
   @@map("rfqs")
 }
 
@@ -972,6 +976,7 @@ model Quote {
   @@index([rfqId, status])
   @@index([manufacturerProfileId, status])
   @@index([status, createdAt])
+
   @@map("quotes")
 }
 
@@ -1162,6 +1167,10 @@ model Order {
   @@index([buyerCompanyId, status])
   @@index([manufacturerProfileId, status])
   @@index([status, createdAt])
+  /// Repeat-order commission: has this buyer completed an order with this factory?
+  @@index([buyerCompanyId, manufacturerProfileId, status])
+  /// Admin overview: GMV by confirmation month.
+  @@index([confirmedAt])
   @@map("orders")
 }
 
@@ -1561,6 +1570,8 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt, createdAt])
+  /// The activity feed pages back through a user's notifications by time.
+  @@index([userId, createdAt])
   @@map("notifications")
 }
 
@@ -1594,6 +1605,8 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([actorUserId, createdAt])
   @@index([action, createdAt])
+  /// The audit log viewer reads newest first over a time window.
+  @@index([createdAt])
   @@map("audit_logs")
 }
 

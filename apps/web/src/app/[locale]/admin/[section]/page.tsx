@@ -1,0 +1,22 @@
+import { Suspense } from 'react';
+import { ComingSoon, ComingSoonSkeleton } from '@/features/shell/coming-soon';
+import { comingSoonSections } from '@/features/shell/nav';
+
+// Sections from the navigation are prerendered; ComingSoon 404s anything else.
+export function generateStaticParams() {
+  return comingSoonSections('ADMIN').map((section) => ({ section }));
+}
+
+export default function AdminSectionPage({ params }: PageProps<'/[locale]/admin/[section]'>) {
+  // Reading params inside Suspense keeps navigation instant under Cache Components.
+  return (
+    <Suspense fallback={<ComingSoonSkeleton />}>
+      <Section params={params} />
+    </Suspense>
+  );
+}
+
+async function Section({ params }: Pick<PageProps<'/[locale]/admin/[section]'>, 'params'>) {
+  const { section } = await params;
+  return <ComingSoon role="ADMIN" section={section} />;
+}

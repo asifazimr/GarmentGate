@@ -26,3 +26,4 @@ export * from './trust/disputes.schema.js';
 export * from './admin/commission.js';
 export * from './admin/admin.schema.js';
 export * from './admin/csv.js';
+export * from './i18n/locales.js';

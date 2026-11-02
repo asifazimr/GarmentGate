@@ -13,7 +13,7 @@ import {
   Truck,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { EmptyState } from '@/components/patterns/empty-state';
 import { ErrorState } from '@/components/patterns/error-state';
 import { PageHeader } from '@/components/patterns/page-header';
@@ -27,7 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ActivityFeed } from '@/features/activity/activity-feed';
 import { useMe } from '@/features/auth/api';
 import { useIsClient } from '@/lib/client-hooks';
-import { formatMoney } from '@/lib/format';
+import { useMoney } from '@/lib/use-money';
 import { useBuyerDashboard } from '../api';
 import { FactoryCard, FactoryCardSkeleton } from './factory-card';
 
@@ -35,7 +35,7 @@ import { FactoryCard, FactoryCardSkeleton } from './factory-card';
 export function BuyerDashboard() {
   const t = useTranslations('dashboard');
   const tb = useTranslations('dashboard.buyer');
-  const locale = useLocale();
+  const showMoney = useMoney();
   const format = useFormatter();
   const me = useMe();
   // The user may already be cached from sign-in; the prerendered HTML never has it.
@@ -66,8 +66,8 @@ export function BuyerDashboard() {
       value:
         data &&
         (escrow.length > 0
-          ? escrow.map((e) => formatMoney(e.amountMinor, e.currency, locale)).join(' · ')
-          : formatMoney(0, 'USD', locale)),
+          ? escrow.map((e) => showMoney(e.amountMinor, e.currency)).join(' · ')
+          : showMoney(0, 'USD')),
       hint: tb('stats.inEscrowHint'),
     },
   ];
@@ -75,12 +75,13 @@ export function BuyerDashboard() {
   return (
     <div className="space-y-10">
       <PageHeader
-        eyebrow={user?.company?.publicCode ?? undefined}
+        // A placeholder holds the eyebrow's line, so the header doesn't jump when it loads.
+        eyebrow={user ? (user.company?.publicCode ?? undefined) : <Skeleton className="h-4 w-24" />}
         title={!user ? <Skeleton className="h-8 w-64" /> : t('welcome', { name: user.firstName })}
         description={tb('subtitle')}
         actions={
           <>
-            <Button variant="outline" render={<Link href="/buyer/rfqs" />}>
+            <Button variant="outline" render={<Link href="/buyer/rfqs/new" />}>
               <FilePlus2 />
               {tb('actions.rfq')}
             </Button>
@@ -276,7 +277,7 @@ function Section({
 
 function OrderRow({ order }: { order: Dashboard['activeOrders'][number] }) {
   const tb = useTranslations('dashboard.buyer');
-  const locale = useLocale();
+  const showMoney = useMoney();
   const format = useFormatter();
   return (
     <li>
@@ -288,7 +289,7 @@ function OrderRow({ order }: { order: Dashboard['activeOrders'][number] }) {
           <Badge variant="code">{order.code}</Badge>
           <StatusBadge domain="order" status={order.status} />
           <span className="text-muted-foreground ms-auto tabular text-sm font-medium">
-            {formatMoney(order.totalMinor, order.currency, locale)}
+            {showMoney(order.totalMinor, order.currency)}
           </span>
         </div>
         <p className="truncate font-medium">{order.title}</p>

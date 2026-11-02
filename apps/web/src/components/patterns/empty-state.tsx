@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { Appear } from './appear';
 
 /**
  * Shown when a list has nothing in it. Always say what to do next, and include the primary
@@ -22,7 +23,7 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div
+    <Appear
       className={cn(
         'flex flex-col items-center justify-center text-center',
         size === 'default'
@@ -46,6 +47,6 @@ export function EmptyState({
         </p>
       ) : null}
       {action ? <div className="mt-6 flex flex-wrap justify-center gap-2">{action}</div> : null}
-    </div>
+    </Appear>
   );
 }

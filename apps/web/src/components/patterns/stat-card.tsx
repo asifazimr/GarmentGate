@@ -2,6 +2,7 @@ import { ArrowDownRight, ArrowUpRight, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Appear } from './appear';
 import { cn } from '@/lib/utils';
 
 export interface StatDelta {
@@ -41,12 +42,17 @@ export function StatCard({
         ) : null}
       </div>
       {loading ? (
-        <Skeleton className="h-8 w-28" />
+        // Same height as the figure (28px), so nothing moves when it loads.
+        <Skeleton className="h-7 w-28" />
       ) : (
         <div className="flex items-end justify-between gap-4">
-          <div className="tabular text-[1.75rem] leading-none font-semibold tracking-[-0.03em]">
+          {/* The figure settles in when it loads and whenever it changes (e.g. a new period). */}
+          <Appear
+            key={typeof value === 'string' || typeof value === 'number' ? value : undefined}
+            className="tabular text-[1.75rem] leading-none font-semibold tracking-[-0.03em]"
+          >
             {value}
-          </div>
+          </Appear>
           {trend && trend.length > 1 ? (
             <Sparkline values={trend} sentiment={delta?.sentiment} />
           ) : null}

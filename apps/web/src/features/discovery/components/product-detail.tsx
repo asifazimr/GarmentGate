@@ -35,11 +35,12 @@ import {
 } from '@/components/ui/table';
 import { ApiError } from '@/lib/api';
 import { countryName } from '@/lib/countries';
-import { formatMoney } from '@/lib/format';
+import { useMoney } from '@/lib/use-money';
 import { cn } from '@/lib/utils';
 import { useFactory, useProduct } from '../api';
 import { RequestDialog, type RequestKind } from './request-dialog';
 import { FavoriteButton, SaveToListMenu } from './save-controls';
+import { Rendition } from '@/components/patterns/rendition';
 
 /** The tier that applies to a quantity: the highest minQty not above it. */
 export function tierFor(tiers: PublicProduct['priceTiers'], quantity: number) {
@@ -71,6 +72,7 @@ export function ProductDetail({ id }: { id: string }) {
 function ProductView({ product: p }: { product: PublicProduct }) {
   const t = useTranslations('discovery.product');
   const locale = useLocale();
+  const showMoney = useMoney();
   const format = useFormatter();
   const factory = useFactory(p.manufacturerCode);
   const [requesting, setRequesting] = useState<RequestKind | null>(null);
@@ -80,7 +82,7 @@ function ProductView({ product: p }: { product: PublicProduct }) {
   const validQty = Number.isInteger(qty) && qty > 0;
   const tier = validQty ? tierFor(p.priceTiers, qty) : null;
   const tiers = [...p.priceTiers].sort((a, b) => a.minQty - b.minQty);
-  const money = (minor: number) => formatMoney(minor, p.currency, locale);
+  const money = (minor: number) => showMoney(minor, p.currency);
 
   const specs = [
     { icon: Shirt, label: t('fabric'), value: p.fabric },
@@ -282,13 +284,12 @@ function Gallery({ images, title }: { images: PublicProduct['images']; title: st
   return (
     <section aria-label={t('gallery')} className="space-y-3">
       <div className="bg-muted overflow-hidden rounded-2xl border">
-        {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed rendition URLs */}
-        <img
+        <Rendition
           key={current.id}
-          src={current.urls.large}
+          urls={current.urls}
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          priority
           alt={current.caption ?? title}
-          width={current.urls.width}
-          height={current.urls.height}
           className="animate-in fade-in-0 aspect-[4/3] size-full object-cover duration-200 motion-reduce:animate-none"
         />
       </div>
@@ -308,8 +309,12 @@ function Gallery({ images, title }: { images: PublicProduct['images']; title: st
                     : 'border-transparent opacity-70 hover:opacity-100',
                 )}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed rendition URLs */}
-                <img src={image.urls.thumb} alt="" className="size-full object-cover" />
+                <Rendition
+                  urls={image.urls}
+                  sizes="80px"
+                  alt=""
+                  className="size-full object-cover"
+                />
               </button>
             </li>
           ))}

@@ -76,7 +76,7 @@ export function CommandMenu({ role }: { role: Role }) {
             </CommandGroup>
             {role === 'BUYER' ? (
               <CommandGroup heading={t('groups.actions')}>
-                <CommandItem onSelect={() => run(() => router.push('/buyer/rfqs'))}>
+                <CommandItem onSelect={() => run(() => router.push('/buyer/rfqs/new'))}>
                   <FilePlus2 />
                   {t('actions.newRfq')}
                 </CommandItem>
@@ -122,7 +122,7 @@ function SearchTrigger({ onOpen }: { onOpen: () => void }) {
         type="button"
         onClick={onOpen}
         aria-haspopup="dialog"
-        aria-label={t('searchHint')}
+        title={t('searchHint')}
         className={cn(
           'hidden h-9 w-full max-w-sm items-center gap-2 rounded-lg border bg-card px-3 text-sm text-subtle-foreground shadow-xs transition-colors outline-none hover:border-border-strong hover:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/30 md:flex',
         )}

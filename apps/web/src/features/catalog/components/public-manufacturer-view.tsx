@@ -6,6 +6,7 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { countryName } from '@/lib/countries';
+import { Rendition } from '@/components/patterns/rendition';
 
 /**
  * Renders the anonymised, buyer-facing factory profile. Takes only `PublicManufacturer`, so it
@@ -151,7 +152,7 @@ export function PublicManufacturerView({ manufacturer: m }: { manufacturer: Publ
                       <BadgeCheck aria-hidden="true" />
                       <span>{c.name ?? tcert(c.type)}</span>
                       {c.validUntil ? (
-                        <span className="opacity-70">
+                        <span className="font-normal">
                           ·{' '}
                           {t('validUntil', {
                             date: format.dateTime(new Date(`${c.validUntil}-01T00:00:00Z`), {
@@ -245,12 +246,16 @@ function PhotoMosaic({ photos }: { photos: PublicManufacturer['photos'] }) {
         const hero = i === 0 && count >= 3;
         return (
           <li key={p.id} className={hero ? 'col-span-2 row-span-2' : ''}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- signed rendition URLs */}
-            <img
-              src={hero || count <= 2 ? p.urls.large : p.urls.medium}
+            <Rendition
+              urls={p.urls}
+              sizes={
+                hero || count <= 2
+                  ? '(min-width: 640px) 66vw, 100vw'
+                  : '(min-width: 640px) 33vw, 50vw'
+              }
+              priority={hero}
               alt={p.caption ?? ''}
               className={`bg-muted size-full rounded-xl object-cover ${hero ? 'aspect-[4/3] sm:aspect-auto' : 'aspect-[4/3]'}`}
-              loading="lazy"
             />
           </li>
         );

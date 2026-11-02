@@ -70,16 +70,34 @@ function ButtonAs({
   className,
   children,
   disabled,
-}: Pick<ButtonProps, 'className' | 'children' | 'disabled'> & { render: ReactElement }) {
+  ...rest
+}: Omit<ButtonProps, 'variant' | 'size'> & { render: ReactElement }) {
   return useRender({
     render,
     props: {
+      // Accessible names, ids, titles and handlers reach the link (e.g. icon-only links).
+      ...domProps(rest),
       className: typeof className === 'string' ? className : undefined,
       children: typeof children === 'function' ? undefined : children,
       ...(disabled && { 'aria-disabled': true, tabIndex: -1 }),
     },
     state: { slot: 'button' },
   });
+}
+
+/** The props that make sense on any element: aria-*, data-*, id, title, handlers. */
+function domProps(props: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(props).filter(
+      ([key]) =>
+        key.startsWith('aria-') ||
+        key.startsWith('data-') ||
+        /^on[A-Z]/.test(key) ||
+        key === 'id' ||
+        key === 'title' ||
+        key === 'tabIndex',
+    ),
+  );
 }
 
 export { Button, buttonVariants };

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { Suspense } from 'react';
 import { PageHeader } from '@/components/patterns/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,11 +20,15 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { Skeleton } from '@/components/ui/skeleton';
 import { ActivityFeed } from '@/features/activity/activity-feed';
 import { useMe } from '@/features/auth/api';
+import { FactoryTodo, FactoryTodoSkeleton } from './factory-todo';
 import { NAV } from '@/features/shell/nav';
 
 const BUILT = new Set(
   [...NAV.BUYER, ...NAV.MANUFACTURER].filter((i) => i.built).map((i) => i.href),
 );
+
+/** A built section, or a page inside one (e.g. /buyer/rfqs/new). */
+const isBuilt = (href: string) => [...BUILT].some((b) => href === b || href.startsWith(`${b}/`));
 
 type DashboardRole = 'buyer' | 'manufacturer';
 
@@ -37,7 +42,7 @@ export function RoleDashboard({ role }: { role: DashboardRole }) {
   const actions =
     role === 'buyer'
       ? [
-          { href: '/buyer/rfqs', Icon: FileText, title: tb('rfq'), body: tb('rfqBody') },
+          { href: '/buyer/rfqs/new', Icon: FileText, title: tb('rfq'), body: tb('rfqBody') },
           { href: '/buyer/orders', Icon: Truck, title: tb('orders'), body: tb('ordersBody') },
           {
             href: '/buyer/messages',
@@ -70,7 +75,9 @@ export function RoleDashboard({ role }: { role: DashboardRole }) {
   return (
     <div className="space-y-10">
       <PageHeader
-        eyebrow={me.data?.company?.publicCode ?? undefined}
+        eyebrow={
+          me.data ? (me.data.company?.publicCode ?? undefined) : <Skeleton className="h-4 w-24" />
+        }
         title={
           me.isPending ? (
             <Skeleton className="h-8 w-64" />
@@ -81,13 +88,20 @@ export function RoleDashboard({ role }: { role: DashboardRole }) {
         description={t(`${role}.subtitle`)}
         actions={
           role === 'buyer' ? (
-            <Button render={<Link href="/buyer/rfqs" />}>
+            <Button render={<Link href="/buyer/rfqs/new" />}>
               <FilePlus2 />
               {tb('rfq')}
             </Button>
           ) : null
         }
       />
+
+      {role === 'manufacturer' ? (
+        // Reads the current time (open deadlines), so it streams in after the static shell.
+        <Suspense fallback={<FactoryTodoSkeleton />}>
+          <FactoryTodo />
+        </Suspense>
+      ) : null}
 
       <section aria-labelledby="quick-actions" className="space-y-3">
         <h2 id="quick-actions" className="text-muted-foreground text-sm font-medium">
@@ -113,7 +127,7 @@ export function RoleDashboard({ role }: { role: DashboardRole }) {
                     </div>
                     <CardTitle className="flex items-center gap-2">
                       {title}
-                      {BUILT.has(href) ? null : <Badge variant="neutral">{t('comingSoon')}</Badge>}
+                      {isBuilt(href) ? null : <Badge variant="neutral">{t('comingSoon')}</Badge>}
                     </CardTitle>
                     <CardDescription>{body}</CardDescription>
                   </CardHeader>
@@ -127,7 +141,7 @@ export function RoleDashboard({ role }: { role: DashboardRole }) {
       <ActivityFeed
         emptyAction={
           role === 'buyer' ? (
-            <Button render={<Link href="/buyer/rfqs" />}>
+            <Button render={<Link href="/buyer/rfqs/new" />}>
               <FilePlus2 />
               {tb('rfq')}
             </Button>

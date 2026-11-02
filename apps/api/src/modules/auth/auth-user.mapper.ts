@@ -1,4 +1,9 @@
-import type { AccessTokenClaims, AuthUser } from '@garmentgate/shared';
+import {
+  type AccessTokenClaims,
+  type AuthUser,
+  DEFAULT_LOCALE,
+  isLocale,
+} from '@garmentgate/shared';
 import type { Prisma } from '../../generated/prisma/client.js';
 
 export const authUserInclude = {
@@ -16,7 +21,8 @@ export function toAuthUser(user: UserWithCompany): AuthUser {
     firstName: user.firstName,
     lastName: user.lastName,
     role: user.role,
-    locale: user.locale,
+    locale: isLocale(user.locale) ? user.locale : DEFAULT_LOCALE,
+    displayCurrency: user.displayCurrency,
     emailVerified: user.emailVerifiedAt !== null,
     company: company
       ? {

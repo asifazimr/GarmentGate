@@ -12,7 +12,9 @@ import {
   Trophy,
   Zap,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { EmptyState } from '@/components/patterns/empty-state';
@@ -31,9 +33,9 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormAlert } from '@/features/auth/components/form-alert';
-import { ApiError } from '@/lib/api';
+import { ApiError, apiSend } from '@/lib/api';
 import { countryName } from '@/lib/countries';
-import { formatMoney } from '@/lib/format';
+import { useMoney } from '@/lib/use-money';
 import { cn } from '@/lib/utils';
 import { useAcceptQuote, useBuyerRfq } from '../api';
 import { OpenThreadButton } from '@/features/chat/components/open-thread-button';
@@ -72,11 +74,12 @@ function DetailView({ rfq }: { rfq: Detail }) {
   const t = useTranslations('rfq.buyerDetail');
   const ti = useTranslations('rfq.wizard.incoterms');
   const locale = useLocale();
+  const showMoney = useMoney();
   const format = useFormatter();
   const [accepting, setAccepting] = useState<BuyerQuote | null>(null);
   const date = (iso: string | null) =>
     iso ? format.dateTime(new Date(iso), { dateStyle: 'medium' }) : '—';
-  const money = (minor: number) => formatMoney(minor, rfq.currency, locale);
+  const money = (minor: number) => showMoney(minor, rfq.currency);
   const canAccept = rfq.status === 'OPEN' || rfq.status === 'CLOSED';
   const live = rfq.quotes.filter((q) => q.status === 'OFFERED');
 
@@ -400,9 +403,27 @@ function AcceptDialog({
   const t = useTranslations('rfq.buyerDetail');
   const tc = useTranslations('common');
   const locale = useLocale();
+  const showMoney = useMoney();
+  const router = useRouter();
   const accept = useAcceptQuote(rfq.code);
   const [error, setError] = useState<string | null>(null);
   const [orderCode, setOrderCode] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  // Most buyers order straight from an approved catalog style: confirm and pay in one go.
+  const confirmAndPay = async (code: string) => {
+    setConfirming(true);
+    setError(null);
+    try {
+      await apiSend(`/orders/${code}/transition`, {
+        method: 'POST',
+        body: { to: 'DEPOSIT_PENDING' },
+      });
+      router.push(`/buyer/orders/${code}?pay=deposit`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : tc('networkError'));
+      setConfirming(false);
+    }
+  };
   const close = () => {
     setError(null);
     setOrderCode(null);
@@ -415,14 +436,29 @@ function AcceptDialog({
         {orderCode ? (
           <div className="grid gap-5">
             <div className="flex flex-col items-center gap-3 pt-2 text-center">
-              <span className="bg-success-soft text-success-ink flex size-12 items-center justify-center rounded-full">
+              <motion.span
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 18 }}
+                className="bg-success-soft text-success-ink flex size-12 items-center justify-center rounded-full"
+              >
                 <CheckCircle2 className="size-6" aria-hidden="true" />
-              </span>
+              </motion.span>
               <DialogTitle>{t('acceptedTitle')}</DialogTitle>
               <DialogDescription>{t('acceptedBody', { order: orderCode })}</DialogDescription>
             </div>
+            <FormAlert message={error} />
             <DialogFooter>
-              <Button onClick={close}>{t('done')}</Button>
+              <Button
+                variant="outline"
+                render={<Link href={`/buyer/orders/${orderCode}`} />}
+                disabled={confirming}
+              >
+                {t('sampleFirst')}
+              </Button>
+              <Button disabled={confirming} onClick={() => void confirmAndPay(orderCode)}>
+                {confirming ? t('confirming') : t('confirmAndPay')}
+              </Button>
             </DialogFooter>
           </div>
         ) : quote ? (
@@ -434,9 +470,9 @@ function AcceptDialog({
             <FormAlert message={error} />
             <dl className="bg-surface divide-y rounded-lg border text-sm">
               {[
-                [t('unitPrice'), formatMoney(quote.unitPriceMinor, quote.currency, locale)],
+                [t('unitPrice'), showMoney(quote.unitPriceMinor, quote.currency)],
                 [t('quantityLabel'), `${rfq.quantity.toLocaleString(locale)} pcs`],
-                [t('totalLabel'), formatMoney(quote.totalMinor, quote.currency, locale)],
+                [t('totalLabel'), showMoney(quote.totalMinor, quote.currency)],
                 [t('leadTime'), t('days', { count: quote.leadTimeDays })],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between gap-4 px-3 py-2">

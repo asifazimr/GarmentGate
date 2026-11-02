@@ -17,7 +17,6 @@ import { useQueryStates } from 'nuqs';
 import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { EmptyState } from '@/components/patterns/empty-state';
 import { ErrorState } from '@/components/patterns/error-state';
-import { PageHeader } from '@/components/patterns/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
@@ -112,8 +111,6 @@ export function ProductSearch() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t('title')} description={t('description')} />
-
       <SearchBox value={params.q} onSearch={(q) => void setParams({ q: q || null, page: 1 })} />
 
       <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
@@ -248,8 +245,8 @@ export function ProductSearch() {
                 )}
               >
                 <ProductGrid view={view}>
-                  {data.hits.map((p) => (
-                    <ProductCard key={p.id} product={p} view={view} />
+                  {data.hits.map((p, i) => (
+                    <ProductCard key={p.id} product={p} view={view} priority={i < 4} />
                   ))}
                 </ProductGrid>
               </div>

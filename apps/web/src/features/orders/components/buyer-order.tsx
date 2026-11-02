@@ -1,15 +1,16 @@
 'use client';
 
-import type { OrderStatus } from '@garmentgate/shared';
+import type { BuyerPaymentPurpose, OrderStatus } from '@garmentgate/shared';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { OpenThreadButton } from '@/features/chat/components/open-thread-button';
 import { countryName } from '@/lib/countries';
-import { formatMoney } from '@/lib/format';
+import { useMoney } from '@/lib/use-money';
 import { InspectionsPanel } from '@/features/qc/components/inspections-panel';
-import { PayBalanceDialog } from '@/features/qc/components/pay-balance-dialog';
+import { PayDialog } from '@/features/qc/components/pay-dialog';
 import { ShipmentPanel } from '@/features/qc/components/shipment-panel';
 import { OpenDisputeDialog } from '@/features/trust/components/dispute-dialogs';
 import { BuyerDisputePanel } from '@/features/trust/components/dispute-panel';
@@ -35,13 +36,18 @@ import { OrderTimeline } from './order-timeline';
 export function BuyerOrderPage({ code }: { code: string }) {
   const t = useTranslations('orders');
   const locale = useLocale();
+  const showMoney = useMoney();
   const format = useFormatter();
   const order = useBuyerOrder(code);
   const [requesting, setRequesting] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [reordering, setReordering] = useState(false);
   const [moving, setMoving] = useState<OrderStatus | null>(null);
-  const [paying, setPaying] = useState(false);
+  // `?pay=deposit` (straight after accepting a quote) opens the deposit right away.
+  const params = useSearchParams();
+  const [paying, setPaying] = useState<BuyerPaymentPurpose | null>(
+    params.get('pay') === 'deposit' ? 'DEPOSIT' : null,
+  );
   const [disputing, setDisputing] = useState(false);
 
   if (order.isPending) return <OrderLoading />;
@@ -55,7 +61,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
       />
     );
   const o = order.data;
-  const money = (minor: number) => formatMoney(minor, o.currency, locale);
+  const money = (minor: number) => showMoney(minor, o.currency);
   const latest = o.samples.at(-1) ?? null;
   const can = (to: OrderStatus) => o.allowedTransitions.includes(to);
   const stage = o.milestones.find((m) => m.status !== 'COMPLETED');
@@ -115,7 +121,10 @@ export function BuyerOrderPage({ code }: { code: string }) {
           </>
         ) : null}
         {o.status === 'DEPOSIT_PENDING' ? (
-          <PoButton href={purchaseOrderUrl(o.code)} label={t('purchaseOrder')} />
+          <>
+            <Button onClick={() => setPaying('DEPOSIT')}>{t('actions.payDeposit')}</Button>
+            <PoButton href={purchaseOrderUrl(o.code)} label={t('purchaseOrder')} />
+          </>
         ) : null}
         {finalFailed ? (
           <>
@@ -126,7 +135,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
           </>
         ) : null}
         {o.status === 'READY_TO_SHIP' && !o.balancePaid ? (
-          <Button onClick={() => setPaying(true)}>{t('actions.payBalance')}</Button>
+          <Button onClick={() => setPaying('BALANCE')}>{t('actions.payBalance')}</Button>
         ) : null}
         {can('DELIVERED') ? (
           <Button onClick={() => setMoving('DELIVERED')}>{t('actions.delivered')}</Button>
@@ -240,7 +249,12 @@ export function BuyerOrderPage({ code }: { code: string }) {
         onClose={() => setMoving(null)}
       />
       <OpenDisputeDialog code={o.code} open={disputing} onClose={() => setDisputing(false)} />
-      <PayBalanceDialog code={o.code} open={paying} onClose={() => setPaying(false)} />
+      <PayDialog
+        code={o.code}
+        purpose={paying ?? 'BALANCE'}
+        open={paying !== null}
+        onClose={() => setPaying(null)}
+      />
       <ReorderDialog
         code={o.code}
         quantity={o.quantity}

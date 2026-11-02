@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { Rendition } from '@/components/patterns/rendition';
 
 interface Upload {
   key: string;
@@ -72,12 +73,11 @@ export function ImageManager({
             >
               <div className="bg-muted relative aspect-[4/3]">
                 {image.urls ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URLs; next/image can't cache them
-                  <img
-                    src={image.urls.medium}
+                  <Rendition
+                    urls={image.urls}
+                    sizes="(min-width: 768px) 25vw, 50vw"
                     alt={image.caption ?? ''}
                     className="size-full object-cover"
-                    loading="lazy"
                   />
                 ) : image.processing === 'FAILED' ? (
                   <div className="text-danger-ink flex size-full flex-col items-center justify-center gap-2 p-3 text-center text-xs">

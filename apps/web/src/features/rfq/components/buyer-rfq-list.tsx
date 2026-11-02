@@ -2,7 +2,7 @@
 
 import { FilePlus2, FileText } from 'lucide-react';
 import Link from 'next/link';
-import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { EmptyState } from '@/components/patterns/empty-state';
 import { ErrorState } from '@/components/patterns/error-state';
 import { PageHeader } from '@/components/patterns/page-header';
@@ -10,12 +10,12 @@ import { StatusBadge } from '@/components/patterns/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatMoney } from '@/lib/format';
+import { useMoney } from '@/lib/use-money';
 import { useBuyerRfqs } from '../api';
 
 export function BuyerRfqList() {
   const t = useTranslations('rfq.buyerList');
-  const locale = useLocale();
+  const showMoney = useMoney();
   const format = useFormatter();
   const rfqs = useBuyerRfqs();
   const newButton = (
@@ -76,7 +76,7 @@ export function BuyerRfqList() {
                   <div>
                     <p className="tabular text-lg font-semibold">
                       {r.bestUnitPriceMinor !== null
-                        ? formatMoney(r.bestUnitPriceMinor, r.currency, locale)
+                        ? showMoney(r.bestUnitPriceMinor, r.currency)
                         : '—'}
                     </p>
                     <p className="text-muted-foreground text-xs">{t('best')}</p>

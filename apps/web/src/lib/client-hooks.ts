@@ -13,6 +13,19 @@ export function useIsClient(): boolean {
   );
 }
 
+/**
+ * A query-string value read in the browser only (null while prerendering). Unlike
+ * useSearchParams it doesn't turn the page dynamic, so forms like sign-in stay in the static
+ * HTML and paint immediately.
+ */
+export function useClientSearchParam(name: string): string | null {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => new URLSearchParams(window.location.search).get(name),
+    () => null,
+  );
+}
+
 /** True on Apple platforms, so shortcuts read ⌘ rather than Ctrl. Server render assumes Mac. */
 export function useIsMac(): boolean {
   return useSyncExternalStore(

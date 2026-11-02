@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Appear } from './appear';
 
 /** Shown when loading failed. Says what went wrong and always offers a retry. */
 export function ErrorState({
@@ -24,7 +25,7 @@ export function ErrorState({
 }) {
   const t = useTranslations('patterns.error');
   return (
-    <div
+    <Appear
       role="alert"
       className={cn(
         'flex flex-col items-center justify-center text-center',
@@ -51,6 +52,6 @@ export function ErrorState({
           {t('retry')}
         </Button>
       ) : null}
-    </div>
+    </Appear>
   );
 }

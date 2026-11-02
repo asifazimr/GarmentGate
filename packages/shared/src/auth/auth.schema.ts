@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { CurrencySchema } from '../catalog/product.schema.js';
+import { DEFAULT_LOCALE, LocaleSchema } from '../i18n/locales.js';
 import { RoleSchema } from './roles.js';
 
 export const KycStatusSchema = z.enum(['NOT_SUBMITTED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED']);
@@ -66,7 +68,10 @@ export const AuthUserSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   role: RoleSchema,
-  locale: z.string(),
+  /** Unknown codes (e.g. a language later removed) fall back to English. */
+  locale: LocaleSchema.catch(DEFAULT_LOCALE),
+  /** Also show amounts converted to this currency (approximate, for orientation only). */
+  displayCurrency: CurrencySchema.nullable(),
   emailVerified: z.boolean(),
   company: z
     .object({
@@ -83,6 +88,17 @@ export const AuthUserSchema = z.object({
 export type AuthUser = z.infer<typeof AuthUserSchema>;
 
 export const AuthResponseSchema = z.object({ user: AuthUserSchema });
+
+/** The signed-in user's own display preferences. */
+export const UpdatePreferencesSchema = z
+  .object({
+    locale: LocaleSchema.optional(),
+    displayCurrency: CurrencySchema.nullable().optional(),
+  })
+  .refine((v) => v.locale !== undefined || v.displayCurrency !== undefined, {
+    error: 'Nothing to update',
+  });
+export type UpdatePreferencesDto = z.infer<typeof UpdatePreferencesSchema>;
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 
 /**

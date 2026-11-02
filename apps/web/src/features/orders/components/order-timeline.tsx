@@ -15,6 +15,7 @@ import { type ReactNode, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { Rendition } from '@/components/patterns/rendition';
 
 export interface TimelineOrder {
   status: OrderStatus;
@@ -372,8 +373,7 @@ function MediaStrip({ media, onOpen }: { media: OrderMedia[]; onOpen: (m: OrderM
             aria-label={m.caption ?? t(m.kind === 'VIDEO' ? 'openVideo' : 'openPhoto')}
           >
             {m.kind === 'IMAGE' && m.urls ? (
-              // eslint-disable-next-line @next/next/no-img-element -- short-lived signed rendition URL
-              <img src={m.urls.thumb} alt="" className="size-full object-cover" loading="lazy" />
+              <Rendition urls={m.urls} sizes="96px" alt="" className="size-full object-cover" />
             ) : m.kind === 'VIDEO' && m.videoUrl ? (
               <>
                 <video

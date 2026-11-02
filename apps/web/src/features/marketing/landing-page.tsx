@@ -117,24 +117,24 @@ export async function LandingPage() {
           />
           <div className="relative mx-auto grid max-w-6xl items-center gap-16 px-4 pt-16 pb-24 sm:px-6 sm:pt-24 lg:grid-cols-[1.1fr_1fr] lg:gap-12 lg:pt-28 lg:pb-32">
             <div>
-              <Reveal>
+              <Reveal above>
                 <span className="bg-card text-muted-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium shadow-xs">
                   <span className="bg-primary size-1.5 rounded-full" aria-hidden="true" />
                   {t('hero.eyebrow')}
                 </span>
               </Reveal>
-              <Reveal delay={0.05}>
+              <Reveal above delay={0.05}>
                 <h1 className="font-display mt-6 text-[2.75rem] leading-[1.02] tracking-[-0.02em] sm:text-display-xl lg:text-display-2xl">
                   {t('hero.titleStart')}{' '}
                   <em className="text-primary-ink">{t('hero.titleAccent')}</em> {t('hero.titleEnd')}
                 </h1>
               </Reveal>
-              <Reveal delay={0.1}>
+              <Reveal above delay={0.1}>
                 <p className="text-muted-foreground mt-6 max-w-xl text-lg leading-relaxed text-pretty">
                   {t('hero.body')}
                 </p>
               </Reveal>
-              <Reveal delay={0.15} className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Reveal above delay={0.15} className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" render={<Link href="/register?as=buyer" />}>
                   {t('hero.primary')}
                   <ArrowRight />
@@ -147,7 +147,7 @@ export async function LandingPage() {
                   {t('hero.secondary')}
                 </Button>
               </Reveal>
-              <Reveal delay={0.2}>
+              <Reveal above delay={0.2}>
                 <p className="text-subtle-foreground mt-8 text-sm">{t('hero.proof')}</p>
               </Reveal>
             </div>

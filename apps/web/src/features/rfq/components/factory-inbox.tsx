@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { countryName } from '@/lib/countries';
-import { formatMoney } from '@/lib/format';
+import { useMoney } from '@/lib/use-money';
 import { cn } from '@/lib/utils';
 import { useRfqInbox } from '../api';
 
@@ -87,6 +87,7 @@ export function FactoryInbox() {
 function InboxRow({ rfq: r }: { rfq: ManufacturerRfqSummary }) {
   const t = useTranslations('rfq.inbox');
   const locale = useLocale();
+  const showMoney = useMoney();
   const format = useFormatter();
   const due = new Date(r.deadline);
   return (
@@ -121,7 +122,7 @@ function InboxRow({ rfq: r }: { rfq: ManufacturerRfqSummary }) {
           </p>
           {r.myQuote ? (
             <p className="text-muted-foreground tabular text-xs">
-              {t('yourPrice', { price: formatMoney(r.myQuote.unitPriceMinor, r.currency, locale) })}
+              {t('yourPrice', { price: showMoney(r.myQuote.unitPriceMinor, r.currency) })}
             </p>
           ) : null}
         </div>

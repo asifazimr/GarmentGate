@@ -8,7 +8,13 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { hash, verify } from '@node-rs/argon2';
-import type { AuthUser, LoginDto, RegisterDto, ResetPasswordDto } from '@garmentgate/shared';
+import type {
+  AuthUser,
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
+  UpdatePreferencesDto,
+} from '@garmentgate/shared';
 import type { Env } from '../../config/env.schema.js';
 import type { UserTokenType } from '../../generated/prisma/client.js';
 import { AuditService } from '../audit/audit.service.js';
@@ -202,6 +208,18 @@ export class AuthService {
       where: { refreshTokenHash: hashOpaqueToken(refreshToken), revokedAt: null },
       data: { revokedAt: new Date() },
     });
+  }
+
+  async updatePreferences(userId: string, dto: UpdatePreferencesDto): Promise<AuthUser> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.locale !== undefined && { locale: dto.locale }),
+        ...(dto.displayCurrency !== undefined && { displayCurrency: dto.displayCurrency }),
+      },
+      include: authUserInclude,
+    });
+    return toAuthUser(user);
   }
 
   async me(userId: string): Promise<AuthUser> {

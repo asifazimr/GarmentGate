@@ -9,16 +9,23 @@ import {
 } from '@garmentgate/shared';
 import { decodeJwt } from 'jose';
 import { type NextRequest, NextResponse } from 'next/server';
+import createIntlMiddleware from 'next-intl/middleware';
+import { routing } from './i18n/routing';
 
 /**
- * Route protection and role-based redirects.
+ * Route protection, role-based redirects and the interface language.
  *
- * This only decides which page to show. It decodes the access token without verifying its
+ * Anything that isn't a redirect is handed to next-intl, which picks the locale (cookie, then
+ * Accept-Language) and rewrites to `/<locale>/…` without changing the URL.
+ *
+ * Auth here only decides which page to show. It decodes the access token without verifying its
  * signature, because the API verifies every request and is the security boundary. A forged
  * cookie can at most render an empty page shell.
  */
 
 const API_URL = process.env.API_URL ?? 'http://localhost:4000';
+
+const intl = createIntlMiddleware(routing);
 
 const PROTECTED = [ONBOARDING_PATH, PENDING_PATH, ...Object.values(ROLE_HOME)];
 const GUEST_ONLY = ['/login', '/register', '/forgot-password', '/reset-password'];
@@ -28,7 +35,7 @@ export async function proxy(req: NextRequest) {
   const isProtected = PROTECTED.some((p) => path === p || path.startsWith(`${p}/`));
   const isGuestOnly = GUEST_ONLY.includes(path);
   const isLanding = path === '/';
-  if (!isProtected && !isGuestOnly && !isLanding) return NextResponse.next();
+  if (!isProtected && !isGuestOnly && !isLanding) return intl(req);
 
   let claims = readClaims(req.cookies.get(AUTH_COOKIES.accessToken)?.value);
   let setCookies: string[] = [];
@@ -38,13 +45,13 @@ export async function proxy(req: NextRequest) {
 
   let response: NextResponse;
   if (!claims) {
-    response = isProtected ? redirectToLogin(req) : NextResponse.next();
+    response = isProtected ? redirectToLogin(req) : intl(req);
   } else {
     const home = homePathFor({ role: claims.role, kycStatus: claims.kyc });
     if (isGuestOnly || isLanding) {
       response = redirect(req, safeNext(req) ?? home);
     } else {
-      response = canView(path, claims, home) ? NextResponse.next() : redirect(req, home);
+      response = canView(path, claims, home) ? intl(req) : redirect(req, home);
     }
   }
   for (const cookie of setCookies) response.headers.append('set-cookie', cookie);

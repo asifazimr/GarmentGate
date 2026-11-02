@@ -23,8 +23,9 @@ export function HeroVisual() {
         className="from-primary/25 absolute -inset-8 -z-10 rounded-[2.5rem] bg-radial-[at_60%_40%] via-transparent to-transparent blur-2xl"
       />
       <motion.div
-        initial={{ opacity: 0, y: 24, rotate: -1 }}
-        animate={{ opacity: 1, y: 0, rotate: 0 }}
+        // Settles into place without fading, so it's painted on first load.
+        initial={{ y: 24, rotate: -1 }}
+        animate={{ y: 0, rotate: 0 }}
         transition={{ duration: 0.9, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
         className="bg-card rounded-2xl border p-5 shadow-xl sm:p-6"
       >

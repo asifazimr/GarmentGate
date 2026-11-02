@@ -7,9 +7,10 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { countryName } from '@/lib/countries';
-import { formatMoney } from '@/lib/format';
+import { useMoney } from '@/lib/use-money';
 import { cn } from '@/lib/utils';
 import { FavoriteButton } from './save-controls';
+import { Rendition } from '@/components/patterns/rendition';
 
 export type ResultsView = 'grid' | 'list';
 
@@ -25,14 +26,18 @@ export function ProductCard({
   product: p,
   view = 'grid',
   footer,
+  priority = false,
 }: {
   product: PublicProduct;
   view?: ResultsView;
+  /** In the first row of results: load the image eagerly (it's the page's main content). */
+  priority?: boolean;
   /** Extra actions under the card (e.g. "Remove from list"). */
   footer?: React.ReactNode;
 }) {
   const t = useTranslations('discovery.card');
   const locale = useLocale();
+  const showMoney = useMoney();
   const cover = p.images[0]?.urls;
   const price = fromPrice(p);
   const list = view === 'list';
@@ -57,12 +62,12 @@ export function ProductCard({
           )}
         >
           {cover ? (
-            // eslint-disable-next-line @next/next/no-img-element -- short-lived signed rendition URLs
-            <img
-              src={list ? cover.thumb : cover.medium}
+            <Rendition
+              urls={cover}
+              priority={priority}
+              sizes={list ? '128px' : '(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw'}
               alt=""
               className="size-full object-cover transition-transform duration-300 ease-out-expo group-hover:scale-[1.02] motion-reduce:transition-none"
-              loading="lazy"
             />
           ) : (
             <div className="text-subtle-foreground flex size-full items-center justify-center">
@@ -79,7 +84,7 @@ export function ProductCard({
           <div className="mt-auto space-y-2 pt-2">
             {price !== null ? (
               <p className="tabular font-semibold">
-                {t('from', { price: formatMoney(price, p.currency, locale) })}
+                {t('from', { price: showMoney(price, p.currency) })}
                 <span className="text-muted-foreground text-xs font-normal"> {t('perPiece')}</span>
               </p>
             ) : null}

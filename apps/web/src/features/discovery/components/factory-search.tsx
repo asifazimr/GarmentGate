@@ -2,13 +2,11 @@
 
 import { ManufacturerSortSchema } from '@garmentgate/shared';
 import { Factory, Search } from 'lucide-react';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { parseAsInteger, parseAsString, parseAsStringLiteral, useQueryStates } from 'nuqs';
 import { useEffect, useEffectEvent, useState } from 'react';
 import { EmptyState } from '@/components/patterns/empty-state';
 import { ErrorState } from '@/components/patterns/error-state';
-import { PageHeader } from '@/components/patterns/page-header';
 import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
@@ -54,15 +52,6 @@ export function FactorySearch() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={t('title')}
-        description={t('description')}
-        actions={
-          <Button variant="outline" render={<Link href="/buyer/search" />}>
-            {t('browseProducts')}
-          </Button>
-        }
-      />
       <div className="flex flex-col gap-2 sm:flex-row">
         <InputGroup className="h-11 flex-1 bg-card shadow-xs">
           <InputGroupAddon>

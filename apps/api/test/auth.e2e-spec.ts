@@ -200,4 +200,46 @@ describe('Auth (e2e)', () => {
         .expect(401);
     });
   });
+
+  describe('preferences', () => {
+    it('saves language and display currency, and follows the language to the browser cookie', async () => {
+      const { agent, email } = await registerAgent(ctx.app, 'BUYER');
+      const res = await agent
+        .patch('/auth/me/preferences')
+        .send({ locale: 'ar', displayCurrency: 'EUR' })
+        .expect(200);
+      expect(AuthResponseSchema.parse(res.body).user).toMatchObject({
+        locale: 'ar',
+        displayCurrency: 'EUR',
+      });
+      expect(cookiesFrom(res).gg_locale).toBe('ar');
+      // Back to the order's own currency only.
+      const cleared = await agent
+        .patch('/auth/me/preferences')
+        .send({ displayCurrency: null })
+        .expect(200);
+      expect(AuthResponseSchema.parse(cleared.body).user.displayCurrency).toBeNull();
+      // The language comes along on the next sign-in, on any device.
+      const login = await http()
+        .post('/auth/login')
+        .send({ email, password: PASSWORD })
+        .expect(200);
+      expect(cookiesFrom(login).gg_locale).toBe('ar');
+    });
+
+    it('rejects unknown languages and currencies, and empty updates', async () => {
+      const { agent } = await registerAgent(ctx.app, 'BUYER');
+      await agent.patch('/auth/me/preferences').send({ locale: 'xx' }).expect(400);
+      await agent.patch('/auth/me/preferences').send({ displayCurrency: 'DOGE' }).expect(400);
+      await agent.patch('/auth/me/preferences').send({}).expect(400);
+      await http().patch('/auth/me/preferences').send({ locale: 'en' }).expect(401);
+    });
+
+    it('serves reference exchange rates to signed-in users for display conversions', async () => {
+      const { agent } = await registerAgent(ctx.app, 'BUYER');
+      const rates = (await agent.get('/fx/rates').expect(200)).body as Record<string, string>;
+      expect(rates.USD).toBe('1');
+      await http().get('/fx/rates').expect(401);
+    });
+  });
 });

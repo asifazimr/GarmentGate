@@ -309,6 +309,17 @@
         "ordersBody": "Update milestones and upload progress photos.",
         "profile": "Factory profile",
         "profileBody": "Keep capabilities and certifications up to date."
+      },
+      "todo": {
+        "quoteTitle": "Waiting for your quote",
+        "quoteEmpty": "No requests waiting",
+        "quoteEmptyBody": "Matching requests for quote appear here as soon as buyers publish them.",
+        "quoteMeta": "{quantity, number} pcs · quotes due {date}",
+        "ordersTitle": "Orders to update",
+        "ordersEmpty": "Nothing in production",
+        "ordersEmptyBody": "Orders appear here once a buyer confirms and pays the deposit.",
+        "updateStage": "Update: {stage}",
+        "openOrder": "Open the order"
       }
     },
     "comingSoon": "Soon"
@@ -474,6 +485,11 @@
       "page": "Page {page} of {pages}",
       "previous": "Previous page",
       "next": "Next page"
+    },
+    "notFound": {
+      "title": "We can’t find that page",
+      "body": "The link may be old, or the page may have moved. Head back and pick up where you left off.",
+      "home": "Go to my dashboard"
     }
   },
   "statuses": {
@@ -1148,8 +1164,11 @@
       "confirmAccept": "Accept and create order",
       "accepting": "Accepting…",
       "acceptedTitle": "Offer accepted",
-      "acceptedBody": "Draft order {order} is ready. Our team will confirm the terms and deposit with you.",
-      "done": "Done"
+      "acceptedBody": "Order {order} is ready. Go straight to the deposit, or ask the factory for a sample first.",
+      "done": "Done",
+      "sampleFirst": "Order a sample first",
+      "confirmAndPay": "Confirm and pay the deposit",
+      "confirming": "Confirming…"
     },
     "inbox": {
       "title": "RFQ inbox",
@@ -1419,7 +1438,8 @@
       "toInspection": "Ready for inspection",
       "ship": "Mark shipped",
       "rework": "Send back for rework",
-      "payBalance": "Pay the balance"
+      "payBalance": "Pay the balance",
+      "payDeposit": "Pay the deposit"
     },
     "timeline": {
       "title": "Progress",
@@ -1881,7 +1901,8 @@
       "open": "{count, plural, =0 {free} one {# open} other {# open}}",
       "done": "Inspector assigned",
       "failed": "Couldn’t assign the inspector",
-      "by": "Inspected by {name}"
+      "by": "Inspected by {name}",
+      "loadFailed": "Couldn’t load inspectors: reopen to retry"
     },
     "inspector": {
       "title": "Inspections",
@@ -2018,16 +2039,21 @@
       "uploadFailed": "The upload failed: try again"
     },
     "pay": {
-      "title": "Pay the balance",
-      "body": "Pay GarmentGate by bank transfer, quoting the reference. The factory ships once it arrives.",
-      "intro": "We’ll show GarmentGate’s bank details and a reference for this payment.",
-      "showDetails": "Show bank details",
+      "title": {
+        "DEPOSIT": "Pay the deposit",
+        "BALANCE": "Pay the balance"
+      },
+      "body": {
+        "DEPOSIT": "Pay GarmentGate by bank transfer, quoting the reference. Production starts once it arrives; we hold it in escrow until each milestone is met.",
+        "BALANCE": "Pay GarmentGate by bank transfer, quoting the reference. The factory ships once it arrives."
+      },
       "amount": "Amount",
       "reference": "Quote this reference",
       "yourReference": "Your transfer reference (optional)",
       "yourReferenceHint": "Helps us match it on our statement faster.",
       "markSent": "I’ve sent it",
-      "sent": "Thanks: we’ll confirm it when it arrives."
+      "sent": "Thanks: we’ll confirm it when it arrives.",
+      "loading": "Getting the bank details"
     }
   },
   "activity": {
@@ -2038,7 +2064,7 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Choose how GarmentGate keeps you informed.",
+    "description": "Language, currency and how GarmentGate keeps you informed.",
     "saved": "Preferences saved",
     "saveFailed": "Couldn’t save your preferences. Try again.",
     "notifications": {
@@ -2084,6 +2110,18 @@
           "body": "Verification, security and important notices."
         }
       }
+    },
+    "preferences": {
+      "title": "Language and currency",
+      "description": "How GarmentGate looks to you. Nobody else sees these choices.",
+      "language": "Language",
+      "languageHint": "More languages are on the way.",
+      "preview": "Preview",
+      "currency": "Also show amounts in",
+      "currencyNone": "Only the order’s own currency",
+      "currencyHint": "Prices and invoices stay in the order’s currency; this adds an approximate conversion at GarmentGate’s reference rate.",
+      "saved": "Preference saved",
+      "failed": "Couldn’t save that. Try again."
     }
   },
   "trust": {

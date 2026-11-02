@@ -3,7 +3,7 @@
 import type { ManufacturerProduct } from '@garmentgate/shared';
 import { ImageIcon, Pencil, Plus, Shirt, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/patterns/empty-state';
@@ -20,8 +20,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatMoney } from '@/lib/format';
+import { useMoney } from '@/lib/use-money';
 import { useDeleteProduct, useProducts } from '../api';
+import { Rendition } from '@/components/patterns/rendition';
 
 export function ProductsList() {
   const t = useTranslations('manufacturer.products');
@@ -75,7 +76,7 @@ function ProductCard({
   onDelete: () => void;
 }) {
   const t = useTranslations('manufacturer.products');
-  const locale = useLocale();
+  const showMoney = useMoney();
   const format = useFormatter();
   const cover = p.images.find((i) => i.urls)?.urls;
   const cheapest = p.priceTiers.at(-1);
@@ -88,8 +89,12 @@ function ProductCard({
       >
         <div className="bg-muted relative aspect-[4/3]">
           {cover ? (
-            // eslint-disable-next-line @next/next/no-img-element -- signed rendition URL
-            <img src={cover.medium} alt="" className="size-full object-cover" loading="lazy" />
+            <Rendition
+              urls={cover}
+              sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+              alt=""
+              className="size-full object-cover"
+            />
           ) : (
             <div className="text-subtle-foreground flex size-full flex-col items-center justify-center gap-2 text-xs">
               <ImageIcon className="size-6" aria-hidden="true" />
@@ -110,7 +115,7 @@ function ProductCard({
             {cheapest ? (
               <p className="tabular font-semibold">
                 {t('fromPrice', {
-                  price: formatMoney(cheapest.unitPriceMinor, p.currency, locale),
+                  price: showMoney(cheapest.unitPriceMinor, p.currency),
                 })}
               </p>
             ) : null}

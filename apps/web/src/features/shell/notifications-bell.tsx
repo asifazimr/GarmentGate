@@ -3,6 +3,7 @@
 import { type Notification, notificationHref, settingsPath } from '@garmentgate/shared';
 import { Bell, CheckCheck, Settings } from 'lucide-react';
 import Link from 'next/link';
+import { motion } from 'motion/react';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { EmptyState } from '@/components/patterns/empty-state';
 import { ErrorState } from '@/components/patterns/error-state';
@@ -35,9 +36,16 @@ export function NotificationsBell() {
       >
         <Bell className="size-5 md:size-[1.125rem]" aria-hidden="true" />
         {unread > 0 ? (
-          <span className="bg-destructive ring-background absolute top-2 end-2 flex min-w-4 items-center justify-center rounded-full px-1 text-[0.625rem] leading-4 font-semibold text-white ring-2 md:top-1 md:end-1">
+          <motion.span
+            // A new count pops in, so new activity is noticed without a sound.
+            key={unread}
+            initial={{ scale: 0.4, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 520, damping: 22 }}
+            className="bg-destructive ring-background absolute top-2 end-2 flex min-w-4 items-center justify-center rounded-full px-1 text-[0.625rem] leading-4 font-semibold text-white ring-2 md:top-1 md:end-1"
+          >
             {unread > 9 ? '9+' : unread}
-          </span>
+          </motion.span>
         ) : null}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[min(24rem,calc(100vw-1rem))] gap-0 p-0">

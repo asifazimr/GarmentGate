@@ -2,7 +2,12 @@ import { createHash, randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { AUTH_COOKIES, type AccessTokenClaims, AccessTokenClaimsSchema } from '@garmentgate/shared';
+import {
+  AUTH_COOKIES,
+  type AccessTokenClaims,
+  AccessTokenClaimsSchema,
+  LOCALE_COOKIE,
+} from '@garmentgate/shared';
 import type { CookieOptions, Request, Response } from 'express';
 import type { Env } from '../../config/env.schema.js';
 import type { AuthenticatedUser } from './auth.decorators.js';
@@ -80,6 +85,11 @@ export class TokenService {
       ...this.cookieBase(),
       maxAge: this.accessTtlSeconds * 1000,
     });
+  }
+
+  /** The interface language, read by the web app to pick its messages. Kept for a year. */
+  setLocaleCookie(res: Response, locale: string): void {
+    res.cookie(LOCALE_COOKIE, locale, { ...this.cookieBase(), maxAge: 365 * 86_400_000 });
   }
 
   clearAuthCookies(res: Response): void {

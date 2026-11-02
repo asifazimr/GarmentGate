@@ -31,6 +31,7 @@ import {
   type LucideIcon,
   Search,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useMemo } from 'react';
@@ -54,7 +55,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { DURATION, EASE_OUT_EXPO } from '@/lib/motion';
 import { cn } from '@/lib/utils';
+
+const MotionBody = motion.create(TableBody);
 
 const features = tableFeatures({
   columnFilteringFeature,
@@ -308,7 +312,13 @@ export function DataTable<T extends RowData>({
                 </TableRow>
               ))}
             </TableHeader>
-            <TableBody>
+            {/* Paging, sorting and filtering cross-fade the rows instead of swapping them. */}
+            <MotionBody
+              key={`${String(pageIndex)}:${String(filtered)}:${JSON.stringify(table.state.sorting)}`}
+              initial={{ opacity: 0.35 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: DURATION.base, ease: EASE_OUT_EXPO }}
+            >
               {table.getRowModel().rows.length === 0 ? (
                 <TableRow>
                   <TableCell
@@ -365,7 +375,7 @@ export function DataTable<T extends RowData>({
                   );
                 })
               )}
-            </TableBody>
+            </MotionBody>
           </Table>
           <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 text-sm">
             <p className="tabular" aria-live="polite">

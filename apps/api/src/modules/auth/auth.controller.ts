@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
@@ -22,6 +23,8 @@ import {
   RegisterSchema,
   type ResetPasswordDto,
   ResetPasswordSchema,
+  type UpdatePreferencesDto,
+  UpdatePreferencesSchema,
   type VerifyEmailDto,
   VerifyEmailSchema,
 } from '@garmentgate/shared';
@@ -53,6 +56,7 @@ export class AuthController {
   ): Promise<AuthResponse> {
     const { user, tokens } = await this.auth.register(dto, meta(req));
     this.tokens.setAuthCookies(res, tokens);
+    this.tokens.setLocaleCookie(res, user.locale);
     return { user };
   }
 
@@ -69,6 +73,8 @@ export class AuthController {
   ): Promise<AuthResponse> {
     const { user, tokens } = await this.auth.login(dto, meta(req));
     this.tokens.setAuthCookies(res, tokens);
+    // Follow the user's language to this device.
+    this.tokens.setLocaleCookie(res, user.locale);
     return { user };
   }
 
@@ -125,6 +131,21 @@ export class AuthController {
     @Body(new ZodValidationPipe(VerifyEmailSchema)) dto: VerifyEmailDto,
   ): Promise<void> {
     await this.auth.verifyEmail(dto.token);
+  }
+
+  @AnyRole()
+  @Patch('me/preferences')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Language and display currency for the signed-in user' })
+  @ApiOkResponse({ standardSchema: AuthResponseSchema })
+  async updatePreferences(
+    @CurrentUser() current: AuthenticatedUser,
+    @Body(new ZodValidationPipe(UpdatePreferencesSchema)) dto: UpdatePreferencesDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponse> {
+    const user = await this.auth.updatePreferences(current.id, dto);
+    this.tokens.setLocaleCookie(res, user.locale);
+    return { user };
   }
 
   @AnyRole()

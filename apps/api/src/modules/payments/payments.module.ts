@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatModule } from '../chat/chat.module.js';
 import { OrdersModule } from '../orders/orders.module.js';
+import { FxController } from './fx.controller.js';
 import { FxService } from './fx.service.js';
 import { LedgerService } from './ledger.service.js';
 import { AdminFinanceController, PaymentsController } from './payments.controller.js';
@@ -12,7 +13,7 @@ import { STRIPE_CLIENT, StripeProvider, stripeClientFactory } from './providers/
 /** Escrow payments: providers (manual, Stripe), the double-entry ledger, releases, payouts, refunds. */
 @Module({
   imports: [ChatModule, OrdersModule],
-  controllers: [PaymentsController, AdminFinanceController],
+  controllers: [PaymentsController, AdminFinanceController, FxController],
   providers: [
     { provide: STRIPE_CLIENT, inject: [ConfigService], useFactory: stripeClientFactory },
     ManualProvider,
