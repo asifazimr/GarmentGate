@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button';
 import { OpenThreadButton } from '@/features/chat/components/open-thread-button';
 import { countryName } from '@/lib/countries';
 import { formatMoney } from '@/lib/format';
+import { InspectionsPanel } from '@/features/qc/components/inspections-panel';
+import { PayBalanceDialog } from '@/features/qc/components/pay-balance-dialog';
+import { ShipmentPanel } from '@/features/qc/components/shipment-panel';
 import { purchaseOrderUrl, useBuyerOrder } from '../api';
 import { NextAction } from './next-action';
 import {
@@ -35,6 +38,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
   const [reviewing, setReviewing] = useState(false);
   const [reordering, setReordering] = useState(false);
   const [moving, setMoving] = useState<OrderStatus | null>(null);
+  const [paying, setPaying] = useState(false);
 
   if (order.isPending) return <OrderLoading />;
   if (order.isError)
@@ -51,6 +55,9 @@ export function BuyerOrderPage({ code }: { code: string }) {
   const latest = o.samples.at(-1) ?? null;
   const can = (to: OrderStatus) => o.allowedTransitions.includes(to);
   const stage = o.milestones.find((m) => m.status !== 'COMPLETED');
+  const finalFailed =
+    o.status === 'QC' &&
+    o.inspections.filter((i) => i.type === 'PRE_SHIPMENT').at(-1)?.result === 'FAIL';
 
   return (
     <div className="space-y-8">
@@ -73,8 +80,11 @@ export function BuyerOrderPage({ code }: { code: string }) {
         role="BUYER"
         status={o.status}
         latestSample={latest}
+        inspections={o.inspections}
+        balancePaid={o.balancePaid}
         values={{
           deposit: money(o.depositMinor),
+          balance: money(o.totalMinor - o.depositMinor),
           stage: stage ? t(`timeline.phases.${stage.stage}`) : '',
           tracking: o.shipment?.trackingNumber ?? '',
           carrier: o.shipment?.carrier ?? '',
@@ -103,6 +113,17 @@ export function BuyerOrderPage({ code }: { code: string }) {
         {o.status === 'DEPOSIT_PENDING' ? (
           <PoButton href={purchaseOrderUrl(o.code)} label={t('purchaseOrder')} />
         ) : null}
+        {finalFailed ? (
+          <>
+            <Button onClick={() => setMoving('IN_PRODUCTION')}>{t('actions.rework')}</Button>
+            <Button variant="outline" onClick={() => setMoving('DISPUTED')}>
+              {t('actions.dispute')}
+            </Button>
+          </>
+        ) : null}
+        {o.status === 'READY_TO_SHIP' && !o.balancePaid ? (
+          <Button onClick={() => setPaying(true)}>{t('actions.payBalance')}</Button>
+        ) : null}
         {can('DELIVERED') ? (
           <Button onClick={() => setMoving('DELIVERED')}>{t('actions.delivered')}</Button>
         ) : null}
@@ -124,13 +145,21 @@ export function BuyerOrderPage({ code }: { code: string }) {
             slot={(key) =>
               key === 'sample' ? (
                 <SampleRounds samples={o.samples} />
-              ) : key === 'shipping' && o.shipment ? (
-                <p className="text-muted-foreground text-sm">
-                  {t('shipment', {
-                    carrier: o.shipment.carrier ?? '',
-                    tracking: o.shipment.trackingNumber ?? '',
-                  })}
-                </p>
+              ) : key === 'qc' ? (
+                <InspectionsPanel
+                  role="BUYER"
+                  code={o.code}
+                  status={o.status}
+                  inspections={o.inspections}
+                />
+              ) : key === 'shipping' ? (
+                <ShipmentPanel
+                  role="BUYER"
+                  code={o.code}
+                  status={o.status}
+                  shipment={o.shipment}
+                  defaultIncoterm={o.incoterm}
+                />
               ) : null
             }
           />
@@ -197,7 +226,13 @@ export function BuyerOrderPage({ code }: { code: string }) {
         open={reviewing}
         onClose={() => setReviewing(false)}
       />
-      <TransitionDialog code={o.code} to={moving} onClose={() => setMoving(null)} />
+      <TransitionDialog
+        code={o.code}
+        to={moving}
+        copy={moving === 'IN_PRODUCTION' ? 'REWORK' : undefined}
+        onClose={() => setMoving(null)}
+      />
+      <PayBalanceDialog code={o.code} open={paying} onClose={() => setPaying(false)} />
       <ReorderDialog
         code={o.code}
         quantity={o.quantity}

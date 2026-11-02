@@ -43,6 +43,7 @@ describe('order state machine', () => {
     expect(canTransition('DEPOSIT_PENDING', 'IN_PRODUCTION', 'ADMIN')).toBe(true);
     expect(canTransition('QC', 'READY_TO_SHIP', 'MANUFACTURER')).toBe(false);
     expect(canTransition('QC', 'IN_PRODUCTION', 'ADMIN')).toBe(true); // rework
+    expect(canTransition('QC', 'IN_PRODUCTION', 'MANUFACTURER')).toBe(false);
   });
 
   it('gives each party only its own moves', () => {
@@ -75,15 +76,28 @@ describe('order state machine', () => {
   it('reports progress and whose move it is', () => {
     expect(flowProgress('DRAFT')).toBe(0);
     expect(flowProgress('COMPLETED')).toBe(100);
-    expect(nextStep('SAMPLING', { status: 'REQUESTED' })).toEqual({
+    expect(nextStep('SAMPLING', { latestSample: { status: 'REQUESTED' } })).toEqual({
       step: 'FACTORY_SHIPS_SAMPLE',
       owner: 'MANUFACTURER',
     });
-    expect(nextStep('SAMPLING', { status: 'SHIPPED' })).toEqual({
+    expect(nextStep('SAMPLING', { latestSample: { status: 'SHIPPED' } })).toEqual({
       step: 'REVIEW_SAMPLE',
       owner: 'BUYER',
     });
-    expect(nextStep('QC', null).owner).toBe('ADMIN');
-    expect(nextStep('COMPLETED', null).owner).toBeNull();
+    expect(nextStep('QC').owner).toBe('ADMIN');
+    expect(nextStep('COMPLETED').owner).toBeNull();
+  });
+
+  it('hands a failed final inspection to the buyer, and asks for the balance before shipping', () => {
+    expect(nextStep('QC', { finalInspection: 'FAIL' })).toEqual({
+      step: 'QC_FAILED',
+      owner: 'BUYER',
+    });
+    expect(nextStep('QC', { finalInspection: 'PENDING' }).step).toBe('INSPECTION');
+    expect(nextStep('READY_TO_SHIP', { balancePaid: false })).toEqual({
+      step: 'PAY_BALANCE',
+      owner: 'BUYER',
+    });
+    expect(nextStep('READY_TO_SHIP', { balancePaid: true }).step).toBe('SHIP');
   });
 });

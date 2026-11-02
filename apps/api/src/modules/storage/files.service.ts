@@ -19,7 +19,8 @@ const EXTENSIONS: Record<string, string> = {
 
 export interface ReserveUpload {
   userId: string;
-  companyId: string;
+  /** The owning company; null for staff uploads (inspectors), which are owned by the uploader. */
+  companyId: string | null;
   purpose: FilePurpose;
   /** Top-level key prefix, e.g. "kyc" or "media". */
   folder: string;
@@ -43,7 +44,7 @@ export class FilesService {
 
   async reserveUpload(input: ReserveUpload): Promise<PresignUploadResponse> {
     const ext = EXTENSIONS[input.contentType] ?? 'bin';
-    const storageKey = `${input.folder}/${input.companyId}/${randomUUID()}.${ext}`;
+    const storageKey = `${input.folder}/${input.companyId ?? 'staff'}/${randomUUID()}.${ext}`;
     const file = await this.prisma.fileAsset.create({
       data: {
         bucket: this.storage.bucket,
@@ -69,10 +70,21 @@ export class FilesService {
     };
   }
 
-  /** Checks the object exists with the declared type and an allowed size, then marks it uploaded. */
-  async confirmUpload(fileId: string, companyId: string, purpose: FilePurpose, maxBytes: number) {
+  /**
+   * Checks the object exists with the declared type and an allowed size, then marks it uploaded.
+   * `owner` is the company, or `{ userId }` for a staff upload.
+   */
+  async confirmUpload(
+    fileId: string,
+    owner: string | { userId: string },
+    purpose: FilePurpose,
+    maxBytes: number,
+  ) {
     const file = await this.prisma.fileAsset.findFirst({
-      where: { id: fileId, ownerCompanyId: companyId, purpose },
+      where:
+        typeof owner === 'string'
+          ? { id: fileId, ownerCompanyId: owner, purpose }
+          : { id: fileId, ownerCompanyId: null, uploadedById: owner.userId, purpose },
     });
     if (!file) throw new NotFoundException('Upload not found');
     if (file.status !== 'PENDING_UPLOAD') {

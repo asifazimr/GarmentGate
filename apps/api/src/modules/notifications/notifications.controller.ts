@@ -1,11 +1,12 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiCookieAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { type NotificationList, NotificationListSchema } from '@garmentgate/shared';
-import { type AuthenticatedUser, CurrentUser } from '../auth/auth.decorators.js';
+import { AnyRole, type AuthenticatedUser, CurrentUser } from '../auth/auth.decorators.js';
 import { NotificationsService } from './notifications.service.js';
 
 @ApiTags('notifications')
 @ApiCookieAuth()
+@AnyRole()
 @Controller('notifications')
 export class NotificationsController {
   constructor(private readonly notifications: NotificationsService) {}

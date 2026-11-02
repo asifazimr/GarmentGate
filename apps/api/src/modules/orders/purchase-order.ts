@@ -62,6 +62,22 @@ export function money(minor: number, currency: string): string {
   return format.format(minor / 10 ** digits).replace(/\u00a0/g, ' ');
 }
 
+/** A company's postal address as printed lines. */
+export function postalAddress(c: {
+  addressLine1: string | null;
+  addressLine2: string | null;
+  postalCode: string | null;
+  city: string | null;
+  country: string;
+}): string[] {
+  return [
+    c.addressLine1,
+    c.addressLine2,
+    [c.postalCode, c.city].filter(Boolean).join(' '),
+    c.country,
+  ].filter((x): x is string => Boolean(x));
+}
+
 const date = (d: Date) => d.toISOString().slice(0, 10);
 
 function wrap(text: string, font: PDFFont, size: number, width: number): string[] {

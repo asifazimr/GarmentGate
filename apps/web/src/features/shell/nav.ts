@@ -1,6 +1,7 @@
 import type { Role } from '@garmentgate/shared';
 import {
   CalendarRange,
+  ClipboardCheck,
   Factory,
   FileText,
   Gauge,
@@ -37,7 +38,9 @@ export type NavLabel =
   | 'products'
   | 'capacity'
   | 'discover'
-  | 'shortlists';
+  | 'shortlists'
+  | 'inspections'
+  | 'inspectors';
 
 export interface NavItem {
   href: string;
@@ -83,7 +86,17 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/admin/disputes', label: 'disputes', icon: Scale },
     { href: '/admin/moderation', label: 'moderation', icon: ShieldAlert, built: true },
     { href: '/admin/margins', label: 'margins', icon: Percent, built: true },
+    { href: '/admin/inspectors', label: 'inspectors', icon: ClipboardCheck, built: true },
     { href: '/admin/settings', label: 'settings', icon: Gauge },
+  ],
+  INSPECTOR: [
+    {
+      href: '/inspector',
+      label: 'inspections',
+      icon: ClipboardCheck,
+      primary: true,
+      built: true,
+    },
   ],
 };
 

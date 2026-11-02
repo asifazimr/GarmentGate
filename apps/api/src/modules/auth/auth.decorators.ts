@@ -23,8 +23,14 @@ export const ROLES_KEY = 'auth:roles';
 /** Opt a route or controller out of the global JWT guard. */
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
-/** Restrict a route or controller to the given roles. */
+/**
+ * Restrict a route or controller to the given roles. Without it a route serves buyers,
+ * manufacturers and admins (see RolesGuard); inspectors only reach routes that name them.
+ */
 export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
+
+/** Every signed-in role, inspectors included (session and notification routes). */
+export const AnyRole = () => Roles('BUYER', 'MANUFACTURER', 'ADMIN', 'INSPECTOR');
 
 /** Injects the authenticated user. Throws if used on a public route without a user. */
 export const CurrentUser = createParamDecorator(

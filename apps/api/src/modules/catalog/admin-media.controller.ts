@@ -46,82 +46,100 @@ export class AdminMediaController {
   @ApiOkResponse({ standardSchema: MediaReviewItemSchema.array() })
   async pending(): Promise<MediaReviewItem[]> {
     const ready = { file: { processingStatus: 'READY' as const } };
-    const [photos, images, attachments, samplePhotos, milestoneMedia] = await Promise.all([
-      this.prisma.factoryPhoto.findMany({
-        where: { reviewStatus: 'PENDING', ...ready },
-        include: {
-          file: fileWithRenditions,
-          manufacturerProfile: { select: { publicCode: true } },
-        },
-        orderBy: { createdAt: 'asc' },
-        take: 100,
-      }),
-      this.prisma.productImage.findMany({
-        where: { reviewStatus: 'PENDING', ...ready },
-        include: {
-          file: fileWithRenditions,
-          product: {
-            select: { title: true, manufacturerProfile: { select: { publicCode: true } } },
+    const [photos, images, attachments, samplePhotos, milestoneMedia, inspectionPhotos] =
+      await Promise.all([
+        this.prisma.factoryPhoto.findMany({
+          where: { reviewStatus: 'PENDING', ...ready },
+          include: {
+            file: fileWithRenditions,
+            manufacturerProfile: { select: { publicCode: true } },
           },
-        },
-        take: 100,
-      }),
-      this.prisma.rfqAttachment.findMany({
-        where: { reviewStatus: 'PENDING', ...ready },
-        include: {
-          file: fileWithRenditions,
-          rfq: {
-            select: {
-              code: true,
-              buyerCompany: { select: { buyerProfile: { select: { publicCode: true } } } },
+          orderBy: { createdAt: 'asc' },
+          take: 100,
+        }),
+        this.prisma.productImage.findMany({
+          where: { reviewStatus: 'PENDING', ...ready },
+          include: {
+            file: fileWithRenditions,
+            product: {
+              select: { title: true, manufacturerProfile: { select: { publicCode: true } } },
             },
           },
-        },
-        orderBy: { createdAt: 'asc' },
-        take: 100,
-      }),
-      this.prisma.samplePhoto.findMany({
-        where: { reviewStatus: 'PENDING', ...ready },
-        include: {
-          file: fileWithRenditions,
-          sample: {
-            select: {
-              round: true,
-              order: {
-                select: {
-                  code: true,
-                  buyerCompany: { select: { buyerProfile: { select: { publicCode: true } } } },
+          take: 100,
+        }),
+        this.prisma.rfqAttachment.findMany({
+          where: { reviewStatus: 'PENDING', ...ready },
+          include: {
+            file: fileWithRenditions,
+            rfq: {
+              select: {
+                code: true,
+                buyerCompany: { select: { buyerProfile: { select: { publicCode: true } } } },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+          take: 100,
+        }),
+        this.prisma.samplePhoto.findMany({
+          where: { reviewStatus: 'PENDING', ...ready },
+          include: {
+            file: fileWithRenditions,
+            sample: {
+              select: {
+                round: true,
+                order: {
+                  select: {
+                    code: true,
+                    buyerCompany: { select: { buyerProfile: { select: { publicCode: true } } } },
+                  },
                 },
               },
             },
           },
-        },
-        orderBy: { createdAt: 'asc' },
-        take: 100,
-      }),
-      this.prisma.milestonePhoto.findMany({
-        where: { reviewStatus: 'PENDING', ...ready },
-        include: {
-          file: fileWithRenditions,
-          milestone: {
-            select: {
-              stage: true,
-              order: {
-                select: { code: true, manufacturerProfile: { select: { publicCode: true } } },
+          orderBy: { createdAt: 'asc' },
+          take: 100,
+        }),
+        this.prisma.milestonePhoto.findMany({
+          where: { reviewStatus: 'PENDING', ...ready },
+          include: {
+            file: fileWithRenditions,
+            milestone: {
+              select: {
+                stage: true,
+                order: {
+                  select: { code: true, manufacturerProfile: { select: { publicCode: true } } },
+                },
               },
             },
           },
-        },
-        orderBy: { createdAt: 'asc' },
-        take: 100,
-      }),
-    ]);
+          orderBy: { createdAt: 'asc' },
+          take: 100,
+        }),
+        this.prisma.inspectionPhoto.findMany({
+          where: { reviewStatus: 'PENDING', ...ready },
+          include: {
+            file: fileWithRenditions,
+            inspection: {
+              select: {
+                type: true,
+                order: {
+                  select: { code: true, manufacturerProfile: { select: { publicCode: true } } },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+          take: 100,
+        }),
+      ]);
     const urls = await this.media.urlMap([
       ...photos.map((p) => p.file),
       ...images.map((i) => i.file),
       ...attachments.map((a) => a.file),
       ...samplePhotos.map((p) => p.file),
       ...milestoneMedia.filter((m) => !m.file.mimeType.startsWith('video/')).map((m) => m.file),
+      ...inspectionPhotos.map((p) => p.file),
     ]);
     const rfqItems = await Promise.all(
       attachments.map(async (a) => {
@@ -182,6 +200,16 @@ export class AdminMediaController {
           videoUrl: m.file.mimeType.startsWith('video/') ? await this.media.videoUrl(m.file) : null,
         })),
       )),
+      ...inspectionPhotos.map((p) => ({
+        kind: 'inspection-photos' as const,
+        id: p.id,
+        ownerCode: p.inspection.order.manufacturerProfile.publicCode,
+        context: `${p.inspection.order.code} · ${p.inspection.type === 'PRE_SHIPMENT' ? 'final' : 'inline'} inspection${p.caption ? ` · ${p.caption}` : ''}`,
+        contentType: p.file.mimeType,
+        urls: urls.get(p.fileId) ?? null,
+        documentUrl: null,
+        videoUrl: null,
+      })),
     ];
   }
 
@@ -221,7 +249,9 @@ export class AdminMediaController {
       await this.prisma.rfqAttachment.update({ where: { id }, data });
     else if (kind === 'sample-photos')
       await this.prisma.samplePhoto.update({ where: { id }, data });
-    else await this.prisma.milestonePhoto.update({ where: { id }, data });
+    else if (kind === 'milestone-media')
+      await this.prisma.milestonePhoto.update({ where: { id }, data });
+    else await this.prisma.inspectionPhoto.update({ where: { id }, data });
     await this.audit.log({
       actorUserId: adminId,
       action: `media.${status.toLowerCase()}`,

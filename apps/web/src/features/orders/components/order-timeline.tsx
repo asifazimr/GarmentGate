@@ -25,6 +25,7 @@ export interface TimelineOrder {
   samples: OrderSample[];
   milestones: OrderMilestone[];
   events: OrderEvent[];
+  inspections: { photos: OrderMedia[] }[];
   shipment: {
     carrier: string | null;
     trackingNumber: string | null;
@@ -167,6 +168,7 @@ export function buildPhases(order: TimelineOrder): {
       return {
         ...base,
         state,
+        media: order.inspections.flatMap((i) => i.photos),
         date: passed && state === 'done' ? { kind: 'done', iso: passed } : null,
       };
     }

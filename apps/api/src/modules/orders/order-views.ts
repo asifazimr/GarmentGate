@@ -1,7 +1,13 @@
 import {
+  acceptanceNumber,
+  AqlLevelSchema,
   type AdminOrder,
   type BuyerOrder,
   flowProgress,
+  GENERATED_DOCUMENT_TYPES,
+  type OrderInspection,
+  type OrderShipment,
+  paymentPlan,
   type ManufacturerOrder,
   type MilestoneStage,
   type OrderActor,
@@ -46,14 +52,61 @@ export const orderInclude = {
     orderBy: { createdAt: 'asc' },
     include: { actor: { select: { firstName: true, lastName: true, role: true } } },
   },
-  shipments: { orderBy: { createdAt: 'desc' }, take: 1 },
+  inspections: {
+    orderBy: { createdAt: 'asc' },
+    include: {
+      photos: { include: { file: fileWithRenditions }, orderBy: { createdAt: 'asc' } },
+      reportFile: { select: { id: true, processingStatus: true, sanitizedKey: true } },
+      inspector: { select: { firstName: true, lastName: true } },
+      bookedBy: { select: { role: true } },
+    },
+  },
+  shipments: {
+    orderBy: { createdAt: 'desc' },
+    take: 1,
+    include: {
+      documents: {
+        orderBy: { createdAt: 'asc' },
+        include: { file: { select: { processingStatus: true, sanitizedKey: true } } },
+      },
+    },
+  },
+  payments: {
+    where: { direction: 'INBOUND', status: 'SUCCEEDED', purpose: 'BALANCE' },
+    select: { amountMinor: true },
+  },
 } satisfies Prisma.OrderInclude;
 export type OrderRow = Prisma.OrderGetPayload<{ include: typeof orderInclude }>;
 
 type MediaRow =
-  OrderRow['milestones'][number]['photos'][number] | OrderRow['samples'][number]['photos'][number];
-/** Signed links per file id, resolved by the service before building views. */
-export type MediaLinks = ReadonlyMap<string, Pick<OrderMedia, 'urls' | 'videoUrl'>>;
+  | OrderRow['milestones'][number]['photos'][number]
+  | OrderRow['samples'][number]['photos'][number]
+  | OrderRow['inspections'][number]['photos'][number];
+/** Signed links per file id (renditions, a sanitized video or PDF), resolved by the service. */
+export type MediaLinks = ReadonlyMap<
+  string,
+  Pick<OrderMedia, 'urls' | 'videoUrl'> & { documentUrl?: string | null }
+>;
+
+/** Neutral download names: nothing from the uploader's file name. */
+export const documentName = (orderCode: string, type: string, index = 0): string =>
+  `${orderCode}-${type.toLowerCase().replace(/_/g, '-')}${index > 0 ? `-${String(index + 1)}` : ''}.pdf`;
+
+/** Whether the buyer's balance has fully arrived. */
+export function balancePaid(
+  order: Pick<OrderRow, 'payments' | 'buyerUnitPriceMinor' | 'quantity' | 'depositBps'>,
+): boolean {
+  const { balance } = paymentPlan(
+    BigInt(order.buyerUnitPriceMinor) * BigInt(order.quantity),
+    order.depositBps,
+  );
+  return order.payments.reduce((sum, p) => sum + p.amountMinor, 0n) >= balance;
+}
+
+/** The latest final (pre-shipment) inspection, if any. */
+export function finalInspection(order: Pick<OrderRow, 'inspections'>) {
+  return order.inspections.filter((i) => i.type === 'PRE_SHIPMENT').at(-1) ?? null;
+}
 
 const STAGE_ORDER: readonly string[] = PRODUCTION_STAGES;
 
@@ -98,6 +151,74 @@ export function currentStage(order: {
   );
 }
 
+type InspectionRow = OrderRow['inspections'][number];
+type NamePatterns = ReturnType<typeof identityPatterns>;
+
+/** An inspection as an audience may see it (inspectors get the staff view). */
+export function inspectionView(
+  i: InspectionRow,
+  audience: Audience,
+  links: MediaLinks,
+  names: { buyerNames: NamePatterns; factoryNames: NamePatterns },
+): OrderInspection {
+  const { buyerNames, factoryNames } = names;
+  const majorAql = AqlLevelSchema.safeParse(i.aqlMajor);
+  const minorAql = AqlLevelSchema.safeParse(i.aqlMinor);
+  const report = i.reportFile;
+  return {
+    id: i.id,
+    type: i.type,
+    result: i.result,
+    scheduledAt: i.scheduledAt?.toISOString() ?? null,
+    inspectedAt: i.inspectedAt?.toISOString() ?? null,
+    bookedBy: !i.bookedBy ? 'PLATFORM' : i.bookedBy.role === 'BUYER' ? 'BUYER' : 'STAFF',
+    inspector:
+      audience === 'ADMIN' && i.inspector
+        ? `${i.inspector.firstName} ${i.inspector.lastName}`
+        : null,
+    aql:
+      i.lotSize && i.sampleSize && majorAql.success && minorAql.success
+        ? {
+            lotSize: i.lotSize,
+            sampleSize: i.sampleSize,
+            majorAql: majorAql.data,
+            minorAql: minorAql.data,
+            acceptMajor: acceptanceNumber(i.sampleSize, majorAql.data),
+            acceptMinor: acceptanceNumber(i.sampleSize, minorAql.data),
+          }
+        : null,
+    defects:
+      i.result === 'PENDING'
+        ? null
+        : {
+            critical: i.criticalDefects ?? 0,
+            major: i.majorDefects ?? 0,
+            minor: i.minorDefects ?? 0,
+          },
+    // Written by our inspector at the factory: keep each side's names away from the other.
+    summary:
+      audience === 'BUYER'
+        ? scrubText(i.summary, factoryNames)
+        : audience === 'MANUFACTURER'
+          ? scrubText(i.summary, buyerNames)
+          : i.summary,
+    // Factory signage and labels can show up: buyers get approved photos only.
+    photos: i.photos
+      .filter((p) =>
+        audience === 'BUYER'
+          ? p.reviewStatus === 'APPROVED' && p.file.processingStatus === 'READY'
+          : p.file.processingStatus === 'READY',
+      )
+      .map((p) =>
+        mediaView(p, links, audience === 'BUYER' ? scrubText(p.caption, factoryNames) : p.caption),
+      ),
+    reportUrl:
+      audience !== 'BUYER' && report?.processingStatus === 'READY'
+        ? (links.get(report.id)?.documentUrl ?? null)
+        : null,
+  };
+}
+
 /**
  * One order as an audience may see it. Buyers: GarmentGate's price, the factory's code,
  * approved factory media only. Factories: their own price, the buyer's code, free text scrubbed
@@ -119,6 +240,10 @@ function core(order: OrderRow, audience: Audience, links: MediaLinks) {
     audience === 'ADMIN' ||
     audience === owner ||
     (m.reviewStatus === 'APPROVED' && m.file.processingStatus === 'READY');
+
+  const inspections = order.inspections.map((i) =>
+    inspectionView(i, audience, links, { buyerNames, factoryNames }),
+  );
 
   const actorLabel = (a: OrderRow['events'][number]['actor']) =>
     a ? `${a.firstName} ${a.lastName}${a.role === 'ADMIN' ? ' (GarmentGate)' : ''}` : 'System';
@@ -183,16 +308,61 @@ function core(order: OrderRow, audience: Audience, links: MediaLinks) {
       actor: audience === 'ADMIN' ? actorLabel(e.actor) : null,
       note: audience === 'ADMIN' ? e.note : null,
     })),
+    inspections,
     shipment: latestShipment
-      ? {
-          mode: latestShipment.mode,
-          carrier: latestShipment.carrier,
-          trackingNumber: latestShipment.trackingNumber,
-          shippedAt: latestShipment.shippedAt?.toISOString() ?? null,
-          deliveredAt: latestShipment.deliveredAt?.toISOString() ?? null,
-        }
+      ? shipmentView(latestShipment, order.code, audience, links, fromFactory)
       : null,
+    balancePaid: balancePaid(order),
     allowedTransitions: allowedTransitions(order.status, audience satisfies OrderActor),
+  };
+}
+
+function shipmentView(
+  shipment: OrderRow['shipments'][number],
+  orderCode: string,
+  audience: Audience,
+  links: MediaLinks,
+  fromFactory: (text: string | null, filtered: string | null) => string | null,
+): OrderShipment {
+  const iso = (d: Date | null) => d?.toISOString() ?? null;
+  const seen = new Map<string, number>();
+  return {
+    status: shipment.status,
+    mode: shipment.mode,
+    incoterm: shipment.incoterm,
+    forwarder: fromFactory(shipment.forwarder, shipment.forwarder),
+    carrier: fromFactory(shipment.carrier, shipment.carrier),
+    trackingNumber: shipment.trackingNumber,
+    containerNumber: shipment.containerNumber,
+    transportDocNo: shipment.transportDocNo,
+    originPort: shipment.originPort,
+    destinationPort: shipment.destinationPort,
+    cartons: shipment.cartons,
+    grossWeightKg: shipment.grossWeightKg,
+    etd: iso(shipment.etd),
+    eta: iso(shipment.eta),
+    shippedAt: iso(shipment.shippedAt),
+    deliveredAt: iso(shipment.deliveredAt),
+    // Uploaded papers usually name the factory: buyers see only those staff have published.
+    documents: shipment.documents
+      .filter(
+        (d) => audience !== 'BUYER' || (d.buyerVisible && d.file.processingStatus === 'READY'),
+      )
+      .map((d) => {
+        const index = seen.get(d.type) ?? 0;
+        seen.set(d.type, index + 1);
+        return {
+          id: d.id,
+          type: d.type,
+          name: documentName(orderCode, d.type, index),
+          url:
+            d.file.processingStatus === 'READY' ? (links.get(d.fileId)?.documentUrl ?? null) : null,
+          processing: d.file.processingStatus ?? 'PENDING',
+          buyerVisible: d.buyerVisible,
+        };
+      }),
+    // GarmentGate's own papers carry the buyer's prices and name: never for the factory.
+    generatedDocuments: audience === 'MANUFACTURER' ? [] : [...GENERATED_DOCUMENT_TYPES],
   };
 }
 

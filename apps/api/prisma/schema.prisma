@@ -27,6 +27,8 @@ enum Role {
   BUYER
   MANUFACTURER
   ADMIN
+  /// GarmentGate's QC inspectors: staff-side, no company.
+  INSPECTOR
 }
 
 enum UserStatus {
@@ -396,6 +398,7 @@ enum FilePurpose {
   PAYMENT_PROOF
   INSPECTION_REPORT
   SHIPMENT_DOCUMENT
+  INSPECTION_PHOTO
   DISPUTE_EVIDENCE
   AVATAR
   OTHER
@@ -467,6 +470,8 @@ model User {
   orderEvents         OrderEvent[]
   paymentsConfirmed   Payment[]                 @relation("PaymentConfirmedBy")
   releasesApproved    OrderRelease[]            @relation("ReleaseApprovedBy")
+  inspectionsBooked   Inspection[]              @relation("InspectionBookedBy")
+  inspectionsAssigned Inspection[]              @relation("InspectionInspector")
 
   @@index([companyId])
   @@index([role, status])
@@ -1303,6 +1308,11 @@ model Inspection {
   agency          String?
   scheduledAt     DateTime?
   inspectedAt     DateTime?
+  /// Who booked it (a buyer member or staff); null when the platform opened it on entering QC.
+  bookedById      String?          @db.Uuid
+  inspectorId     String?          @db.Uuid
+  /// Pieces in the lot; the AQL sample size follows from it.
+  lotSize         Int?
   /// General inspection level, e.g. "II"
   aqlLevel        String?
   /// Acceptable quality limits, e.g. "2.5"
@@ -1318,12 +1328,34 @@ model Inspection {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
-  order      Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  reportFile FileAsset? @relation(fields: [reportFileId], references: [id], onDelete: SetNull)
+  order      Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reportFile FileAsset?        @relation(fields: [reportFileId], references: [id], onDelete: SetNull)
+  bookedBy   User?             @relation("InspectionBookedBy", fields: [bookedById], references: [id], onDelete: SetNull)
+  inspector  User?             @relation("InspectionInspector", fields: [inspectorId], references: [id], onDelete: SetNull)
+  photos     InspectionPhoto[]
 
+  @@index([inspectorId, result])
   @@index([orderId, type])
   @@index([result, scheduledAt])
   @@map("inspections")
+}
+
+/// Inspector's photos: shown to the buyer once sanitized and approved (factory signage, labels).
+model InspectionPhoto {
+  id           String            @id @default(uuid(7)) @db.Uuid
+  inspectionId String            @db.Uuid
+  fileId       String            @unique @db.Uuid
+  caption      String?
+  reviewStatus MediaReviewStatus @default(PENDING)
+  reviewNote   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime          @default(now())
+
+  inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  file       FileAsset  @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([inspectionId])
+  @@map("inspection_photos")
 }
 
 model Shipment {
@@ -1331,6 +1363,9 @@ model Shipment {
   orderId         String         @db.Uuid
   mode            ShipmentMode
   status          ShipmentStatus @default(PENDING)
+  incoterm        Incoterm?
+  /// Freight forwarder handling the booking.
+  forwarder       String?
   carrier         String?
   trackingNumber  String?
   containerNumber String?
@@ -1516,6 +1551,7 @@ model FileAsset {
   messageAttachment MessageAttachment?
   milestonePhoto    MilestonePhoto?
   inspectionReport  Inspection?
+  inspectionPhoto   InspectionPhoto?
   shipmentDocument  ShipmentDocument?
   disputeEvidence   DisputeEvidence?
 

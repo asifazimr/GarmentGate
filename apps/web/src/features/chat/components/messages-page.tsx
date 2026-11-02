@@ -11,6 +11,7 @@ const BASE: Record<Role, string> = {
   BUYER: '/buyer',
   MANUFACTURER: '/manufacturer',
   ADMIN: '/admin',
+  INSPECTOR: '/inspector',
 };
 
 /** Where an RFQ / order lives for each role (null: no page yet). */

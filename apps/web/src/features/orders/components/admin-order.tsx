@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OpenThreadButton } from '@/features/chat/components/open-thread-button';
 import { formatMoney } from '@/lib/format';
 import { purchaseOrderUrl, useAdminOrder } from '../api';
+import { InspectionsPanel } from '@/features/qc/components/inspections-panel';
+import { ShipmentPanel } from '@/features/qc/components/shipment-panel';
 import { NextAction } from './next-action';
 import { TransitionDialog } from './order-dialogs';
 import {
@@ -81,7 +83,13 @@ export function AdminOrderPage({ code }: { code: string }) {
         }
       />
 
-      <NextAction role="ADMIN" status={o.status} latestSample={o.samples.at(-1) ?? null}>
+      <NextAction
+        role="ADMIN"
+        status={o.status}
+        latestSample={o.samples.at(-1) ?? null}
+        inspections={o.inspections}
+        balancePaid={o.balancePaid}
+      >
         {moves.map((to) => (
           <Button
             key={to}
@@ -100,7 +108,26 @@ export function AdminOrderPage({ code }: { code: string }) {
           </h2>
           <OrderTimeline
             order={o}
-            slot={(key) => (key === 'sample' ? <SampleRounds samples={o.samples} /> : null)}
+            slot={(key) =>
+              key === 'sample' ? (
+                <SampleRounds samples={o.samples} />
+              ) : key === 'qc' ? (
+                <InspectionsPanel
+                  role="ADMIN"
+                  code={o.code}
+                  status={o.status}
+                  inspections={o.inspections}
+                />
+              ) : key === 'shipping' ? (
+                <ShipmentPanel
+                  role="ADMIN"
+                  code={o.code}
+                  status={o.status}
+                  shipment={o.shipment}
+                  defaultIncoterm={o.incoterm}
+                />
+              ) : null
+            }
           />
         </section>
         <aside className="space-y-4">

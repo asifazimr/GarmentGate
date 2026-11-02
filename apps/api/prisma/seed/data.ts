@@ -627,3 +627,10 @@ export const ADMIN = {
   lastName: 'Siddiqui',
   email: 'admin@garmentgate.example',
 };
+
+/** One of GarmentGate's QC inspectors (staff-side, no company). */
+export const INSPECTOR = {
+  firstName: 'Tanvir',
+  lastName: 'Ahmed',
+  email: 'inspector@garmentgate.example',
+};

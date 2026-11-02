@@ -6,23 +6,25 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Role } from '@garmentgate/shared';
-import { type AuthenticatedRequest, ROLES_KEY } from '../auth.decorators.js';
+import { type AuthenticatedRequest, IS_PUBLIC_KEY, ROLES_KEY } from '../auth.decorators.js';
 
-/** Global guard enforcing @Roles(...). Routes without @Roles allow any signed-in user. */
+/** Who a route without @Roles serves. Inspectors are left out so they only see QC routes. */
+const DEFAULT_ROLES: readonly Role[] = ['BUYER', 'MANUFACTURER', 'ADMIN'];
+
+/** Global guard enforcing @Roles(...); routes without it allow DEFAULT_ROLES. */
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     if (context.getType() !== 'http') return true; // see JwtAuthGuard
-    const roles = this.reflector.getAllAndOverride<Role[] | undefined>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (!roles || roles.length === 0) return true;
-
+    const targets = [context.getHandler(), context.getClass()];
+    const roles = this.reflector.getAllAndOverride<Role[] | undefined>(ROLES_KEY, targets);
+    if (this.reflector.getAllAndOverride<boolean | undefined>(IS_PUBLIC_KEY, targets)) return true;
     const { user } = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    if (user && roles.includes(user.role)) return true;
+    if (!user) return true; // unreachable: the JWT guard runs first
+    const allowed = roles && roles.length > 0 ? roles : DEFAULT_ROLES;
+    if (allowed.includes(user.role)) return true;
     throw new ForbiddenException('You do not have access to this resource');
   }
 }

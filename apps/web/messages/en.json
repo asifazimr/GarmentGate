@@ -384,7 +384,9 @@
     "products": "Products",
     "capacity": "Capacity",
     "discover": "Discover",
-    "shortlists": "Shortlists"
+    "shortlists": "Shortlists",
+    "inspections": "Inspections",
+    "inspectors": "Inspectors"
   },
   "shell": {
     "search": "Search…",
@@ -425,7 +427,8 @@
     "roles": {
       "BUYER": "Buyer",
       "MANUFACTURER": "Manufacturer",
-      "ADMIN": "Admin"
+      "ADMIN": "Admin",
+      "INSPECTOR": "Inspector"
     }
   },
   "patterns": {
@@ -1221,7 +1224,8 @@
         "product-images": "Product image",
         "rfq-attachments": "RFQ file",
         "sample-photos": "Sample photo (buyer)",
-        "milestone-media": "Production media (factory)"
+        "milestone-media": "Production media (factory)",
+        "inspection-photos": "Inspection photo (GarmentGate QC)"
       },
       "document": "PDF document",
       "open": "Open sanitized copy",
@@ -1362,7 +1366,9 @@
       "cancel": "Cancel order",
       "shipSample": "Mark sample shipped",
       "toInspection": "Ready for inspection",
-      "ship": "Mark shipped"
+      "ship": "Mark shipped",
+      "rework": "Send back for rework",
+      "payBalance": "Pay the balance"
     },
     "timeline": {
       "title": "Progress",
@@ -1524,7 +1530,7 @@
       },
       "SHIPPED": {
         "title": "Mark as shipped",
-        "body": "Add how the goods travel and the tracking number.",
+        "body": "The goods have left on the booked shipment. The buyer gets the tracking details and documents.",
         "action": "Mark shipped",
         "done": "Marked shipped"
       },
@@ -1569,6 +1575,12 @@
         "body": "",
         "action": "Approve sample",
         "done": "Done"
+      },
+      "REWORK": {
+        "title": "Send the order back for rework?",
+        "body": "The factory fixes the defects the inspector found, then the goods are inspected again.",
+        "action": "Send back for rework",
+        "done": "Sent back for rework"
       }
     },
     "next": {
@@ -1606,16 +1618,16 @@
           "body": "Photos from the factory appear on each stage as it progresses."
         },
         "INSPECTION": {
-          "title": "Quality inspection",
-          "body": "An inspector checks the goods against your approved sample."
+          "title": "Final inspection",
+          "body": "GarmentGate’s inspector checks a random sample against AQL. Pick a date below if you want a say."
         },
         "SHIP": {
-          "title": "Getting ready to ship",
-          "body": "You’ll get the carrier and tracking number here."
+          "title": "Balance received: getting ready to ship",
+          "body": "The shipment details and your documents appear below once it’s booked."
         },
         "IN_TRANSIT": {
           "title": "On its way: {carrier} {tracking}",
-          "body": "Confirm delivery when the goods arrive."
+          "body": "Confirm delivery when the goods arrive: that releases the final payment to the factory."
         },
         "CONFIRM_COMPLETION": {
           "title": "Delivered: is everything right?",
@@ -1632,6 +1644,14 @@
         "CANCELLED": {
           "title": "Order cancelled",
           "body": "Message GarmentGate if you have questions."
+        },
+        "QC_FAILED": {
+          "title": "The final inspection failed",
+          "body": "See the defects below. Send the order back for rework (it’s inspected again), or report a problem."
+        },
+        "PAY_BALANCE": {
+          "title": "Inspection passed: pay the {balance} balance",
+          "body": "The factory ships as soon as it arrives. Funds stay in escrow until each milestone."
         }
       },
       "MANUFACTURER": {
@@ -1660,12 +1680,12 @@
           "body": "Update each stage and add photos or videos: buyers love seeing progress."
         },
         "INSPECTION": {
-          "title": "Inspection",
-          "body": "GarmentGate’s inspector checks the goods."
+          "title": "Final inspection",
+          "body": "GarmentGate’s inspector visits to check a random AQL sample. Have the packed goods ready."
         },
         "SHIP": {
-          "title": "Inspection passed: ship it",
-          "body": "Add the carrier and tracking number when the goods leave."
+          "title": "Balance received: ship it",
+          "body": "Book the shipment and upload your papers, then mark it shipped when it leaves."
         },
         "IN_TRANSIT": {
           "title": "Shipped",
@@ -1686,6 +1706,14 @@
         "CANCELLED": {
           "title": "Order cancelled",
           "body": "Message GarmentGate if you have questions."
+        },
+        "QC_FAILED": {
+          "title": "The final inspection failed",
+          "body": "See the defects below. The buyer decides on rework; GarmentGate will be in touch."
+        },
+        "PAY_BALANCE": {
+          "title": "Inspection passed: book the shipment",
+          "body": "You can ship once the buyer’s balance is in. We’ll tell you when it arrives."
         }
       },
       "ADMIN": {
@@ -1714,8 +1742,8 @@
           "body": "Review the factory’s photos in Moderation."
         },
         "INSPECTION": {
-          "title": "Inspection",
-          "body": "Pass it (ready to ship) or send it back to production."
+          "title": "Final inspection",
+          "body": "Assign an inspector below; their report moves the order on."
         },
         "SHIP": {
           "title": "Factory to ship",
@@ -1740,9 +1768,215 @@
         "CANCELLED": {
           "title": "Cancelled",
           "body": "Nothing left to do."
+        },
+        "QC_FAILED": {
+          "title": "Final inspection failed",
+          "body": "Waiting for the buyer to choose rework or a dispute."
+        },
+        "PAY_BALANCE": {
+          "title": "Balance due",
+          "body": "Confirm the buyer’s transfer in Finance when it arrives."
         }
       }
     },
     "stagesDone": "all stages complete"
+  },
+  "qc": {
+    "types": {
+      "PRE_PRODUCTION": "Pre-production inspection",
+      "DURING_PRODUCTION": "Inline inspection",
+      "PRE_SHIPMENT": "Final random inspection",
+      "CONTAINER_LOADING": "Container loading check"
+    },
+    "typeHints": {
+      "DURING_PRODUCTION": "Catch problems early, while there’s time to fix them.",
+      "PRE_SHIPMENT": "A random AQL sample of the finished, packed goods. Required before shipping."
+    },
+    "results": {
+      "PASS": "Pass",
+      "FAIL": "Fail"
+    },
+    "scheduledFor": "Scheduled for {date}",
+    "inspectedOn": "Inspected {date}",
+    "notScheduled": "Date to be set",
+    "bookedBy": {
+      "BUYER": "Booked by the buyer",
+      "STAFF": "Booked by GarmentGate",
+      "PLATFORM": "Opened when production finished"
+    },
+    "byGarmentGate": "inspected by GarmentGate QC",
+    "report": "Inspection report (PDF)",
+    "aql": {
+      "sample": "Sample",
+      "sampleOf": "{n} of {lot}",
+      "critical": "Critical",
+      "major": "Major (AQL {aql})",
+      "minor": "Minor (AQL {aql})",
+      "found": "{found} found · {allowed} allowed"
+    },
+    "book": {
+      "action": "Book an inspection",
+      "title": "Book an inspection",
+      "body": "GarmentGate’s inspector visits the factory on the day you pick. You’ll see the AQL results and photos here.",
+      "type": "Inspection",
+      "date": "Date",
+      "submit": "Book",
+      "done": "Inspection booked"
+    },
+    "assign": {
+      "label": "Inspector",
+      "placeholder": "Assign an inspector",
+      "loading": "Loading…",
+      "open": "{count, plural, =0 {free} one {# open} other {# open}}",
+      "done": "Inspector assigned",
+      "failed": "Couldn’t assign the inspector",
+      "by": "Inspected by {name}"
+    },
+    "inspector": {
+      "title": "Inspections",
+      "description": "Your inspections, next first. File each report from the factory floor.",
+      "empty": "No inspections assigned",
+      "emptyBody": "GarmentGate staff assign inspections to you; they appear here with the factory’s address.",
+      "notFound": "Inspection not found",
+      "back": "All inspections",
+      "factory": "Factory",
+      "lot": "Lot",
+      "pieces": "{count, plural, one {# piece} other {# pieces}}",
+      "photos": "Photos",
+      "addPhotos": "Add photos",
+      "photosHint": "Defects, measurements, packing. JPG, PNG or WebP up to 15 MB. Buyers see them after a check for logos and labels.",
+      "processing": "Processing…",
+      "uploadFailed": "The upload failed: try again",
+      "report": "AQL report",
+      "lotSize": "Lot size (pcs)",
+      "aql": {
+        "majorAql": "Major AQL",
+        "minorAql": "Minor AQL"
+      },
+      "plan": "Sample {sample} pieces (ISO 2859-1, level II). Accept up to {major} major and {minor} minor; no critical.",
+      "planMissing": "Enter the lot size to see the sampling plan.",
+      "defects": {
+        "critical": "Critical",
+        "major": "Major",
+        "minor": "Minor"
+      },
+      "allowed": "{count, plural, =0 {none allowed} other {up to # allowed}}",
+      "verdictPass": "Within AQL: the lot can pass.",
+      "verdictFail": "Over AQL ({reasons}): the lot fails.",
+      "cantPass": "These counts fail AQL, so the lot can’t pass.",
+      "result": "Result",
+      "summary": "Summary",
+      "summaryHint": "What you checked, the main defects and anything the factory should fix.",
+      "pdf": "Full report (optional)",
+      "pdfLabel": "Attach the PDF report",
+      "pdfHint": "PDF up to 20 MB. Metadata is removed; the buyer doesn’t get the PDF.",
+      "submit": "File report",
+      "filedPass": "Report filed: the lot passed",
+      "filedFail": "Report filed: the lot failed",
+      "notYet": "The report can be filed once the order is at this stage."
+    },
+    "inspectors": {
+      "title": "Inspectors",
+      "description": "GarmentGate’s QC inspectors. Assign them on each order’s quality step.",
+      "add": "Add inspector",
+      "empty": "No inspectors yet",
+      "emptyBody": "Add an inspector: they get an email to set their password.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "open": "{count, plural, =0 {No open inspections} one {# open inspection} other {# open inspections}}",
+      "addTitle": "Add an inspector",
+      "addBody": "They’ll get an email with a link to set their password. Inspectors only see the inspections assigned to them.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Work email",
+      "create": "Create and send invite",
+      "added": "Invite sent to {email}"
+    },
+    "shipment": {
+      "title": "Shipment",
+      "notBooked": "Book the shipment once the final inspection has passed.",
+      "book": "Book shipment",
+      "edit": "Edit",
+      "save": "Save changes",
+      "bookTitle": "Book the shipment",
+      "editTitle": "Update the shipment",
+      "bookBody": "The buyer sees these details (without your company’s name) and gets GarmentGate’s documents built from them.",
+      "booked": "Shipment booked",
+      "updated": "Shipment updated",
+      "privacy": "Only carrier references go in the number fields. Contact details are removed from every field.",
+      "modes": {
+        "SEA": "Sea freight",
+        "AIR": "Air freight",
+        "ROAD": "Road",
+        "RAIL": "Rail",
+        "COURIER": "Courier"
+      },
+      "fields": {
+        "mode": "Mode",
+        "incoterm": "Incoterm",
+        "forwarder": "Forwarder",
+        "carrier": "Carrier",
+        "tracking": "Tracking no.",
+        "container": "Container",
+        "transportDoc": "B/L or AWB no.",
+        "route": "Route",
+        "etd": "Departs (ETD)",
+        "eta": "Arrives (ETA)",
+        "cartons": "Cartons",
+        "weight": "Gross weight"
+      },
+      "form": {
+        "forwarder": "Forwarder",
+        "carrier": "Carrier",
+        "trackingNumber": "Tracking number",
+        "containerNumber": "Container number",
+        "transportDocNo": "Bill of lading / AWB number",
+        "originPort": "Port of loading",
+        "destinationPort": "Port of discharge",
+        "weightKg": "Gross weight (kg)"
+      },
+      "documents": "Documents",
+      "issuedByUs": "Issued by GarmentGate as your seller and exporter.",
+      "docTypes": {
+        "COMMERCIAL_INVOICE": "Commercial invoice",
+        "PACKING_LIST": "Packing list",
+        "BILL_OF_LADING": "Bill of lading",
+        "AIRWAY_BILL": "Air waybill",
+        "CERTIFICATE_OF_ORIGIN": "Certificate of origin",
+        "INSPECTION_CERTIFICATE": "Inspection certificate",
+        "OTHER": "Other document"
+      },
+      "visible": "Visible to buyer",
+      "hidden": "Not shown to buyer",
+      "processing": "Sanitizing…",
+      "failed": "Couldn’t process",
+      "open": "Open",
+      "publish": "Publish",
+      "hide": "Hide",
+      "published": "Published to the buyer",
+      "hiddenDone": "Hidden from the buyer",
+      "publishFailed": "Couldn’t update the document",
+      "upload": "Upload a document",
+      "uploadTitle": "Upload a shipping document",
+      "uploadBody": "PDF only. Metadata is removed, and GarmentGate checks it before the buyer sees it.",
+      "docType": "Document",
+      "choosePdf": "Choose a PDF",
+      "pdfHint": "PDF up to 20 MB",
+      "uploadAction": "Upload",
+      "uploaded": "Document uploaded",
+      "uploadFailed": "The upload failed: try again"
+    },
+    "pay": {
+      "title": "Pay the balance",
+      "body": "Pay GarmentGate by bank transfer, quoting the reference. The factory ships once it arrives.",
+      "intro": "We’ll show GarmentGate’s bank details and a reference for this payment.",
+      "showDetails": "Show bank details",
+      "amount": "Amount",
+      "reference": "Quote this reference",
+      "yourReference": "Your transfer reference (optional)",
+      "yourReferenceHint": "Helps us match it on our statement faster.",
+      "markSent": "I’ve sent it",
+      "sent": "Thanks: we’ll confirm it when it arrives."
+    }
   }
 }

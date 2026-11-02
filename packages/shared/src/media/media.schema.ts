@@ -70,6 +70,7 @@ export const MediaReviewKindSchema = z.enum([
   'rfq-attachments',
   'sample-photos',
   'milestone-media',
+  'inspection-photos',
 ]);
 export type MediaReviewKind = z.infer<typeof MediaReviewKindSchema>;
 
@@ -92,3 +93,16 @@ export type MediaReviewItem = z.infer<typeof MediaReviewItemSchema>;
 
 export const MediaReviewDecisionSchema = z.object({ note: z.string().trim().max(300).optional() });
 export type MediaReviewDecisionDto = z.output<typeof MediaReviewDecisionSchema>;
+
+/** A photo or video on an order (samples, production, inspections). */
+export const OrderMediaSchema = z.object({
+  id: z.uuid(),
+  kind: z.enum(['IMAGE', 'VIDEO']),
+  urls: ImageUrlsSchema.nullable(),
+  videoUrl: z.url().nullable(),
+  caption: z.string().nullable(),
+  processing: z.enum(['PENDING', 'PROCESSING', 'READY', 'FAILED']),
+  /** Factories and staff see review state; buyers only ever get approved media. */
+  review: MediaReviewStatusSchema,
+});
+export type OrderMedia = z.infer<typeof OrderMediaSchema>;

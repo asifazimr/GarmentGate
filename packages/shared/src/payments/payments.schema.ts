@@ -38,9 +38,11 @@ export const ReleaseScheduleSchema = z
   );
 export type ReleaseSchedule = z.output<typeof ReleaseScheduleSchema>;
 
+/** 30% when production starts, 50% when the final inspection passes, 20% on delivery. */
 export const DEFAULT_RELEASE_SCHEDULE: ReleaseSchedule = [
   { trigger: 'PRODUCTION_START', bps: 3000 },
-  { trigger: 'QC_PASSED', bps: 7000 },
+  { trigger: 'QC_PASSED', bps: 5000 },
+  { trigger: 'DELIVERED', bps: 2000 },
 ];
 
 /** Exchange rates: units of each currency per 1 USD, as decimal strings. */

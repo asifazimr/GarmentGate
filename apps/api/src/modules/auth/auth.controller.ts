@@ -27,7 +27,7 @@ import {
 } from '@garmentgate/shared';
 import type { Request, Response } from 'express';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
-import { type AuthenticatedUser, CurrentUser, Public } from './auth.decorators.js';
+import { AnyRole, type AuthenticatedUser, CurrentUser, Public } from './auth.decorators.js';
 import { AuthService, type RequestMeta } from './auth.service.js';
 import { TokenService } from './token.service.js';
 
@@ -107,6 +107,7 @@ export class AuthController {
     this.tokens.clearAuthCookies(res);
   }
 
+  @AnyRole()
   @Get('me')
   @ApiCookieAuth()
   @ApiOperation({ summary: 'The signed-in user, read fresh from the database' })
@@ -126,6 +127,7 @@ export class AuthController {
     await this.auth.verifyEmail(dto.token);
   }
 
+  @AnyRole()
   @Post('verify-email/resend')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({ default: { limit: 3, ttl: 60_000 } })

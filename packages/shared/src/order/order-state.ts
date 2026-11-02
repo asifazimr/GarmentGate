@@ -27,7 +27,8 @@ const M = 'MANUFACTURER' as const;
  * - Sampling is optional (DRAFT → DEPOSIT_PENDING, e.g. a reorder of an approved style).
  * - SAMPLE_APPROVED is reached by the buyer approving a sample, not by a bare status change.
  * - Money and quality are GarmentGate's: deposit received (→ IN_PRODUCTION) and QC results.
- * - QC can send an order back to production for rework.
+ * - QC can send an order back to production for rework (staff, or the buyer after a failed
+ *   final inspection).
  * - Buyers can cancel until production starts; after that only staff can.
  * - Disputes are resolved by staff, back into the flow or to COMPLETED / CANCELLED.
  */
@@ -39,7 +40,8 @@ export const ORDER_TRANSITIONS: Readonly<
   SAMPLE_APPROVED: { DEPOSIT_PENDING: [B, A], SAMPLING: [B, A], CANCELLED: [B, A] },
   DEPOSIT_PENDING: { IN_PRODUCTION: [A], CANCELLED: [B, A] },
   IN_PRODUCTION: { QC: [M, A], DISPUTED: [B, A], CANCELLED: [A] },
-  QC: { READY_TO_SHIP: [A], IN_PRODUCTION: [A], DISPUTED: [B, A] },
+  // The buyer may send it back for rework after a failed final inspection (checked by QC).
+  QC: { READY_TO_SHIP: [A], IN_PRODUCTION: [B, A], DISPUTED: [B, A] },
   READY_TO_SHIP: { SHIPPED: [M, A], DISPUTED: [B, A] },
   SHIPPED: { DELIVERED: [B, A], DISPUTED: [B, A] },
   DELIVERED: { COMPLETED: [B, A], DISPUTED: [B, A] },
@@ -86,6 +88,8 @@ export type NextStep =
   | 'PAY_DEPOSIT'
   | 'PRODUCTION'
   | 'INSPECTION'
+  | 'QC_FAILED'
+  | 'PAY_BALANCE'
   | 'SHIP'
   | 'IN_TRANSIT'
   | 'CONFIRM_COMPLETION'
@@ -99,10 +103,16 @@ export interface NextStepInfo {
   owner: OrderActor | null;
 }
 
-export function nextStep(
-  status: OrderStatus,
-  latestSample: { status: string } | null,
-): NextStepInfo {
+/** What else decides the next step besides the status. */
+export interface NextStepContext {
+  latestSample?: { status: string } | null;
+  /** Result of the latest final (pre-shipment) inspection. */
+  finalInspection?: 'PENDING' | 'PASS' | 'FAIL' | 'ON_HOLD' | null;
+  balancePaid?: boolean;
+}
+
+export function nextStep(status: OrderStatus, context: NextStepContext = {}): NextStepInfo {
+  const latestSample = context.latestSample ?? null;
   switch (status) {
     case 'DRAFT':
       return { step: 'CHOOSE_SAMPLING', owner: 'BUYER' };
@@ -117,9 +127,14 @@ export function nextStep(
     case 'IN_PRODUCTION':
       return { step: 'PRODUCTION', owner: 'MANUFACTURER' };
     case 'QC':
-      return { step: 'INSPECTION', owner: 'ADMIN' };
+      // A failed final inspection: the buyer decides between rework and a dispute.
+      return context.finalInspection === 'FAIL'
+        ? { step: 'QC_FAILED', owner: 'BUYER' }
+        : { step: 'INSPECTION', owner: 'ADMIN' };
     case 'READY_TO_SHIP':
-      return { step: 'SHIP', owner: 'MANUFACTURER' };
+      return context.balancePaid === false
+        ? { step: 'PAY_BALANCE', owner: 'BUYER' }
+        : { step: 'SHIP', owner: 'MANUFACTURER' };
     case 'SHIPPED':
       return { step: 'IN_TRANSIT', owner: 'BUYER' };
     case 'DELIVERED':

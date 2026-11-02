@@ -7,7 +7,7 @@ import { hash } from '@node-rs/argon2';
 import { filterContactDetails } from '@garmentgate/shared';
 import { createPrismaClient } from '../../src/prisma/create-prisma-client.js';
 import type { Currency, Prisma } from '../../src/generated/prisma/client.js';
-import { ADMIN, BUYERS, CATEGORIES, DEMO_PASSWORD, MANUFACTURERS } from './data.js';
+import { ADMIN, BUYERS, CATEGORIES, DEMO_PASSWORD, INSPECTOR, MANUFACTURERS } from './data.js';
 import { Meilisearch } from 'meilisearch';
 import { SearchIndexer } from '../../src/modules/search/search-indexer.js';
 import { seedDocument, seedImage } from './media.js';
@@ -60,6 +60,9 @@ async function main(): Promise<void> {
   // ── Admin ─────────────────────────────────────────────────────────────────
   const admin = await prisma.user.create({
     data: { ...ADMIN, passwordHash, role: 'ADMIN', emailVerifiedAt: now },
+  });
+  const inspector = await prisma.user.create({
+    data: { ...INSPECTOR, passwordHash, role: 'INSPECTOR', emailVerifiedAt: now },
   });
 
   // ── Manufacturers ─────────────────────────────────────────────────────────
@@ -610,13 +613,15 @@ async function main(): Promise<void> {
       inspections: {
         create: [
           {
+            // Booked by the buyer, assigned to GarmentGate's inspector.
             type: 'DURING_PRODUCTION',
-            agency: 'Third-party QC (to be assigned)',
             scheduledAt: daysFromNow(3),
             aqlLevel: 'II',
             aqlMajor: '2.5',
             aqlMinor: '4.0',
             result: 'PENDING',
+            bookedById: northbound.userId,
+            inspectorId: inspector.id,
           },
         ],
       },
@@ -1241,6 +1246,7 @@ async function createFile(
 function printLogins(): void {
   const rows = [
     ['ADMIN', ADMIN.email, '—'],
+    ['INSPECTOR', INSPECTOR.email, '—'],
     ...MANUFACTURERS.map((m) => ['MANUFACTURER', m.owner.email, `${m.publicCode} (${m.kyc})`]),
     ...BUYERS.map((b) => ['BUYER', b.owner.email, `${b.publicCode} (${b.kyc})`]),
   ];

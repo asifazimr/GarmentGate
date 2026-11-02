@@ -215,7 +215,8 @@ describe('payments and escrow ledger (e2e)', () => {
       ]),
     ).toEqual([
       ['PRODUCTION_START', 3000, 136_500, 114_000, 22_500, 'SCHEDULED'],
-      ['QC_PASSED', 7000, 318_500, 266_000, 52_500, 'SCHEDULED'],
+      ['QC_PASSED', 5000, 227_500, 190_000, 37_500, 'SCHEDULED'],
+      ['DELIVERED', 2000, 91_000, 76_000, 15_000, 'SCHEDULED'],
     ]);
     expect(f.marginMinor).toBe(75_000);
 
@@ -227,7 +228,7 @@ describe('payments and escrow ledger (e2e)', () => {
     expect(b.methods).toEqual(['BANK_TRANSFER', 'LETTER_OF_CREDIT', 'CARD']);
     const p = await factoryView();
     expect(p).toMatchObject({ totalMinor: 380_000, releasedMinor: 0, paidMinor: 0 });
-    expect(p.schedule.map((r) => r.amountMinor)).toEqual([114_000, 266_000]);
+    expect(p.schedule.map((r) => r.amountMinor)).toEqual([114_000, 190_000, 76_000]);
 
     // Never the margin, never the other side's amounts.
     const buyerJson = JSON.stringify(b);
@@ -390,7 +391,7 @@ describe('payments and escrow ledger (e2e)', () => {
     expect(f.ledger.filter((t) => t.kind === 'DEPOSIT')).toHaveLength(2);
   });
 
-  it('releases the rest after QC and lets the order ship', async () => {
+  it('releases the QC tranche, lets the order ship, and releases the rest on delivery', async () => {
     await ctx.prisma.orderMilestone.updateMany({
       where: { order: { code } },
       data: { status: 'COMPLETED', completedAt: new Date() },
@@ -404,6 +405,17 @@ describe('payments and escrow ledger (e2e)', () => {
       shipment: { mode: 'SEA', carrier: 'Maersk', trackingNumber: 'MAEU1' },
     }).expect(204);
     expect(await finance()).toMatchObject({
+      escrowMinor: 91_000,
+      releasedMinor: 304_000,
+      commissionMinor: 60_000,
+      payableMinor: 190_000,
+    });
+
+    // The buyer confirms delivery: the last 20% goes to the factory without staff approval.
+    await move(buyer.agent, 'DELIVERED').expect(204);
+    const f = await finance();
+    expect(f.releases.map((r) => r.status)).toEqual(['PAID', 'RELEASED', 'RELEASED']);
+    expect(f).toMatchObject({
       escrowMinor: 0,
       releasedMinor: 380_000,
       commissionMinor: 75_000,

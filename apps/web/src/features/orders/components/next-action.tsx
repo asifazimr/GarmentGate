@@ -1,10 +1,16 @@
 'use client';
 
-import { nextStep, type OrderSample, type OrderStatus } from '@garmentgate/shared';
+import {
+  nextStep,
+  type OrderInspection,
+  type OrderSample,
+  type OrderStatus,
+} from '@garmentgate/shared';
 import {
   ArrowRight,
   CheckCircle2,
   ClipboardCheck,
+  ClipboardX,
   CreditCard,
   Factory,
   PackageCheck,
@@ -27,6 +33,8 @@ const ICONS = {
   PAY_DEPOSIT: CreditCard,
   PRODUCTION: Factory,
   INSPECTION: ClipboardCheck,
+  QC_FAILED: ClipboardX,
+  PAY_BALANCE: CreditCard,
   SHIP: Truck,
   IN_TRANSIT: Truck,
   CONFIRM_COMPLETION: PackageCheck,
@@ -43,19 +51,25 @@ export function NextAction({
   role,
   status,
   latestSample,
+  inspections = [],
+  balancePaid,
   values,
   children,
 }: {
   role: OrderRole;
   status: OrderStatus;
   latestSample: OrderSample | null;
+  inspections?: Pick<OrderInspection, 'type' | 'result'>[];
+  balancePaid?: boolean;
   /** Values for the copy, e.g. the deposit amount or the stage in progress. */
   values?: Record<string, string>;
   /** Buttons for the action. */
   children?: ReactNode;
 }) {
   const t = useTranslations('orders.next');
-  const { step, owner } = nextStep(status, latestSample);
+  const finalInspection =
+    inspections.filter((i) => i.type === 'PRE_SHIPMENT').at(-1)?.result ?? null;
+  const { step, owner } = nextStep(status, { latestSample, finalInspection, balancePaid });
   const yours = owner === role || (role === 'ADMIN' && owner !== null);
   const Icon = step === 'DONE' && role !== 'BUYER' ? CheckCircle2 : ICONS[step];
   const who =

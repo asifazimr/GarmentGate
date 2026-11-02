@@ -35,7 +35,7 @@ import {
   type StartPaymentDto,
 } from '@garmentgate/shared';
 import type Stripe from 'stripe';
-import type { Payment, Prisma } from '../../generated/prisma/client.js';
+import type { OrderRelease, Payment, Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import type { ChatActor } from '../chat/chat-actor.service.js';
@@ -210,6 +210,22 @@ export class PaymentsService implements OnModuleInit {
         },
         data: { status: 'DUE', dueAt: now },
       });
+    }
+    if (to === 'DELIVERED') {
+      // The buyer confirmed delivery: the delivery tranche goes to the factory without waiting
+      // for staff, provided escrow holds it (otherwise it stays DUE for staff to sort out).
+      const due = await tx.orderRelease.findMany({
+        where: { orderId: order.id, status: 'DUE', trigger: 'DELIVERED' },
+      });
+      const parties = {
+        buyerCompanyId: order.buyerCompanyId,
+        manufacturerProfile: { companyId: order.manufacturerProfile.company.id },
+      };
+      for (const release of due) {
+        const position = await this.ledger.orderPosition(order.id, tx);
+        if (position.escrow < release.buyerMinor) continue;
+        await this.releaseWithin(tx, { ...release, order: parties }, null);
+      }
     }
     if (to === 'CANCELLED') {
       await tx.orderRelease.updateMany({
@@ -640,63 +656,7 @@ export class PaymentsService implements OnModuleInit {
     });
     if (!release) throw new NotFoundException('Release not found');
     await this.prisma.$transaction(async (tx) => {
-      await this.ledger.lockOrder(tx, release.orderId);
-      const { count } = await tx.orderRelease.updateMany({
-        where: { id: release.id, status: 'DUE' },
-        data: { status: 'RELEASED', releasedAt: new Date(), approvedById: adminId },
-      });
-      if (count !== 1)
-        throw new ConflictException('This tranche isn’t due, or was already released');
-      const position = await this.ledger.orderPosition(release.orderId, tx);
-      if (position.escrow < release.buyerMinor) {
-        throw new ConflictException(
-          `Not enough in escrow: ${String(position.escrow)} held, ${String(release.buyerMinor)} needed`,
-        );
-      }
-      const { rates } = await this.fx.snapshot(release.currency, tx);
-      const base = { orderId: release.orderId, currency: release.currency, rates };
-      await this.ledger.post(tx, {
-        ...base,
-        kind: 'RELEASE',
-        key: `release:${release.id}`,
-        description: `${release.trigger} tranche released to the factory`,
-        lines: [
-          {
-            account: 'BUYER_ESCROW',
-            companyId: release.order.buyerCompanyId,
-            direction: 'DEBIT',
-            amountMinor: release.manufacturerMinor,
-          },
-          {
-            account: 'MANUFACTURER_PAYABLE',
-            companyId: release.order.manufacturerProfile.companyId,
-            direction: 'CREDIT',
-            amountMinor: release.manufacturerMinor,
-          },
-        ],
-      });
-      if (release.commissionMinor > 0n) {
-        await this.ledger.post(tx, {
-          ...base,
-          kind: 'COMMISSION',
-          key: `commission:${release.id}`,
-          description: `Commission on the ${release.trigger} tranche`,
-          lines: [
-            {
-              account: 'BUYER_ESCROW',
-              companyId: release.order.buyerCompanyId,
-              direction: 'DEBIT',
-              amountMinor: release.commissionMinor,
-            },
-            {
-              account: 'PLATFORM_REVENUE',
-              companyId: null,
-              direction: 'CREDIT',
-              amountMinor: release.commissionMinor,
-            },
-          ],
-        });
-      }
+      await this.releaseWithin(tx, release, adminId);
     });
     await this.notifyCompany(
       release.order.manufacturerProfile.companyId,
@@ -710,6 +670,82 @@ export class PaymentsService implements OnModuleInit {
       entityType: 'OrderRelease',
       entityId: release.id,
     });
+  }
+
+  /**
+   * Moves one DUE tranche out of escrow inside the caller's transaction: the factory's share to
+   * its payable, the commission to revenue. Throws if it isn't due or escrow is short.
+   */
+  private async releaseWithin(
+    tx: Prisma.TransactionClient,
+    release: Pick<
+      OrderRelease,
+      | 'id'
+      | 'orderId'
+      | 'currency'
+      | 'trigger'
+      | 'buyerMinor'
+      | 'manufacturerMinor'
+      | 'commissionMinor'
+    > & { order: { buyerCompanyId: string; manufacturerProfile: { companyId: string } } },
+    approvedById: string | null,
+  ): Promise<void> {
+    await this.ledger.lockOrder(tx, release.orderId);
+    const { count } = await tx.orderRelease.updateMany({
+      where: { id: release.id, status: 'DUE' },
+      data: { status: 'RELEASED', releasedAt: new Date(), approvedById },
+    });
+    if (count !== 1) throw new ConflictException('This tranche isn’t due, or was already released');
+    const position = await this.ledger.orderPosition(release.orderId, tx);
+    if (position.escrow < release.buyerMinor) {
+      throw new ConflictException(
+        `Not enough in escrow: ${String(position.escrow)} held, ${String(release.buyerMinor)} needed`,
+      );
+    }
+    const { rates } = await this.fx.snapshot(release.currency, tx);
+    const base = { orderId: release.orderId, currency: release.currency, rates };
+    await this.ledger.post(tx, {
+      ...base,
+      kind: 'RELEASE',
+      key: `release:${release.id}`,
+      description: `${release.trigger} tranche released to the factory`,
+      lines: [
+        {
+          account: 'BUYER_ESCROW',
+          companyId: release.order.buyerCompanyId,
+          direction: 'DEBIT',
+          amountMinor: release.manufacturerMinor,
+        },
+        {
+          account: 'MANUFACTURER_PAYABLE',
+          companyId: release.order.manufacturerProfile.companyId,
+          direction: 'CREDIT',
+          amountMinor: release.manufacturerMinor,
+        },
+      ],
+    });
+    if (release.commissionMinor > 0n) {
+      await this.ledger.post(tx, {
+        ...base,
+        kind: 'COMMISSION',
+        key: `commission:${release.id}`,
+        description: `Commission on the ${release.trigger} tranche`,
+        lines: [
+          {
+            account: 'BUYER_ESCROW',
+            companyId: release.order.buyerCompanyId,
+            direction: 'DEBIT',
+            amountMinor: release.commissionMinor,
+          },
+          {
+            account: 'PLATFORM_REVENUE',
+            companyId: null,
+            direction: 'CREDIT',
+            amountMinor: release.commissionMinor,
+          },
+        ],
+      });
+    }
   }
 
   /** Records the bank transfer to the factory for a released tranche (optionally in another currency). */

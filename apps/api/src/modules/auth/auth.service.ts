@@ -77,6 +77,43 @@ export class AuthService {
     return this.startSession(user, meta);
   }
 
+  /**
+   * A staff account made by an admin (inspectors): no usable password until the person sets
+   * one from the emailed link.
+   */
+  async createStaffUser(
+    adminId: string,
+    input: { email: string; firstName: string; lastName: string; role: 'INSPECTOR' },
+  ): Promise<{ id: string }> {
+    const existing = await this.prisma.user.findUnique({ where: { email: input.email } });
+    if (existing) throw new ConflictException('An account with this email already exists');
+    const user = await this.prisma.user.create({
+      data: {
+        ...input,
+        passwordHash: await hash(randomUUID()),
+        emailVerifiedAt: new Date(),
+      },
+    });
+    const token = await this.createUserToken(
+      user.id,
+      'PASSWORD_RESET',
+      PASSWORD_RESET_TTL_MINUTES * 60_000,
+    );
+    await this.mail.send('reset-password', user.email, {
+      firstName: user.firstName,
+      resetUrl: this.webUrl('/reset-password', token),
+      expiresInMinutes: PASSWORD_RESET_TTL_MINUTES,
+    });
+    await this.audit.log({
+      actorUserId: adminId,
+      action: 'auth.staff_created',
+      entityType: 'User',
+      entityId: user.id,
+      metadata: { role: input.role },
+    });
+    return { id: user.id };
+  }
+
   async login(dto: LoginDto, meta: RequestMeta): Promise<AuthResult> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },

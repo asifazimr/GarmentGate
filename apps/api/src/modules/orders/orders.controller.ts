@@ -37,10 +37,9 @@ import { z } from 'zod';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { type AuthenticatedUser, CurrentUser } from '../auth/auth.decorators.js';
 import { ChatActorService } from '../chat/chat-actor.service.js';
+import { CodeSchema, IdSchema } from './order-params.js';
 import { OrdersService } from './orders.service.js';
 
-const CodeSchema = z.string().regex(/^ORD-\d{4}-\d{4,}$/, { error: 'Unknown order' });
-const IdSchema = z.uuid();
 const SideSchema = z.object({ side: z.enum(['buyer', 'manufacturer']).optional() });
 
 /**

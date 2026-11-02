@@ -41,10 +41,13 @@ import type { ChatActor } from '../chat/chat-actor.service.js';
 import { MediaService } from '../media/media.service.js';
 import { PublicCodeService } from '../onboarding/public-code.service.js';
 import { FilesService } from '../storage/files.service.js';
+import { StorageService } from '../storage/storage.service.js';
 import {
   adminOrderView,
   buyerOrderView,
   currentStage,
+  documentName,
+  finalInspection,
   manufacturerOrderView,
   type MediaLinks,
   orderInclude,
@@ -52,7 +55,7 @@ import {
   progressOf,
 } from './order-views.js';
 import { OrderHooks } from './order-hooks.js';
-import { renderPurchaseOrder } from './purchase-order.js';
+import { postalAddress, renderPurchaseOrder } from './purchase-order.js';
 
 /** When each production stage is planned, as a share of the time to the ship date. */
 const STAGE_PLAN: Record<ProductionStage, number> = {
@@ -84,6 +87,7 @@ export class OrdersService {
     private readonly audit: AuditService,
     private readonly config: ConfigService<Env, true>,
     private readonly hooks: OrderHooks,
+    private readonly storage: StorageService,
   ) {}
 
   // ── Reading ───────────────────────────────────────────────────────────────
@@ -180,19 +184,48 @@ export class OrdersService {
     }));
   }
 
-  private async links(order: OrderRow): Promise<MediaLinks> {
+  async links(order: OrderRow): Promise<MediaLinks> {
+    type Link = Pick<OrderMedia, 'urls' | 'videoUrl'> & { documentUrl?: string | null };
     const media = [
       ...order.samples.flatMap((s) => s.photos),
       ...order.milestones.flatMap((m) => m.photos),
+      ...order.inspections.flatMap((i) => i.photos),
     ];
-    const entries = await Promise.all(
-      media.map(async (m): Promise<[string, Pick<OrderMedia, 'urls' | 'videoUrl'>]> => {
+    // Sanitized PDFs, signed under a neutral name.
+    const documents = [
+      ...order.inspections.flatMap((i) =>
+        i.reportFile
+          ? [{ id: i.reportFile.id, file: i.reportFile, type: 'INSPECTION_REPORT' }]
+          : [],
+      ),
+      ...(order.shipments[0]?.documents ?? []).map((d) => ({
+        id: d.fileId,
+        file: d.file,
+        type: d.type,
+      })),
+    ];
+    const entries = await Promise.all([
+      ...media.map(async (m): Promise<[string, Link]> => {
         if (m.file.mimeType.startsWith('video/')) {
           return [m.fileId, { urls: null, videoUrl: await this.media.videoUrl(m.file) }];
         }
         return [m.fileId, { urls: await this.media.urls(m.file), videoUrl: null }];
       }),
-    );
+      ...documents.map(async (d): Promise<[string, Link]> => [
+        d.id,
+        {
+          urls: null,
+          videoUrl: null,
+          documentUrl:
+            d.file.processingStatus === 'READY' && d.file.sanitizedKey
+              ? await this.storage.presignDownload(
+                  d.file.sanitizedKey,
+                  documentName(order.code, d.type),
+                )
+              : null,
+        },
+      ]),
+    ]);
     return new Map(entries);
   }
 
@@ -214,6 +247,14 @@ export class OrdersService {
           return { confirmedAt: order.confirmedAt ?? now };
         case 'IN_PRODUCTION':
           if (order.status === 'DEPOSIT_PENDING') await this.planMilestones(tx, order, now);
+          // Rework: the buyer's call only once the final inspection has failed.
+          if (
+            order.status === 'QC' &&
+            !actor.isAdmin &&
+            finalInspection(order)?.result !== 'FAIL'
+          ) {
+            throw new ConflictException('Rework can be requested after a failed final inspection');
+          }
           return {};
         case 'QC': {
           const open = order.milestones.filter(
@@ -224,16 +265,42 @@ export class OrdersService {
           if (open.length > 0 && !actor.isAdmin) {
             throw new ConflictException('Complete every production stage before inspection');
           }
+          // The final random inspection, unless one is already booked (staff assign the inspector).
+          if (!order.inspections.some((i) => i.type === 'PRE_SHIPMENT' && i.result === 'PENDING')) {
+            await tx.inspection.create({
+              data: { orderId: order.id, type: 'PRE_SHIPMENT', aqlLevel: 'II' },
+            });
+          }
           return {};
         }
         case 'SHIPPED': {
-          if (!dto.shipment) throw new BadRequestException('Add the carrier and tracking number');
+          const booked = order.shipments[0];
+          if (booked) {
+            if (!booked.trackingNumber && !booked.transportDocNo && !dto.shipment) {
+              throw new BadRequestException('Add the tracking or bill of lading number first');
+            }
+            await tx.shipment.update({
+              where: { id: booked.id },
+              data: {
+                status: 'IN_TRANSIT',
+                shippedAt: now,
+                ...(dto.shipment && {
+                  mode: dto.shipment.mode,
+                  carrier: filterContactDetails(dto.shipment.carrier).filtered,
+                  trackingNumber: dto.shipment.trackingNumber,
+                }),
+              },
+            });
+            return {};
+          }
+          if (!dto.shipment) throw new BadRequestException('Book the shipment first');
           await tx.shipment.create({
             data: {
               orderId: order.id,
               mode: dto.shipment.mode,
-              carrier: dto.shipment.carrier,
+              carrier: filterContactDetails(dto.shipment.carrier).filtered,
               trackingNumber: dto.shipment.trackingNumber,
+              incoterm: order.incoterm,
               status: 'IN_TRANSIT',
               shippedAt: now,
               destinationPort: order.destinationPort,
@@ -713,19 +780,7 @@ export class OrdersService {
       address: this.config.get('PLATFORM_ADDRESS', { infer: true }),
       email: this.config.get('PLATFORM_EMAIL', { infer: true }),
     };
-    const address = (c: {
-      addressLine1: string | null;
-      addressLine2: string | null;
-      postalCode: string | null;
-      city: string | null;
-      country: string;
-    }) =>
-      [
-        c.addressLine1,
-        c.addressLine2,
-        [c.postalCode, c.city].filter(Boolean).join(' '),
-        c.country,
-      ].filter((x): x is string => Boolean(x));
+    const address = postalAddress;
     const garmentGate = (role: string) => ({
       role,
       name: platform.name,
@@ -813,13 +868,16 @@ export class OrdersService {
         buyer: 'Deposit received: production has started.',
         factory: 'Deposit received: please start production and update each stage.',
       },
-      QC: { buyer: 'Production finished: quality inspection next.' },
-      READY_TO_SHIP: {
-        buyer: 'Inspection passed: getting ready to ship.',
-        factory: 'Inspection passed: please ship and add tracking.',
+      QC: {
+        buyer: 'Production finished: the final inspection is next.',
+        factory: 'Production finished: GarmentGate will schedule the final inspection.',
       },
-      SHIPPED: { buyer: 'Your order has shipped.' },
-      DELIVERED: { factory: 'The order was delivered.' },
+      READY_TO_SHIP: {
+        buyer: 'Final inspection passed: please pay the balance so the order can ship.',
+        factory: 'Final inspection passed: book the shipment. You can ship once the balance is in.',
+      },
+      SHIPPED: { buyer: 'Your order has shipped: tracking and documents are on the order.' },
+      DELIVERED: { factory: 'The buyer confirmed delivery: the final payment is being released.' },
       COMPLETED: { buyer: 'Order completed. Thank you!', factory: 'Order completed. Thank you!' },
       CANCELLED: { buyer: 'The order was cancelled.', factory: 'The order was cancelled.' },
       DISPUTED: {
@@ -853,7 +911,7 @@ export class OrdersService {
     );
   }
 
-  private async notifyParty(
+  async notifyParty(
     order: OrderRow,
     party: 'BUYER' | 'MANUFACTURER' | 'ADMIN',
     type: NotificationType,

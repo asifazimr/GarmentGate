@@ -29,6 +29,8 @@ import {
 } from '../api';
 import { NextAction } from './next-action';
 import { ShipSampleDialog, TransitionDialog } from './order-dialogs';
+import { InspectionsPanel } from '@/features/qc/components/inspections-panel';
+import { ShipmentPanel } from '@/features/qc/components/shipment-panel';
 import {
   OrderError,
   OrderHeader,
@@ -85,6 +87,8 @@ export function FactoryOrderPage({ code }: { code: string }) {
         role="MANUFACTURER"
         status={o.status}
         latestSample={latest}
+        inspections={o.inspections}
+        balancePaid={o.balancePaid}
         values={{
           stage: stage ? t(`timeline.phases.${stage.stage}`) : t('timeline.phases.PACKING'),
         }}
@@ -97,7 +101,7 @@ export function FactoryOrderPage({ code }: { code: string }) {
             {t('actions.toInspection')}
           </Button>
         ) : null}
-        {o.allowedTransitions.includes('SHIPPED') ? (
+        {o.allowedTransitions.includes('SHIPPED') && o.shipment && o.balancePaid ? (
           <Button onClick={() => setMoving('SHIPPED')}>{t('actions.ship')}</Button>
         ) : null}
       </NextAction>
@@ -111,6 +115,25 @@ export function FactoryOrderPage({ code }: { code: string }) {
             order={o}
             slot={(key) => {
               if (key === 'sample') return <SampleRounds samples={o.samples} />;
+              if (key === 'qc')
+                return (
+                  <InspectionsPanel
+                    role="MANUFACTURER"
+                    code={o.code}
+                    status={o.status}
+                    inspections={o.inspections}
+                  />
+                );
+              if (key === 'shipping')
+                return (
+                  <ShipmentPanel
+                    role="MANUFACTURER"
+                    code={o.code}
+                    status={o.status}
+                    shipment={o.shipment}
+                    defaultIncoterm={o.incoterm}
+                  />
+                );
               const parsed = ProductionStageSchema.safeParse(key);
               const milestone = parsed.success
                 ? o.milestones.find((m) => m.stage === parsed.data)

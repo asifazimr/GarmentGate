@@ -5,6 +5,7 @@ export const ROLE_HOME: Record<Role, string> = {
   BUYER: '/buyer',
   MANUFACTURER: '/manufacturer',
   ADMIN: '/admin',
+  INSPECTOR: '/inspector',
 };
 
 /** Areas only reachable by one role once verified. */
@@ -18,7 +19,8 @@ export const PENDING_PATH = '/pending';
  * and client code (from /auth/me) so both always agree.
  */
 export function homePathFor(state: { role: Role; kycStatus: KycStatus | null }): string {
-  if (state.role === 'ADMIN') return ROLE_HOME.ADMIN;
+  // Staff roles have no company to verify.
+  if (state.role === 'ADMIN' || state.role === 'INSPECTOR') return ROLE_HOME[state.role];
   switch (state.kycStatus) {
     case 'VERIFIED':
       return ROLE_HOME[state.role];

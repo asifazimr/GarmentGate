@@ -1,11 +1,13 @@
 import { z } from 'zod';
 import { CurrencySchema } from '../catalog/product.schema.js';
 import { MilestoneStageSchema } from '../discovery/discovery.schema.js';
+import { IMAGE_CONTENT_TYPES, OrderMediaSchema } from '../media/media.schema.js';
+import { OrderInspectionSchema } from '../qc/qc.schema.js';
 import {
-  IMAGE_CONTENT_TYPES,
-  ImageUrlsSchema,
-  MediaReviewStatusSchema,
-} from '../media/media.schema.js';
+  OrderShipmentSchema,
+  ShipmentModeSchema,
+  ShipmentReferenceSchema,
+} from '../qc/shipping.schema.js';
 import { IncotermSchema } from '../rfq/rfq.schema.js';
 import {
   MilestoneStatusSchema,
@@ -60,9 +62,9 @@ export const OrderTransitionSchema = z.object({
   /** When shipping: how it travels. */
   shipment: z
     .object({
-      mode: z.enum(['SEA', 'AIR', 'ROAD', 'RAIL', 'COURIER']),
+      mode: ShipmentModeSchema,
       carrier: z.string().trim().min(2).max(80),
-      trackingNumber: z.string().trim().min(3).max(60),
+      trackingNumber: ShipmentReferenceSchema,
     })
     .optional(),
 });
@@ -123,18 +125,6 @@ export const OrderCreatedSchema = z.object({ code: z.string() });
 
 // ── Views ───────────────────────────────────────────────────────────────────
 
-export const OrderMediaSchema = z.object({
-  id: z.uuid(),
-  kind: z.enum(['IMAGE', 'VIDEO']),
-  urls: ImageUrlsSchema.nullable(),
-  videoUrl: z.url().nullable(),
-  caption: z.string().nullable(),
-  processing: z.enum(['PENDING', 'PROCESSING', 'READY', 'FAILED']),
-  /** Factories and staff see review state; buyers only ever get approved media. */
-  review: MediaReviewStatusSchema,
-});
-export type OrderMedia = z.infer<typeof OrderMediaSchema>;
-
 export const OrderSampleSchema = z.object({
   id: z.uuid(),
   round: z.number().int(),
@@ -171,14 +161,6 @@ export const OrderEventSchema = z.object({
 });
 export type OrderEvent = z.infer<typeof OrderEventSchema>;
 
-export const OrderShipmentSchema = z.object({
-  mode: z.string(),
-  carrier: z.string().nullable(),
-  trackingNumber: z.string().nullable(),
-  shippedAt: z.iso.datetime().nullable(),
-  deliveredAt: z.iso.datetime().nullable(),
-});
-
 const core = {
   code: z.string(),
   title: z.string(),
@@ -201,7 +183,10 @@ const core = {
   samples: z.array(OrderSampleSchema),
   milestones: z.array(OrderMilestoneSchema),
   events: z.array(OrderEventSchema),
+  inspections: z.array(OrderInspectionSchema),
   shipment: OrderShipmentSchema.nullable(),
+  /** Whether the buyer's balance is in (the factory ships only after it). */
+  balancePaid: z.boolean(),
   /** What the viewer may move the order to right now. */
   allowedTransitions: z.array(OrderStatusSchema),
 };

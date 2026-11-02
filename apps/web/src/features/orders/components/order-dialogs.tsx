@@ -39,13 +39,6 @@ import {
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { FormAlert } from '@/features/auth/components/form-alert';
 import { applyServerErrors } from '@/lib/form-errors';
@@ -405,16 +398,17 @@ export function ShipSampleDialog({
   );
 }
 
-const MODES = ['SEA', 'AIR', 'ROAD', 'RAIL', 'COURIER'] as const;
-
-/** Confirms a status change; asks for a reason (disputes) or tracking (shipping) when needed. */
+/** Confirms a status change; asks for a reason when disputing. Shipments are booked first. */
 export function TransitionDialog({
   code,
   to,
+  copy,
   onClose,
 }: {
   code: string;
   to: OrderStatus | null;
+  /** Wording for a move that means something else here (the buyer's rework is → IN_PRODUCTION). */
+  copy?: 'REWORK';
   onClose: () => void;
 }) {
   const t = useTranslations('orders.dialogs');
@@ -422,22 +416,14 @@ export function TransitionDialog({
   const tc = useTranslations('common');
   const transition = useTransition(code);
   const [error, setError] = useState<string | null>(null);
-  const shipping = to === 'SHIPPED';
   const needsNote = to === 'DISPUTED';
-  const form = useForm<{
-    note: string;
-    mode: (typeof MODES)[number];
-    carrier: string;
-    trackingNumber: string;
-  }>({
-    defaultValues: { note: '', mode: 'SEA', carrier: '', trackingNumber: '' },
-  });
+  const form = useForm<{ note: string }>({ defaultValues: { note: '' } });
   return (
     <Shell
       open={to !== null}
       onClose={onClose}
-      title={to ? ts(`${to}.title`) : ''}
-      description={to ? ts(`${to}.body`) : ''}
+      title={to ? ts(`${copy ?? to}.title`) : ''}
+      description={to ? ts(`${copy ?? to}.body`) : ''}
     >
       <form
         className="grid gap-5"
@@ -448,13 +434,6 @@ export function TransitionDialog({
             const parsed = OrderTransitionSchema.safeParse({
               to,
               note: values.note,
-              ...(shipping && {
-                shipment: {
-                  mode: values.mode,
-                  carrier: values.carrier,
-                  trackingNumber: values.trackingNumber,
-                },
-              }),
             });
             if (!parsed.success) {
               setError(t('checkFields'));
@@ -466,7 +445,7 @@ export function TransitionDialog({
             }
             try {
               await transition.mutateAsync(parsed.data satisfies OrderTransitionDto);
-              toast.success(ts(`${to}.done`));
+              toast.success(ts(`${copy ?? to}.done`));
               form.reset();
               onClose();
             } catch (err) {
@@ -476,46 +455,6 @@ export function TransitionDialog({
         }
       >
         <FormAlert message={error} />
-        {shipping ? (
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="t-mode">{t('mode')}</FieldLabel>
-              <Controller
-                control={form.control}
-                name="mode"
-                render={({ field }) => (
-                  <Select
-                    items={MODES.map((m) => ({ value: m, label: t(`modes.${m}`) }))}
-                    value={field.value}
-                    onValueChange={(v) => {
-                      const m = MODES.find((x) => x === v);
-                      if (m) field.onChange(m);
-                    }}
-                  >
-                    <SelectTrigger id="t-mode" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MODES.map((m) => (
-                        <SelectItem key={m} value={m}>
-                          {t(`modes.${m}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="t-carrier">{t('carrier')}</FieldLabel>
-              <Input id="t-carrier" placeholder="Maersk" {...form.register('carrier')} />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="t-tracking">{t('tracking')}</FieldLabel>
-              <Input id="t-tracking" {...form.register('trackingNumber')} />
-            </Field>
-          </FieldGroup>
-        ) : null}
         <Field data-invalid={!!form.formState.errors.note}>
           <FieldLabel htmlFor="t-note">{needsNote ? t('reason') : t('note')}</FieldLabel>
           <Textarea id="t-note" rows={3} {...form.register('note')} />
@@ -530,7 +469,7 @@ export function TransitionDialog({
             variant={to === 'CANCELLED' || to === 'DISPUTED' ? 'destructive' : 'default'}
             disabled={form.formState.isSubmitting}
           >
-            {to ? ts(`${to}.action`) : ''}
+            {to ? ts(`${copy ?? to}.action`) : ''}
           </Button>
         </DialogFooter>
       </form>
