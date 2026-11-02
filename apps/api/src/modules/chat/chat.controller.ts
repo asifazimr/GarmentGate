@@ -36,6 +36,7 @@ import { type AuthenticatedUser, CurrentUser } from '../auth/auth.decorators.js'
 import { ChatActorService } from './chat-actor.service.js';
 import { ChatModerationService } from './chat-moderation.service.js';
 import { ConversationsService } from './conversations.service.js';
+import { MessageThrottle, ThreadThrottle, UploadThrottle } from '../../common/throttle/limits.js';
 
 /** Chat for everyone signed in: buyers and factories reach their own threads, staff all. */
 @ApiTags('chat')
@@ -49,6 +50,7 @@ export class ChatController {
   ) {}
 
   @Post('conversations')
+  @ThreadThrottle()
   @ApiOperation({ summary: 'Open (or find) the GarmentGate thread for an RFQ or order' })
   @ApiOkResponse({ standardSchema: ConversationSummarySchema })
   async open(
@@ -95,6 +97,7 @@ export class ChatController {
   }
 
   @Post('conversations/:id/uploads')
+  @UploadThrottle()
   @ApiOperation({ summary: 'Presigned POST for a chat attachment (PDF or image)' })
   async presign(
     @CurrentUser() user: AuthenticatedUser,
@@ -105,6 +108,7 @@ export class ChatController {
   }
 
   @Post('conversations/:id/messages')
+  @MessageThrottle()
   @ApiOperation({ summary: 'Send a message; contact details are hidden and flagged' })
   @ApiOkResponse({ standardSchema: ChatMessageSchema })
   async send(

@@ -47,6 +47,7 @@ import { CapacityService } from './capacity.service.js';
 import { ManufacturerContextService } from './manufacturer-context.service.js';
 import { ManufacturerProductsService } from './products.service.js';
 import { ManufacturerProfileService } from './profile.service.js';
+import { UploadThrottle } from '../../common/throttle/limits.js';
 
 const CalendarQuerySchema = z.object({
   from: MonthSchema.optional(),
@@ -69,6 +70,7 @@ export class ManufacturerController {
 
   // ── Uploads ──
   @Post('uploads')
+  @UploadThrottle()
   @ApiOperation({ summary: 'Presigned POST for product images, factory photos or certificates' })
   async presign(
     @CurrentUser() user: AuthenticatedUser,

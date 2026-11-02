@@ -108,6 +108,8 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
       addTrailingSlash: false,
       withCredentials: true,
       transports: ['websocket', 'polling'],
+      // Hosts that can't proxy WebSocket upgrades (Vercel rewrites) fall back to HTTP polling.
+      tryAllTransports: true,
     });
     socketRef.current = socket;
 

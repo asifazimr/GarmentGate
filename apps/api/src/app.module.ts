@@ -1,8 +1,8 @@
+import { APP_FILTER } from '@nestjs/core';
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { HttpThrottlerGuard } from './common/throttle/http-throttler.guard.js';
 import { LoggingModule } from './common/logging/logging.module.js';
 import { QueueModule } from './common/queue/queue.module.js';
 import { AppConfigModule, type AppConfigService } from './config/config.module.js';
@@ -31,6 +31,8 @@ import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
   imports: [
+    // Error monitoring (no-op without SENTRY_DSN); initialised in instrument.ts.
+    SentryModule.forRoot(),
     AppConfigModule,
     LoggingModule,
     PrismaModule,
@@ -66,7 +68,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     TrustModule,
     AdminModule,
   ],
-  // Global rate limit; auth routes tighten it with @Throttle.
-  providers: [{ provide: APP_GUARD, useClass: HttpThrottlerGuard }],
+  // Unexpected errors go to Sentry; HTTP errors the API throws on purpose (4xx) don't.
+  providers: [{ provide: APP_FILTER, useClass: SentryGlobalFilter }],
 })
 export class AppModule {}

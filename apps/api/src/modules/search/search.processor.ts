@@ -1,11 +1,12 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import { SEARCH_QUEUE, type SearchJob } from './search.constants.js';
 import { SearchService } from './search.service.js';
+import { MonitoredWorker } from '../../common/queue/monitored-worker.js';
 
 @Processor(SEARCH_QUEUE, { concurrency: 1 })
-export class SearchProcessor extends WorkerHost {
+export class SearchProcessor extends MonitoredWorker {
   private readonly logger = new Logger(SearchProcessor.name);
 
   constructor(private readonly search: SearchService) {

@@ -62,6 +62,7 @@ import { ChatActorService } from '../chat/chat-actor.service.js';
 import { FxService } from './fx.service.js';
 import { PaymentsService } from './payments.service.js';
 import { StripeProvider } from './providers/stripe.provider.js';
+import { UploadThrottle } from '../../common/throttle/limits.js';
 
 const CodeSchema = z.string().regex(/^ORD-\d{4}-\d{4,}$/, { error: 'Unknown order' });
 
@@ -179,6 +180,7 @@ export class AdminFinanceController {
   }
 
   @Post('payments/:id/uploads')
+  @UploadThrottle()
   presignProof(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,

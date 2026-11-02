@@ -40,6 +40,7 @@ import type { NotificationType, Prisma } from '../../generated/prisma/client.js'
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { identityForScrubbing } from '../catalog/catalog.queries.js';
 import { identityOf, identityPatterns, scrubText } from '../catalog/public.serializer.js';
 import type { ChatActor } from '../chat/chat-actor.service.js';
 import { MediaService } from '../media/media.service.js';
@@ -140,7 +141,10 @@ export class OrdersService {
       include: {
         milestones: { select: { stage: true, status: true } },
         buyerCompany: {
-          select: { legalName: true, buyerProfile: { select: { publicCode: true } } },
+          select: {
+            ...identityForScrubbing.select,
+            buyerProfile: { select: { publicCode: true } },
+          },
         },
         manufacturerProfile: {
           select: { publicCode: true, company: { select: { legalName: true } } },
@@ -166,10 +170,11 @@ export class OrdersService {
       }));
     }
     if (side === 'MANUFACTURER') {
-      // Factories never see the buyer's title as written: it can carry the brand.
+      // Factories never see the buyer's title as written: it can carry the brand. Same
+      // scrubbing as the order page (the buyer's names, website and people removed).
       return rows.map((o) => ({
         ...base(o),
-        title: o.code,
+        title: scrubText(o.title, identityPatterns(identityOf(o.buyerCompany))) ?? o.code,
         buyerCode: o.buyerCompany.buyerProfile?.publicCode ?? 'BYR',
         totalMinor: o.manufacturerUnitPriceMinor * o.quantity,
       }));

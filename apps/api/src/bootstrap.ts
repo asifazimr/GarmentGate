@@ -7,7 +7,19 @@ import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { z } from 'zod';
 import type { AppConfigService } from './config/config.module.js';
+import { originCheckMiddleware } from './common/security/origin-check.js';
 import { ChatIoAdapter } from './modules/chat/chat-io.adapter.js';
+
+/**
+ * Express "trust proxy" from TRUST_PROXY: `true`/`false`, a hop count (`1` = one load balancer in
+ * front) or addresses/presets (`loopback`, `10.0.0.0/8`). Express reads a numeric *string* as an
+ * address, so hop counts must be numbers.
+ */
+export function parseTrustProxy(value: string): boolean | number | string {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return /^\d+$/.test(value) ? Number(value) : value;
+}
 
 /**
  * Cross-cutting HTTP setup shared by `main.ts` and e2e tests,
@@ -15,19 +27,18 @@ import { ChatIoAdapter } from './modules/chat/chat-io.adapter.js';
  */
 export function configureApp(app: INestApplication): void {
   const config = app.get<AppConfigService>(ConfigService);
-  const trustProxy = config.get('TRUST_PROXY', { infer: true });
   (app as NestExpressApplication).set(
     'trust proxy',
-    trustProxy === 'true' ? true : trustProxy === 'false' ? false : trustProxy,
+    parseTrustProxy(config.get('TRUST_PROXY', { infer: true })),
   );
 
   app.useLogger(app.get(Logger));
   app.use(helmet());
   app.use(cookieParser());
-  app.enableCors({
-    origin: config.get('CORS_ORIGINS', { infer: true }),
-    credentials: true,
-  });
+  const origins = config.get('CORS_ORIGINS', { infer: true });
+  app.enableCors({ origin: origins, credentials: true });
+  // CSRF defence in depth on top of SameSite=Lax cookies.
+  app.use(originCheckMiddleware(origins));
   // Socket.io for chat, with the same allowed origins as CORS.
   app.useWebSocketAdapter(new ChatIoAdapter(app));
   app.enableShutdownHooks();

@@ -4,12 +4,23 @@ import { ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import type { AppConfigService } from '../../config/config.module.js';
 
+/** pino-pretty is a dev dependency: production images don't have it, so log JSON there. */
+function hasPrettyPrinter(): boolean {
+  try {
+    import.meta.resolve('pino-pretty');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 @Module({
   imports: [
     LoggerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: AppConfigService) => {
-        const isDev = config.get('NODE_ENV', { infer: true }) === 'development';
+        const isDev =
+          config.get('NODE_ENV', { infer: true }) === 'development' && hasPrettyPrinter();
         return {
           pinoHttp: {
             level: config.get('LOG_LEVEL', { infer: true }),

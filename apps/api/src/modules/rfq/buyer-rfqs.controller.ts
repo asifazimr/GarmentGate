@@ -23,6 +23,7 @@ import { type AuthenticatedUser, CurrentUser, Roles } from '../auth/auth.decorat
 import { BuyerContextService } from '../buyer/buyer-context.service.js';
 import { FilesService } from '../storage/files.service.js';
 import { BuyerRfqsService } from './buyer-rfqs.service.js';
+import { UploadThrottle } from '../../common/throttle/limits.js';
 
 const RfqCodeSchema = z.string().regex(/^RFQ-\d{4}-\d{4,}$/, { error: 'Unknown RFQ' });
 
@@ -38,6 +39,7 @@ export class BuyerRfqsController {
   ) {}
 
   @Post('uploads')
+  @UploadThrottle()
   @ApiOperation({ summary: 'Presigned POST for a tech pack, sketch or reference image' })
   @ApiOkResponse({ standardSchema: PresignUploadResponseSchema })
   async presign(

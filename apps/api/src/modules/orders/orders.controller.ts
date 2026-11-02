@@ -39,6 +39,7 @@ import { type AuthenticatedUser, CurrentUser } from '../auth/auth.decorators.js'
 import { ChatActorService } from '../chat/chat-actor.service.js';
 import { CodeSchema, IdSchema } from './order-params.js';
 import { OrdersService } from './orders.service.js';
+import { UploadThrottle } from '../../common/throttle/limits.js';
 
 const SideSchema = z.object({ side: z.enum(['buyer', 'manufacturer']).optional() });
 
@@ -142,6 +143,7 @@ export class OrdersController {
   }
 
   @Post(':code/uploads')
+  @UploadThrottle()
   @ApiOperation({ summary: 'Presigned POST: factory production media, buyer sample photos' })
   async presign(
     @CurrentUser() user: AuthenticatedUser,

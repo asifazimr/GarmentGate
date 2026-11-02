@@ -26,6 +26,7 @@ import { ChatActorService } from '../chat/chat-actor.service.js';
 import { CodeSchema, IdSchema } from '../orders/order-params.js';
 import { DisputesService } from './disputes.service.js';
 import { ReviewsService } from './reviews.service.js';
+import { UploadThrottle } from '../../common/throttle/limits.js';
 
 const FactoryCodeSchema = z.string().regex(/^MFR-[A-Z]{2}-\d{4,}$/, { error: 'Unknown factory' });
 
@@ -79,6 +80,7 @@ export class OrderTrustController {
   }
 
   @Post('dispute/uploads')
+  @UploadThrottle()
   @ApiOperation({ summary: 'Presigned upload for dispute evidence (photo or PDF)' })
   async presignEvidence(
     @CurrentUser() user: AuthenticatedUser,

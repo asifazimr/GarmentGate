@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { type Job, UnrecoverableError } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -7,13 +7,14 @@ import { InvalidDocumentError, sanitizePdf } from './document-processor.js';
 import { InvalidImageError, processImage } from './image-processor.js';
 import { InvalidVideoError, sanitizeVideo } from './video-processor.js';
 import { MEDIA_QUEUE, type MediaJob } from './media.constants.js';
+import { MonitoredWorker } from '../../common/queue/monitored-worker.js';
 
 /**
  * Makes uploads safe to show the other side, next to the private original: images become
  * metadata-free WebP renditions, PDFs a sanitized copy (see document-processor.ts).
  */
 @Processor(MEDIA_QUEUE, { concurrency: 2 })
-export class MediaProcessor extends WorkerHost {
+export class MediaProcessor extends MonitoredWorker {
   private readonly logger = new Logger(MediaProcessor.name);
 
   constructor(
@@ -46,7 +47,6 @@ export class MediaProcessor extends WorkerHost {
             processingError: null,
             processedAt: new Date(),
             sanitizedKey,
-            scanStatus: 'CLEAN',
           },
         });
         this.logger.log(`Sanitized ${video ? 'video' : 'document'} ${file.id}`);
@@ -78,7 +78,6 @@ export class MediaProcessor extends WorkerHost {
             width: result.width,
             height: result.height,
             sanitizedKey: renditions.at(-1)?.storageKey ?? null,
-            scanStatus: 'CLEAN',
           },
         }),
       ]);

@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -71,6 +72,25 @@ export class StorageService {
         return null;
       throw error;
     }
+  }
+
+  /** The first bytes of an object (to check its real type). */
+  async getStart(key: string, bytes: number): Promise<Buffer> {
+    const out = await this.client.send(
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Range: `bytes=0-${String(bytes - 1)}`,
+      }),
+    );
+    return out.Body ? Buffer.from(await out.Body.transformToByteArray()) : Buffer.alloc(0);
+  }
+
+  /** An object as a stream (for scanning without holding it in memory). */
+  async getStream(key: string): Promise<Readable> {
+    const out = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    if (!(out.Body instanceof Readable)) throw new Error(`Not a stream: ${key}`);
+    return out.Body;
   }
 
   /** Reads a whole object into memory. Only for bounded files (uploads are size-capped). */

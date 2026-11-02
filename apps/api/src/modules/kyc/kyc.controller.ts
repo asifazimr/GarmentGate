@@ -23,6 +23,7 @@ import {
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { type AuthenticatedUser, CurrentUser, Roles } from '../auth/auth.decorators.js';
 import { KycService } from './kyc.service.js';
+import { UploadThrottle } from '../../common/throttle/limits.js';
 
 @ApiTags('kyc')
 @ApiCookieAuth()
@@ -31,6 +32,7 @@ export class KycController {
   constructor(private readonly kyc: KycService) {}
 
   @Post('uploads')
+  @UploadThrottle()
   @Roles('BUYER', 'MANUFACTURER')
   @ApiOperation({
     summary: 'Get a presigned POST to upload a document straight to storage',

@@ -2,13 +2,19 @@ import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import type { PresignUploadResponse } from '@garmentgate/shared';
 import type { FilePurpose } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { matchesSignature, SIGNATURE_BYTES } from './file-signature.js';
+import type { MalwareScanner } from './malware-scanner.js';
 import { StorageService } from './storage.service.js';
+
+export const MALWARE_SCANNER = Symbol('MALWARE_SCANNER');
 
 const EXTENSIONS: Record<string, string> = {
   'application/pdf': 'pdf',
@@ -37,9 +43,12 @@ export interface ReserveUpload {
  */
 @Injectable()
 export class FilesService {
+  private readonly logger = new Logger(FilesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    @Inject(MALWARE_SCANNER) private readonly scanner: MalwareScanner | null,
   ) {}
 
   async reserveUpload(input: ReserveUpload): Promise<PresignUploadResponse> {
@@ -92,14 +101,46 @@ export class FilesService {
     }
     const object = await this.storage.head(file.storageKey);
     if (!object) throw new BadRequestException('The file has not finished uploading');
-    if (object.sizeBytes > maxBytes || object.contentType !== file.mimeType) {
+    const reject = async (scanStatus?: 'INFECTED') => {
       await this.storage.delete(file.storageKey).catch(() => undefined);
-      await this.prisma.fileAsset.update({ where: { id: file.id }, data: { status: 'REJECTED' } });
+      await this.prisma.fileAsset.update({
+        where: { id: file.id },
+        data: { status: 'REJECTED', ...(scanStatus && { scanStatus }) },
+      });
+    };
+    // The declared type was enforced by the presigned POST; check the bytes really are that type.
+    if (
+      object.sizeBytes > maxBytes ||
+      object.contentType !== file.mimeType ||
+      !matchesSignature(
+        file.mimeType,
+        await this.storage.getStart(file.storageKey, SIGNATURE_BYTES),
+      )
+    ) {
+      await reject();
       throw new BadRequestException('The uploaded file does not match what was declared');
+    }
+    // Scanner errors fail the request (the user retries); they never let a file through unscanned.
+    if (this.scanner) {
+      const result = await this.scanner.scan(await this.storage.getStream(file.storageKey));
+      if (!result.clean) {
+        await reject('INFECTED');
+        this.logger.warn(
+          { fileId: file.id, signature: result.signature },
+          'Infected upload rejected',
+        );
+        throw new BadRequestException('This file was flagged by our malware scan and removed');
+      }
     }
     return this.prisma.fileAsset.update({
       where: { id: file.id },
-      data: { status: 'UPLOADED', sizeBytes: object.sizeBytes, uploadedAt: new Date() },
+      data: {
+        status: 'UPLOADED',
+        sizeBytes: object.sizeBytes,
+        uploadedAt: new Date(),
+        // PENDING means "not scanned" (no scanner configured).
+        scanStatus: this.scanner ? 'CLEAN' : 'PENDING',
+      },
     });
   }
 

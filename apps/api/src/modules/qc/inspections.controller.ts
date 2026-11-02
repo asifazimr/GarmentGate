@@ -26,6 +26,7 @@ import { type AuthenticatedUser, CurrentUser, Roles } from '../auth/auth.decorat
 import { ChatActorService } from '../chat/chat-actor.service.js';
 import { CodeSchema, IdSchema } from '../orders/order-params.js';
 import { InspectionsService } from './inspections.service.js';
+import { UploadThrottle } from '../../common/throttle/limits.js';
 
 /** Booking an inspection on an order: the buyer, or staff. */
 @ApiTags('qc')
@@ -72,6 +73,7 @@ export class InspectorController {
   }
 
   @Post(':id/uploads')
+  @UploadThrottle()
   @ApiOperation({ summary: 'Presigned upload for a photo or the PDF report' })
   presign(
     @CurrentUser() user: AuthenticatedUser,

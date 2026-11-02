@@ -1,12 +1,13 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { renderEmail } from '@garmentgate/emails';
 import type { Job } from 'bullmq';
 import { MAIL_QUEUE, type MailJob } from './mail.service.js';
 import { MailTransport } from './mail.transport.js';
+import { MonitoredWorker } from '../../common/queue/monitored-worker.js';
 
 @Processor(MAIL_QUEUE)
-export class MailProcessor extends WorkerHost {
+export class MailProcessor extends MonitoredWorker {
   private readonly logger = new Logger(MailProcessor.name);
 
   constructor(private readonly transport: MailTransport) {

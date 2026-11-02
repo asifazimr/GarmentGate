@@ -31,6 +31,7 @@ import { type AuthenticatedUser, CurrentUser, Roles } from '../auth/auth.decorat
 import { ChatActorService } from '../chat/chat-actor.service.js';
 import { CodeSchema, IdSchema } from '../orders/order-params.js';
 import { ShippingService } from './shipping.service.js';
+import { UploadThrottle } from '../../common/throttle/limits.js';
 
 @ApiTags('shipping')
 @ApiCookieAuth()
@@ -53,6 +54,7 @@ export class ShippingController {
   }
 
   @Post('uploads')
+  @UploadThrottle()
   @ApiOperation({ summary: 'Factory/staff: presigned upload for a shipping document (PDF)' })
   async presign(
     @CurrentUser() user: AuthenticatedUser,

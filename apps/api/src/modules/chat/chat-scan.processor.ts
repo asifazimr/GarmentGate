@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { filterContactDetails } from '@garmentgate/shared';
 import type { Job } from 'bullmq';
@@ -9,6 +9,7 @@ import { StorageService } from '../storage/storage.service.js';
 import { ChatModerationService } from './chat-moderation.service.js';
 import { CHAT_SCAN_QUEUE, type ChatScanJob } from './chat.constants.js';
 import { ConversationsService } from './conversations.service.js';
+import { MonitoredWorker } from '../../common/queue/monitored-worker.js';
 
 /** Enough to catch contact details on a letterhead or in a footer, without unbounded work. */
 const MAX_PAGES = 30;
@@ -34,7 +35,7 @@ export async function pdfText(data: Uint8Array): Promise<string> {
  * itself stays in the thread, which only the sender's company and GarmentGate can read.
  */
 @Processor(CHAT_SCAN_QUEUE, { concurrency: 2 })
-export class ChatScanProcessor extends WorkerHost {
+export class ChatScanProcessor extends MonitoredWorker {
   private readonly logger = new Logger(ChatScanProcessor.name);
 
   constructor(

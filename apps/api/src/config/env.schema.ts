@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 const booleanString = z.enum(['true', 'false']).transform((value) => value === 'true');
 
+/** Optional settings left empty in a copied .env.example (`KEY=`) count as unset. */
+const unsetIfEmpty = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((v) => (v === '' ? undefined : v), schema.optional());
+
 const commaSeparatedUrls = z
   .string()
   .transform((value) =>
@@ -76,12 +80,43 @@ export const EnvSchema = z.object({
   S3_ACCESS_KEY_ID: z.string().min(3),
   S3_SECRET_ACCESS_KEY: z.string().min(8),
   S3_FORCE_PATH_STYLE: booleanString.default(true),
+
+  /** Malware scanning of uploads with ClamAV (clamd). Without a host, files aren't scanned. */
+  CLAMAV_HOST: unsetIfEmpty(z.string().min(1)),
+  CLAMAV_PORT: z.coerce.number().int().positive().default(3310),
+
+  /** Error monitoring (optional). */
+  SENTRY_DSN: unsetIfEmpty(z.url()),
+  SENTRY_ENVIRONMENT: unsetIfEmpty(z.string().min(1)),
+  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
 
-/** Production must send real email and use secure cookies. */
-export const ProductionEnvSchema = EnvSchema.refine(
-  (env) => env.NODE_ENV !== 'production' || (env.COOKIE_SECURE && env.RESEND_API_KEY),
-  { error: 'In production set COOKIE_SECURE=true and RESEND_API_KEY' },
-);
+/** Values from `.env.example` and local Docker: never acceptable outside development. */
+const PLACEHOLDER = /change-me|dev-master-key|garmentgate-dev-secret|^x+$/i;
+
+/**
+ * Production must send real email, use secure cookies and HTTPS origins, and never run with a
+ * placeholder secret. Checked at boot: the API refuses to start otherwise.
+ */
+export const ProductionEnvSchema = EnvSchema.superRefine((env, ctx) => {
+  if (env.NODE_ENV !== 'production') return;
+  const fail = (path: string, message: string) => {
+    ctx.addIssue({ code: 'custom', path: [path], message });
+  };
+  if (!env.COOKIE_SECURE) fail('COOKIE_SECURE', 'In production set COOKIE_SECURE=true');
+  if (!env.RESEND_API_KEY) fail('RESEND_API_KEY', 'In production set RESEND_API_KEY');
+  for (const [key, value] of [
+    ['JWT_ACCESS_SECRET', env.JWT_ACCESS_SECRET],
+    ['MEILISEARCH_API_KEY', env.MEILISEARCH_API_KEY],
+    ['S3_SECRET_ACCESS_KEY', env.S3_SECRET_ACCESS_KEY],
+  ] as const)
+    if (PLACEHOLDER.test(value)) fail(key, `${key} is still a placeholder: generate a real secret`);
+  if (env.CORS_ORIGINS.some((o) => !o.startsWith('https://')))
+    fail('CORS_ORIGINS', 'In production every CORS origin must be https://');
+  if (!env.WEB_APP_URL.startsWith('https://'))
+    fail('WEB_APP_URL', 'In production WEB_APP_URL must be https://');
+  if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET)
+    fail('STRIPE_WEBHOOK_SECRET', 'Card payments need STRIPE_WEBHOOK_SECRET to verify webhooks');
+});

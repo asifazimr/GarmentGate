@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { RolesGuard } from './guards/roles.guard.js';
+import { HttpThrottlerGuard } from '../../common/throttle/http-throttler.guard.js';
 import { TokenService } from './token.service.js';
 
 @Module({
@@ -28,9 +29,11 @@ import { TokenService } from './token.service.js';
   providers: [
     AuthService,
     TokenService,
-    // Order matters: authenticate first, then check roles.
+    // Order matters: authenticate, check roles, then rate-limit, so the throttler counts
+    // signed-in requests per user (anonymous ones per IP).
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: HttpThrottlerGuard },
   ],
   exports: [AuthService, TokenService],
 })
