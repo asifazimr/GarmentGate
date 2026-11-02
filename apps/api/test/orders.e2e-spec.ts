@@ -416,7 +416,46 @@ describe('order lifecycle (e2e)', () => {
   it('ships, delivers once, and completes', async () => {
     await move(factory.agent, 'READY_TO_SHIP', {}, 403);
     await move(admin, 'READY_TO_SHIP'); // inspection passed
-    await move(factory.agent, 'SHIPPED', {}, 400);
+    await move(factory.agent, 'SHIPPED', {}, 409); // the buyer's balance isn't in yet
+    // Payments are tested in payments.e2e-spec.ts; here the balance simply arrives, posted to
+    // the ledger like a real one so the books still reconcile.
+    const order = await ctx.prisma.order.findUniqueOrThrow({ where: { code } });
+    const account = async (type: 'PLATFORM_CASH' | 'BUYER_ESCROW', companyId: string | null) =>
+      (await ctx.prisma.ledgerAccount.findFirst({ where: { type, companyId, currency: 'USD' } })) ??
+      (await ctx.prisma.ledgerAccount.create({ data: { type, companyId, currency: 'USD' } }));
+    const cash = await account('PLATFORM_CASH', null);
+    const escrow = await account('BUYER_ESCROW', order.buyerCompanyId);
+    const balance = await ctx.prisma.payment.create({
+      data: {
+        orderId: order.id,
+        direction: 'INBOUND',
+        purpose: 'BALANCE',
+        amountMinor: 637_000n,
+        currency: 'USD',
+        method: 'BANK_TRANSFER',
+        provider: 'manual',
+        status: 'SUCCEEDED',
+        paidAt: new Date(),
+      },
+    });
+    await ctx.prisma.ledgerTransaction.create({
+      data: {
+        kind: 'DEPOSIT',
+        idempotencyKey: `payment:${balance.id}`,
+        orderId: order.id,
+        paymentId: balance.id,
+        currency: 'USD',
+        description: 'Balance (test)',
+        amountUsdMinor: 637_000n,
+        entries: {
+          create: [
+            { accountId: cash.id, direction: 'DEBIT', amountMinor: 637_000n },
+            { accountId: escrow.id, direction: 'CREDIT', amountMinor: 637_000n },
+          ],
+        },
+      },
+    });
+    await move(factory.agent, 'SHIPPED', {}, 400); // tracking is still required
     await move(factory.agent, 'SHIPPED', {
       shipment: { mode: 'SEA', carrier: 'Maersk', trackingNumber: 'MAEU123456' },
     });
