@@ -20,3 +20,6 @@ export * from './payments/payments.schema.js';
 export * from './qc/aql.js';
 export * from './qc/qc.schema.js';
 export * from './qc/shipping.schema.js';
+export * from './trust/performance.js';
+export * from './trust/reviews.schema.js';
+export * from './trust/disputes.schema.js';

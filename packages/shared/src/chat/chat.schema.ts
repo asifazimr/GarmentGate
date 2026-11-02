@@ -32,12 +32,15 @@ export const OpenConversationSchema = z
   .object({
     rfqCode: Code.optional(),
     orderCode: Code.optional(),
+    /** The mediation thread of a dispute (one per side). */
+    disputeId: z.uuid().optional(),
     /** Admins only: open that factory's thread instead of the buyer's. */
     factoryCode: Code.optional(),
   })
-  .refine((v) => (v.rfqCode === undefined) !== (v.orderCode === undefined), {
-    error: 'Give an RFQ or an order',
-  });
+  .refine(
+    (v) => [v.rfqCode, v.orderCode, v.disputeId].filter((x) => x !== undefined).length === 1,
+    { error: 'Give an RFQ, an order or a dispute' },
+  );
 export type OpenConversationDto = z.infer<typeof OpenConversationSchema>;
 
 export const SendMessageSchema = z
@@ -58,7 +61,7 @@ export const MessagesQuerySchema = z.object({
 });
 
 export const ChatContextSchema = z.object({
-  kind: z.enum(['RFQ', 'ORDER']),
+  kind: z.enum(['RFQ', 'ORDER', 'DISPUTE']),
   code: z.string(),
   title: z.string(),
 });

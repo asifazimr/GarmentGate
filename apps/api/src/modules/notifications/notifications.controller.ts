@@ -1,6 +1,29 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiCookieAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { type NotificationList, NotificationListSchema } from '@garmentgate/shared';
+import {
+  type ActivityPage,
+  ActivityPageSchema,
+  type ActivityQuery,
+  ActivityQuerySchema,
+  type NotificationList,
+  NotificationListSchema,
+  type NotificationPreferences,
+  NotificationPreferencesSchema,
+  type UpdateNotificationPreferencesDto,
+  UpdateNotificationPreferencesSchema,
+} from '@garmentgate/shared';
+import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { AnyRole, type AuthenticatedUser, CurrentUser } from '../auth/auth.decorators.js';
 import { NotificationsService } from './notifications.service.js';
 
@@ -16,6 +39,32 @@ export class NotificationsController {
   @ApiOkResponse({ standardSchema: NotificationListSchema })
   list(@CurrentUser() user: AuthenticatedUser): Promise<NotificationList> {
     return this.notifications.list(user.id);
+  }
+
+  @Get('activity')
+  @ApiOperation({ summary: 'The activity feed: every notification, newest first, paged by time' })
+  @ApiOkResponse({ standardSchema: ActivityPageSchema })
+  activity(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query(new ZodValidationPipe(ActivityQuerySchema)) query: ActivityQuery,
+  ): Promise<ActivityPage> {
+    return this.notifications.activity(user.id, query);
+  }
+
+  @Get('preferences')
+  @ApiOkResponse({ standardSchema: NotificationPreferencesSchema })
+  preferences(@CurrentUser() user: AuthenticatedUser): Promise<NotificationPreferences> {
+    return this.notifications.preferences(user.id);
+  }
+
+  @Put('preferences')
+  @ApiOkResponse({ standardSchema: NotificationPreferencesSchema })
+  updatePreferences(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(UpdateNotificationPreferencesSchema))
+    dto: UpdateNotificationPreferencesDto,
+  ): Promise<NotificationPreferences> {
+    return this.notifications.updatePreferences(user.id, dto);
   }
 
   @Post('read-all')

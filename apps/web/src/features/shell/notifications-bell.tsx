@@ -1,46 +1,26 @@
 'use client';
 
-import type { Notification, NotificationType } from '@garmentgate/shared';
-import {
-  Bell,
-  BellRing,
-  CheckCheck,
-  FileText,
-  MessageSquare,
-  Package,
-  Scale,
-  ShieldCheck,
-  Wallet,
-} from 'lucide-react';
+import { type Notification, notificationHref, settingsPath } from '@garmentgate/shared';
+import { Bell, CheckCheck, Settings } from 'lucide-react';
+import Link from 'next/link';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { EmptyState } from '@/components/patterns/empty-state';
 import { ErrorState } from '@/components/patterns/error-state';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CATEGORY_ICONS } from '@/features/activity/notification-icons';
+import { useMe } from '@/features/auth/api';
 import { cn } from '@/lib/utils';
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from './api';
-
-const ICONS: Record<NotificationType, typeof Bell> = {
-  EMAIL_VERIFIED: ShieldCheck,
-  KYC_SUBMITTED: ShieldCheck,
-  KYC_APPROVED: ShieldCheck,
-  KYC_REJECTED: ShieldCheck,
-  RFQ_INVITATION: FileText,
-  QUOTE_RECEIVED: FileText,
-  QUOTE_OFFERED: FileText,
-  ORDER_UPDATE: Package,
-  MESSAGE_RECEIVED: MessageSquare,
-  PAYMENT_UPDATE: Wallet,
-  DISPUTE_UPDATE: Scale,
-  SYSTEM: BellRing,
-};
 
 export function NotificationsBell() {
   const t = useTranslations('shell.notifications');
   const notifications = useNotifications();
   const markAll = useMarkAllNotificationsRead();
   const unread = notifications.data?.unreadCount ?? 0;
+  const me = useMe();
+  const settingsHref = me.data ? settingsPath(me.data.role) : null;
 
   return (
     <Popover>
@@ -115,51 +95,103 @@ export function NotificationsBell() {
             </ul>
           )}
         </div>
+        {settingsHref ? (
+          <div className="border-t px-2 py-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              render={<Link href={settingsHref} />}
+            >
+              <Settings />
+              {t('settings')}
+            </Button>
+          </div>
+        ) : null}
       </PopoverContent>
     </Popover>
   );
 }
 
+const rowClass = 'hover:bg-surface flex w-full gap-3 px-4 py-3.5 text-start transition-colors';
+
 function NotificationRow({ notification: n }: { notification: Notification }) {
   const format = useFormatter();
   const now = useNow({ updateInterval: 60_000 });
   const markRead = useMarkNotificationRead();
-  const Icon = ICONS[n.type];
+  const Icon = CATEGORY_ICONS[n.category];
+  const me = useMe();
+  const href = me.data ? notificationHref(me.data.role, n.link) : null;
   const unread = n.readAt === null;
   return (
     <li>
-      <button
-        type="button"
-        onClick={() => unread && markRead.mutate(n.id)}
-        className={cn(
-          'hover:bg-surface flex w-full gap-3 px-4 py-3.5 text-start transition-colors',
-          unread && 'bg-primary-soft/40',
-        )}
-      >
-        <span
-          className={cn(
-            'flex size-8 shrink-0 items-center justify-center rounded-full',
-            unread ? 'bg-primary-soft text-primary-ink' : 'bg-muted text-muted-foreground',
-          )}
-          aria-hidden="true"
+      {href ? (
+        <Link
+          href={href}
+          onClick={() => unread && markRead.mutate(n.id)}
+          className={cn(rowClass, unread && 'bg-primary-soft/40')}
         >
-          <Icon className="size-4" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-start justify-between gap-2">
-            <span className={cn('text-sm', unread ? 'font-semibold' : 'font-medium')}>
-              {n.title}
+          <span
+            className={cn(
+              'flex size-8 shrink-0 items-center justify-center rounded-full',
+              unread ? 'bg-primary-soft text-primary-ink' : 'bg-muted text-muted-foreground',
+            )}
+            aria-hidden="true"
+          >
+            <Icon className="size-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-start justify-between gap-2">
+              <span className={cn('text-sm', unread ? 'font-semibold' : 'font-medium')}>
+                {n.title}
+              </span>
+              {unread ? (
+                <span
+                  className="bg-primary mt-1.5 size-2 shrink-0 rounded-full"
+                  aria-hidden="true"
+                />
+              ) : null}
             </span>
-            {unread ? (
-              <span className="bg-primary mt-1.5 size-2 shrink-0 rounded-full" aria-hidden="true" />
-            ) : null}
+            <span className="text-muted-foreground line-clamp-2 text-[0.8125rem]">{n.body}</span>
+            <span className="text-subtle-foreground mt-1 block text-xs">
+              {format.relativeTime(new Date(n.createdAt), now)}
+            </span>
           </span>
-          <span className="text-muted-foreground line-clamp-2 text-[0.8125rem]">{n.body}</span>
-          <span className="text-subtle-foreground mt-1 block text-xs">
-            {format.relativeTime(new Date(n.createdAt), now)}
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={() => unread && markRead.mutate(n.id)}
+          className={cn(rowClass, unread && 'bg-primary-soft/40')}
+        >
+          <span
+            className={cn(
+              'flex size-8 shrink-0 items-center justify-center rounded-full',
+              unread ? 'bg-primary-soft text-primary-ink' : 'bg-muted text-muted-foreground',
+            )}
+            aria-hidden="true"
+          >
+            <Icon className="size-4" />
           </span>
-        </span>
-      </button>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-start justify-between gap-2">
+              <span className={cn('text-sm', unread ? 'font-semibold' : 'font-medium')}>
+                {n.title}
+              </span>
+              {unread ? (
+                <span
+                  className="bg-primary mt-1.5 size-2 shrink-0 rounded-full"
+                  aria-hidden="true"
+                />
+              ) : null}
+            </span>
+            <span className="text-muted-foreground line-clamp-2 text-[0.8125rem]">{n.body}</span>
+            <span className="text-subtle-foreground mt-1 block text-xs">
+              {format.relativeTime(new Date(n.createdAt), now)}
+            </span>
+          </span>
+        </button>
+      )}
     </li>
   );
 }

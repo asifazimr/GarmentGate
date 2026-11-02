@@ -23,6 +23,7 @@ import { AuditService } from '../audit/audit.service.js';
 import { type AuthenticatedUser, CurrentUser, Roles } from '../auth/auth.decorators.js';
 import { fileWithRenditions, MediaService } from '../media/media.service.js';
 import { RfqFilesService } from '../rfq/rfq-files.service.js';
+import { StorageService } from '../storage/storage.service.js';
 
 /**
  * Human check of files before the other side sees them: logos, signage, faces, documents in
@@ -39,6 +40,7 @@ export class AdminMediaController {
     private readonly media: MediaService,
     private readonly rfqFiles: RfqFilesService,
     private readonly audit: AuditService,
+    private readonly storage: StorageService,
   ) {}
 
   @Get('pending')
@@ -46,7 +48,7 @@ export class AdminMediaController {
   @ApiOkResponse({ standardSchema: MediaReviewItemSchema.array() })
   async pending(): Promise<MediaReviewItem[]> {
     const ready = { file: { processingStatus: 'READY' as const } };
-    const [photos, images, attachments, samplePhotos, milestoneMedia, inspectionPhotos] =
+    const [photos, images, attachments, samplePhotos, milestoneMedia, inspectionPhotos, evidence] =
       await Promise.all([
         this.prisma.factoryPhoto.findMany({
           where: { reviewStatus: 'PENDING', ...ready },
@@ -132,6 +134,25 @@ export class AdminMediaController {
           orderBy: { createdAt: 'asc' },
           take: 100,
         }),
+        this.prisma.disputeEvidence.findMany({
+          where: { reviewStatus: 'PENDING', submittedBy: { not: 'STAFF' }, ...ready },
+          include: {
+            file: fileWithRenditions,
+            dispute: {
+              select: {
+                order: {
+                  select: {
+                    code: true,
+                    buyerCompany: { select: { buyerProfile: { select: { publicCode: true } } } },
+                    manufacturerProfile: { select: { publicCode: true } },
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+          take: 100,
+        }),
       ]);
     const urls = await this.media.urlMap([
       ...photos.map((p) => p.file),
@@ -140,6 +161,7 @@ export class AdminMediaController {
       ...samplePhotos.map((p) => p.file),
       ...milestoneMedia.filter((m) => !m.file.mimeType.startsWith('video/')).map((m) => m.file),
       ...inspectionPhotos.map((p) => p.file),
+      ...evidence.filter((e) => e.file.mimeType !== 'application/pdf').map((e) => e.file),
     ]);
     const rfqItems = await Promise.all(
       attachments.map(async (a) => {
@@ -210,6 +232,31 @@ export class AdminMediaController {
         documentUrl: null,
         videoUrl: null,
       })),
+      ...(await Promise.all(
+        evidence.map(async (e) => {
+          const order = e.dispute.order;
+          const pdf = e.file.mimeType === 'application/pdf';
+          return {
+            kind: 'dispute-evidence' as const,
+            id: e.id,
+            ownerCode:
+              e.submittedBy === 'BUYER'
+                ? (order.buyerCompany.buyerProfile?.publicCode ?? 'BYR')
+                : order.manufacturerProfile.publicCode,
+            context: `${order.code} · dispute evidence${e.note ? ` · ${e.note}` : ''}`,
+            contentType: e.file.mimeType,
+            urls: urls.get(e.fileId) ?? null,
+            documentUrl:
+              pdf && e.file.sanitizedKey
+                ? await this.storage.presignDownload(
+                    e.file.sanitizedKey,
+                    `${order.code}-evidence.pdf`,
+                  )
+                : null,
+            videoUrl: null,
+          };
+        }),
+      )),
     ];
   }
 
@@ -251,7 +298,9 @@ export class AdminMediaController {
       await this.prisma.samplePhoto.update({ where: { id }, data });
     else if (kind === 'milestone-media')
       await this.prisma.milestonePhoto.update({ where: { id }, data });
-    else await this.prisma.inspectionPhoto.update({ where: { id }, data });
+    else if (kind === 'inspection-photos')
+      await this.prisma.inspectionPhoto.update({ where: { id }, data });
+    else await this.prisma.disputeEvidence.update({ where: { id }, data });
     await this.audit.log({
       actorUserId: adminId,
       action: `media.${status.toLowerCase()}`,

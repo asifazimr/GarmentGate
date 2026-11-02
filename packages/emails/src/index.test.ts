@@ -27,4 +27,18 @@ describe('renderEmail', () => {
     expect(rejected.subject).toContain('Action needed');
     expect(rejected.text).toContain('Upload all pages.');
   });
+
+  it('renders a notification with its link and a way to change settings', async () => {
+    const email = await renderEmail('notification', {
+      firstName: 'Jordan',
+      title: 'ORD-2026-00017: shipment booked',
+      body: 'Departs 2026-11-10.',
+      actionUrl: 'https://app.garmentgate.example/buyer/orders/ORD-2026-00017',
+      actionLabel: 'Open the order',
+      preferencesUrl: 'https://app.garmentgate.example/buyer/settings',
+    });
+    expect(email.subject).toBe('ORD-2026-00017: shipment booked');
+    expect(email.text).toContain('Departs 2026-11-10.');
+    expect(email.text).toContain('/buyer/settings');
+  });
 });

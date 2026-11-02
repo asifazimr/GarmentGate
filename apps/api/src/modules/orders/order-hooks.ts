@@ -12,6 +12,8 @@ export interface OrderHook {
   before?(order: OrderRow, to: OrderStatus, who: OrderActor): Promise<void>;
   /** Runs inside the transaction that moves the order, so its writes commit or roll back with it. */
   within?(tx: Prisma.TransactionClient, order: OrderRow, to: OrderStatus): Promise<void>;
+  /** Runs once the move has committed (recalculating scores, indexes). Must not throw. */
+  after?(order: OrderRow, to: OrderStatus): Promise<void>;
 }
 
 @Injectable()
@@ -28,5 +30,9 @@ export class OrderHooks {
 
   async within(tx: Prisma.TransactionClient, order: OrderRow, to: OrderStatus): Promise<void> {
     for (const h of this.hooks) await h.within?.(tx, order, to);
+  }
+
+  async after(order: OrderRow, to: OrderStatus): Promise<void> {
+    for (const h of this.hooks) await h.after?.(order, to);
   }
 }

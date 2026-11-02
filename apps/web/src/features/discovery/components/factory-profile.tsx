@@ -8,6 +8,7 @@ import { ErrorState } from '@/components/patterns/error-state';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PublicManufacturerView } from '@/features/catalog/components/public-manufacturer-view';
+import { FactoryReviews } from '@/features/trust/components/reviews';
 import { ApiError } from '@/lib/api';
 import { useFactory, useFactoryProducts } from '../api';
 import { ProductCard, ProductCardSkeleton, ProductGrid } from './product-card';
@@ -97,6 +98,8 @@ export function FactoryProfile({ code }: { code: string }) {
           </ProductGrid>
         )}
       </section>
+
+      <FactoryReviews code={code} rating={factory.data.scores.rating} />
     </div>
   );
 }

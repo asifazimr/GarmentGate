@@ -17,6 +17,7 @@ import {
   type ManufacturerOrder,
   type ManufacturerOrderSummary,
   type MilestoneUpdateDto,
+  type NotificationLink,
   ORDER_IMAGE_MAX_BYTES,
   ORDER_VIDEO_MAX_BYTES,
   type OrderActor,
@@ -35,6 +36,7 @@ import {
 import type { Env } from '../../config/env.schema.js';
 import type { NotificationType, Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { identityOf, identityPatterns, scrubText } from '../catalog/public.serializer.js';
 import type { ChatActor } from '../chat/chat-actor.service.js';
@@ -81,6 +83,7 @@ export const actorOf = (actor: ChatActor): OrderActor =>
 export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly notifier: Notifier,
     private readonly media: MediaService,
     private readonly files: FilesService,
     private readonly codes: PublicCodeService,
@@ -231,8 +234,29 @@ export class OrdersService {
 
   // ── Transitions ───────────────────────────────────────────────────────────
 
-  async transition(actor: ChatActor, code: string, dto: OrderTransitionDto): Promise<void> {
+  /**
+   * `resolvingDispute` is set by the disputes service when staff resolve one: otherwise a
+   * disputed order with an open dispute can't be moved on.
+   */
+  async transition(
+    actor: ChatActor,
+    code: string,
+    dto: OrderTransitionDto,
+    options: { resolvingDispute?: boolean } = {},
+  ): Promise<void> {
     const order = await this.load(actor, code);
+    if (dto.to === 'DISPUTED')
+      throw new BadRequestException('Open a dispute with a reason and evidence instead');
+    if (
+      order.status === 'DISPUTED' &&
+      !options.resolvingDispute &&
+      canTransition(order.status, dto.to, actorOf(actor))
+    ) {
+      const open = await this.prisma.dispute.count({
+        where: { orderId: order.id, status: { in: ['OPEN', 'UNDER_REVIEW'] } },
+      });
+      if (open > 0) throw new ConflictException('Resolve the dispute to move the order on');
+    }
     if (VIA_SAMPLES.includes(dto.to)) {
       throw new BadRequestException(
         dto.to === 'SAMPLING'
@@ -321,9 +345,6 @@ export class OrdersService {
           return { completedAt: now, disputedFrom: null };
         case 'CANCELLED':
           return { cancelledAt: now, disputedFrom: null };
-        case 'DISPUTED':
-          if (!dto.note) throw new BadRequestException('Say what went wrong');
-          return { disputedFrom: order.status };
         default:
           return {};
       }
@@ -334,7 +355,7 @@ export class OrdersService {
    * The one place an order's status changes: checks the state machine, updates only if nobody
    * moved it meanwhile, records the event, then notifies both sides and staff.
    */
-  private async move(
+  async move(
     actor: ChatActor | 'SYSTEM',
     order: OrderRow,
     to: OrderStatus,
@@ -383,6 +404,7 @@ export class OrdersService {
       metadata: { from: order.status, to },
     });
     await this.announce(order, to);
+    await this.hooks.after(order, to);
   }
 
   /** A status change the platform makes itself (e.g. production starts when the deposit lands). */
@@ -615,14 +637,14 @@ export class OrdersService {
       await this.notifyParty(
         order,
         'BUYER',
-        'ORDER_UPDATE',
+        'MILESTONE_UPDATE',
         `${order.code}: ${label} ${dto.status === 'COMPLETED' ? 'complete' : 'delayed'}`,
         order.title,
       );
       await this.notifyParty(
         order,
         'ADMIN',
-        'ORDER_UPDATE',
+        'MILESTONE_UPDATE',
         `${order.code}: ${label} ${dto.status.toLowerCase()}`,
         order.manufacturerProfile.publicCode,
       );
@@ -880,10 +902,6 @@ export class OrdersService {
       DELIVERED: { factory: 'The buyer confirmed delivery: the final payment is being released.' },
       COMPLETED: { buyer: 'Order completed. Thank you!', factory: 'Order completed. Thank you!' },
       CANCELLED: { buyer: 'The order was cancelled.', factory: 'The order was cancelled.' },
-      DISPUTED: {
-        buyer: 'A dispute is open: GarmentGate is on it.',
-        factory: 'A dispute is open: GarmentGate will be in touch.',
-      },
     };
     const text = messages[to];
     if (text?.buyer)
@@ -917,27 +935,20 @@ export class OrdersService {
     type: NotificationType,
     title: string,
     body: string,
+    link: NotificationLink = { orderCode: order.code },
   ): Promise<void> {
-    const users = await this.prisma.user.findMany({
-      where:
+    await this.notifier.notify({
+      to:
         party === 'ADMIN'
-          ? { role: 'ADMIN', status: 'ACTIVE' }
+          ? 'ADMINS'
           : {
-              status: 'ACTIVE',
               companyId:
                 party === 'BUYER' ? order.buyerCompanyId : order.manufacturerProfile.company.id,
             },
-      select: { id: true },
-    });
-    if (users.length === 0) return;
-    await this.prisma.notification.createMany({
-      data: users.map((u) => ({
-        userId: u.id,
-        type,
-        title,
-        body,
-        data: { orderCode: order.code },
-      })),
+      type,
+      title,
+      body,
+      link,
     });
   }
 }

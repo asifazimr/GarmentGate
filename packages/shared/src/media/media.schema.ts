@@ -71,6 +71,7 @@ export const MediaReviewKindSchema = z.enum([
   'sample-photos',
   'milestone-media',
   'inspection-photos',
+  'dispute-evidence',
 ]);
 export type MediaReviewKind = z.infer<typeof MediaReviewKindSchema>;
 

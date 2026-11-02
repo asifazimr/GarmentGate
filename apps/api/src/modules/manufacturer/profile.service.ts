@@ -12,6 +12,7 @@ import {
   UPLOAD_MAX_BYTES,
 } from '@garmentgate/shared';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { toPublicManufacturer } from '../catalog/public.serializer.js';
 import { publicManufacturerInclude } from '../catalog/catalog.queries.js';
@@ -28,6 +29,7 @@ const MAX_PHOTOS = 20;
 export class ManufacturerProfileService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly notifier: Notifier,
     private readonly media: MediaService,
     private readonly files: FilesService,
     private readonly audit: AuditService,
@@ -200,12 +202,6 @@ export class ManufacturerProfileService {
     body: string,
     data: Record<string, string>,
   ): Promise<void> {
-    const admins = await this.prisma.user.findMany({
-      where: { role: 'ADMIN', status: 'ACTIVE' },
-      select: { id: true },
-    });
-    await this.prisma.notification.createMany({
-      data: admins.map((a) => ({ userId: a.id, type: 'SYSTEM' as const, title, body, data })),
-    });
+    await this.notifier.notify({ to: 'ADMINS', type: 'SYSTEM', title, body, link: data });
   }
 }

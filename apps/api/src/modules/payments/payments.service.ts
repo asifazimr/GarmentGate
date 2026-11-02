@@ -37,6 +37,7 @@ import {
 import type Stripe from 'stripe';
 import type { OrderRelease, Payment, Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import type { ChatActor } from '../chat/chat-actor.service.js';
 import { OrderHooks } from '../orders/order-hooks.js';
@@ -86,6 +87,7 @@ export class PaymentsService implements OnModuleInit {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly notifier: Notifier,
     private readonly ledger: LedgerService,
     private readonly fx: FxService,
     private readonly manual: ManualProvider,
@@ -1319,20 +1321,13 @@ export class PaymentsService implements OnModuleInit {
     body: string,
     data: Record<string, string>,
   ): Promise<void> {
-    const users = await this.prisma.user.findMany({
-      where: { companyId, status: 'ACTIVE' },
-      select: { id: true },
+    await this.notifier.notify({
+      to: { companyId },
+      type: 'PAYMENT_UPDATE',
+      title,
+      body,
+      link: data,
     });
-    if (users.length > 0)
-      await this.prisma.notification.createMany({
-        data: users.map((u) => ({
-          userId: u.id,
-          type: 'PAYMENT_UPDATE' as const,
-          title,
-          body,
-          data,
-        })),
-      });
   }
 
   private async notifyAdmins(
@@ -1340,20 +1335,7 @@ export class PaymentsService implements OnModuleInit {
     body: string,
     data: Record<string, string>,
   ): Promise<void> {
-    const users = await this.prisma.user.findMany({
-      where: { role: 'ADMIN', status: 'ACTIVE' },
-      select: { id: true },
-    });
-    if (users.length > 0)
-      await this.prisma.notification.createMany({
-        data: users.map((u) => ({
-          userId: u.id,
-          type: 'PAYMENT_UPDATE' as const,
-          title,
-          body,
-          data,
-        })),
-      });
+    await this.notifier.notify({ to: 'ADMINS', type: 'PAYMENT_UPDATE', title, body, link: data });
   }
 }
 

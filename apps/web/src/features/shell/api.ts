@@ -4,7 +4,7 @@ import { NotificationListSchema } from '@garmentgate/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiJson, apiSend } from '@/lib/api';
 
-const notificationsKey = ['notifications'] as const;
+export const notificationsKey = ['notifications'] as const;
 
 export function useNotifications() {
   return useQuery({

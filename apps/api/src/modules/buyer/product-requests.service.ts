@@ -5,6 +5,7 @@ import {
   type ProductRequestResult,
 } from '@garmentgate/shared';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { listedManufacturer } from '../catalog/catalog.queries.js';
 import { PublicCodeService } from '../onboarding/public-code.service.js';
@@ -21,6 +22,7 @@ const QUOTE_WINDOW_DAYS = 7;
 export class ProductRequestsService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly notifier: Notifier,
     private readonly codes: PublicCodeService,
     private readonly audit: AuditService,
   ) {}
@@ -91,39 +93,29 @@ export class ProductRequestsService {
       });
     });
 
-    const admins = await this.prisma.user.findMany({
-      where: { role: 'ADMIN', status: 'ACTIVE' },
-      select: { id: true },
-    });
-    const buyers = await this.prisma.user.findMany({
-      where: { companyId: ctx.companyId },
-      select: { id: true },
-    });
     const what = sample ? 'sample request' : 'quote request';
-    await this.prisma.notification.createMany({
-      data: [
-        ...buyers.map((u) => ({
-          userId: u.id,
-          type: 'SYSTEM' as const,
-          title: `${rfq.code} sent`,
-          body: `Your ${what} for ${product.title} is with our sourcing team.`,
-          data: { rfqCode: rfq.code },
-        })),
-        ...product.manufacturerProfile.company.users.map((u) => ({
-          userId: u.id,
-          type: 'RFQ_INVITATION' as const,
-          title: `New ${what}: ${product.title}`,
-          body: `${ctx.publicCode} requests ${String(dto.quantity)} pcs.`,
-          data: { rfqCode: rfq.code },
-        })),
-        ...admins.map((u) => ({
-          userId: u.id,
-          type: 'SYSTEM' as const,
-          title: `New ${what} ${rfq.code}`,
-          body: `${ctx.publicCode} → ${product.manufacturerProfile.publicCode}: ${product.title}`,
-          data: { rfqCode: rfq.code },
-        })),
-      ],
+    const link = { rfqCode: rfq.code };
+    await this.notifier.notify({
+      to: { companyId: ctx.companyId },
+      type: 'SYSTEM',
+      title: `${rfq.code} sent`,
+      body: `Your ${what} for ${product.title} is with our sourcing team.`,
+      link,
+      email: false,
+    });
+    await this.notifier.notify({
+      to: { manufacturerProfileId: product.manufacturerProfile.id },
+      type: 'RFQ_INVITATION',
+      title: `New ${what}: ${product.title}`,
+      body: `${ctx.publicCode} requests ${String(dto.quantity)} pcs.`,
+      link,
+    });
+    await this.notifier.notify({
+      to: 'ADMINS',
+      type: 'SYSTEM',
+      title: `New ${what} ${rfq.code}`,
+      body: `${ctx.publicCode} → ${product.manufacturerProfile.publicCode}: ${product.title}`,
+      link,
     });
     await this.audit.log({
       actorUserId: ctx.userId,

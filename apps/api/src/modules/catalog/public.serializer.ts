@@ -166,6 +166,12 @@ export interface PublicManufacturerSource {
   exportMarkets: string[];
   performanceScore: number;
   onTimeDeliveryBps: number | null;
+  qcPassBps: number | null;
+  reviewCount: number;
+  ratingAvgX100: number | null;
+  qualityAvgX100: number | null;
+  communicationAvgX100: number | null;
+  onTimeAvgX100: number | null;
   categories: CategorySource[];
   certifications: {
     type: PublicManufacturer['certifications'][number]['type'];
@@ -281,6 +287,17 @@ export function toPublicManufacturer(
     scores: {
       performanceScore: source.performanceScore,
       onTimeDeliveryBps: source.onTimeDeliveryBps,
+      qcPassBps: source.qcPassBps,
+      rating:
+        source.reviewCount > 0 && source.ratingAvgX100 !== null
+          ? {
+              average: source.ratingAvgX100 / 100,
+              count: source.reviewCount,
+              quality: (source.qualityAvgX100 ?? 0) / 100,
+              communication: (source.communicationAvgX100 ?? 0) / 100,
+              onTime: (source.onTimeAvgX100 ?? 0) / 100,
+            }
+          : null,
     },
     photos: publicImages(source.photos, urls, patterns),
   };

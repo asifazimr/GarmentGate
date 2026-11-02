@@ -31,6 +31,8 @@ import { NextAction } from './next-action';
 import { ShipSampleDialog, TransitionDialog } from './order-dialogs';
 import { InspectionsPanel } from '@/features/qc/components/inspections-panel';
 import { ShipmentPanel } from '@/features/qc/components/shipment-panel';
+import { FactoryDisputePanel } from '@/features/trust/components/dispute-panel';
+import { OrderReviewsCard } from '@/features/trust/components/reviews';
 import {
   OrderError,
   OrderHeader,
@@ -106,6 +108,8 @@ export function FactoryOrderPage({ code }: { code: string }) {
         ) : null}
       </NextAction>
 
+      <FactoryDisputePanel code={o.code} />
+
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section aria-labelledby="timeline-heading">
           <h2 id="timeline-heading" className="mb-4 text-lg font-semibold tracking-[-0.01em]">
@@ -151,7 +155,7 @@ export function FactoryOrderPage({ code }: { code: string }) {
             }}
           />
         </section>
-        <aside>
+        <aside className="space-y-4">
           <SummaryCard
             rows={[
               [t('fields.quantity'), `${format.number(o.quantity)} pcs`],
@@ -174,6 +178,7 @@ export function FactoryOrderPage({ code }: { code: string }) {
               <p className="text-muted-foreground text-sm leading-relaxed">{o.specification}</p>
             ) : null}
           </SummaryCard>
+          {o.status === 'COMPLETED' ? <OrderReviewsCard code={o.code} side="MANUFACTURER" /> : null}
         </aside>
       </div>
 

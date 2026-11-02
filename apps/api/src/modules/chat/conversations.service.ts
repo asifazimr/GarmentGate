@@ -12,6 +12,7 @@ import {
 import type { Queue } from 'bullmq';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { identityForScrubbing } from '../catalog/catalog.queries.js';
 import { identityOf, identityPatterns, scrubText } from '../catalog/public.serializer.js';
@@ -40,6 +41,7 @@ const conversationInclude = {
   },
   rfq: { select: { code: true } },
   order: { select: { code: true } },
+  dispute: { select: { order: { select: { code: true } } } },
 } satisfies Prisma.ConversationInclude;
 type ConversationRow = Prisma.ConversationGetPayload<{ include: typeof conversationInclude }>;
 
@@ -58,6 +60,7 @@ export class ConversationsService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly notifier: Notifier,
     private readonly actors: ChatActorService,
     private readonly files: FilesService,
     private readonly storage: StorageService,
@@ -78,6 +81,7 @@ export class ConversationsService {
       companyId: target.companyId,
       rfqId: target.rfqId,
       orderId: target.orderId,
+      disputeId: target.disputeId,
     };
     let conversation = await this.prisma.conversation.findFirst({ where });
     if (!conversation) {
@@ -110,7 +114,10 @@ export class ConversationsService {
   }
 
   private async resolveThread(actor: ChatActor, dto: OpenConversationDto) {
-    const notFound = () => new NotFoundException(dto.rfqCode ? 'RFQ not found' : 'Order not found');
+    const notFound = () =>
+      new NotFoundException(
+        dto.rfqCode ? 'RFQ not found' : dto.disputeId ? 'Dispute not found' : 'Order not found',
+      );
     const factoryFor = async (code: string | undefined) => {
       if (actor.isAdmin && code) {
         const p = await this.prisma.manufacturerProfile.findUnique({
@@ -153,6 +160,7 @@ export class ConversationsService {
           companyId: factory.companyId,
           rfqId: rfq.id,
           orderId: null,
+          disputeId: null,
           subject: `${rfq.code} · ${title}`,
         };
       }
@@ -162,7 +170,48 @@ export class ConversationsService {
         companyId: rfq.buyerCompanyId,
         rfqId: rfq.id,
         orderId: null,
+        disputeId: null,
         subject: `${rfq.code} · ${rfq.title}`,
+      };
+    }
+
+    if (dto.disputeId) {
+      // Mediation: each side talks to GarmentGate in its own thread, as for orders.
+      const dispute = await this.prisma.dispute.findUnique({
+        where: { id: dto.disputeId },
+        select: {
+          id: true,
+          order: {
+            select: {
+              code: true,
+              buyerCompanyId: true,
+              manufacturerProfileId: true,
+              manufacturerProfile: { select: { publicCode: true } },
+            },
+          },
+        },
+      });
+      if (!dispute) throw notFound();
+      const factory = await factoryFor(dto.factoryCode);
+      if (factory) {
+        if (dispute.order.manufacturerProfileId !== factory.id) throw notFound();
+        return {
+          type: 'MANUFACTURER_PLATFORM' as const,
+          companyId: factory.companyId,
+          rfqId: null,
+          orderId: null,
+          disputeId: dispute.id,
+          subject: `${dispute.order.code} · Dispute`,
+        };
+      }
+      if (!actor.isAdmin && dispute.order.buyerCompanyId !== actor.companyId) throw notFound();
+      return {
+        type: 'BUYER_PLATFORM' as const,
+        companyId: dispute.order.buyerCompanyId,
+        rfqId: null,
+        orderId: null,
+        disputeId: dispute.id,
+        subject: `${dispute.order.code} · Dispute`,
       };
     }
 
@@ -187,6 +236,7 @@ export class ConversationsService {
         companyId: factory.companyId,
         rfqId: null,
         orderId: order.id,
+        disputeId: null,
         subject: `${order.code} · ${title}`,
       };
     }
@@ -196,6 +246,7 @@ export class ConversationsService {
       companyId: order.buyerCompanyId,
       rfqId: null,
       orderId: order.id,
+      disputeId: null,
       subject: `${order.code} · ${order.title}`,
     };
   }
@@ -277,7 +328,9 @@ export class ConversationsService {
         ? { kind: 'RFQ' as const, code: c.rfq.code, title: rest.join(' · ') || code }
         : c.order
           ? { kind: 'ORDER' as const, code: c.order.code, title: rest.join(' · ') || code }
-          : null,
+          : c.dispute
+            ? { kind: 'DISPUTE' as const, code: c.dispute.order.code, title: rest.join(' · ') }
+            : null,
       counterpart: actor.isAdmin
         ? { code: companyCode(c), name: c.company.legalName }
         : { code: 'GarmentGate', name: null },
@@ -650,19 +703,12 @@ export class ConversationsService {
     companyId: string;
     subject: string;
   }): Promise<void> {
-    const users = await this.prisma.user.findMany({
-      where: { companyId: conversation.companyId, status: 'ACTIVE' },
-      select: { id: true },
-    });
-    if (users.length === 0) return;
-    await this.prisma.notification.createMany({
-      data: users.map((u) => ({
-        userId: u.id,
-        type: 'MESSAGE_RECEIVED' as const,
-        title: 'New message from GarmentGate',
-        body: conversation.subject,
-        data: { conversationId: conversation.id },
-      })),
+    await this.notifier.notify({
+      to: { companyId: conversation.companyId },
+      type: 'MESSAGE_RECEIVED',
+      title: 'New message from GarmentGate',
+      body: conversation.subject,
+      link: { conversationId: conversation.id },
     });
   }
 }

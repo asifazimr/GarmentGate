@@ -75,12 +75,28 @@ export function PublicManufacturerView({ manufacturer: m }: { manufacturer: Publ
             <p className="text-lg font-semibold tracking-[-0.015em]">{m.headline}</p>
           ) : null}
         </div>
-        <div className="flex gap-6">
+        <div className="flex flex-wrap gap-6">
           <Score label={t('performance')} value={`${m.scores.performanceScore}`} suffix="/100" />
+          {m.scores.rating ? (
+            <Score
+              label={t('rating', { count: m.scores.rating.count })}
+              value={format.number(m.scores.rating.average, { maximumFractionDigits: 1 })}
+              suffix="/5"
+            />
+          ) : null}
           {m.scores.onTimeDeliveryBps !== null ? (
             <Score
               label={t('onTime')}
               value={format.number(m.scores.onTimeDeliveryBps / 10_000, {
+                style: 'percent',
+                maximumFractionDigits: 1,
+              })}
+            />
+          ) : null}
+          {m.scores.qcPassBps !== null ? (
+            <Score
+              label={t('qcPass')}
+              value={format.number(m.scores.qcPassBps / 10_000, {
                 style: 'percent',
                 maximumFractionDigits: 1,
               })}

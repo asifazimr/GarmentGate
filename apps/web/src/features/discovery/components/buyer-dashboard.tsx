@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ActivityFeed } from '@/features/activity/activity-feed';
 import { useMe } from '@/features/auth/api';
 import { useIsClient } from '@/lib/client-hooks';
 import { formatMoney } from '@/lib/format';
@@ -195,6 +196,8 @@ export function BuyerDashboard() {
               )}
             </Section>
           </div>
+
+          <ActivityFeed />
 
           <section aria-labelledby="recommended" className="space-y-4">
             <div className="flex items-end justify-between gap-3">

@@ -398,7 +398,7 @@ export function ShipSampleDialog({
   );
 }
 
-/** Confirms a status change; asks for a reason when disputing. Shipments are booked first. */
+/** Confirms a status change with an optional note. Disputes have their own dialog. */
 export function TransitionDialog({
   code,
   to,
@@ -416,7 +416,6 @@ export function TransitionDialog({
   const tc = useTranslations('common');
   const transition = useTransition(code);
   const [error, setError] = useState<string | null>(null);
-  const needsNote = to === 'DISPUTED';
   const form = useForm<{ note: string }>({ defaultValues: { note: '' } });
   return (
     <Shell
@@ -439,10 +438,6 @@ export function TransitionDialog({
               setError(t('checkFields'));
               return;
             }
-            if (needsNote && !parsed.data.note) {
-              form.setError('note', { message: t('reasonRequired') });
-              return;
-            }
             try {
               await transition.mutateAsync(parsed.data satisfies OrderTransitionDto);
               toast.success(ts(`${copy ?? to}.done`));
@@ -456,7 +451,7 @@ export function TransitionDialog({
       >
         <FormAlert message={error} />
         <Field data-invalid={!!form.formState.errors.note}>
-          <FieldLabel htmlFor="t-note">{needsNote ? t('reason') : t('note')}</FieldLabel>
+          <FieldLabel htmlFor="t-note">{t('note')}</FieldLabel>
           <Textarea id="t-note" rows={3} {...form.register('note')} />
           <FieldError errors={[form.formState.errors.note]} />
         </Field>
@@ -466,7 +461,7 @@ export function TransitionDialog({
           </Button>
           <Button
             type="submit"
-            variant={to === 'CANCELLED' || to === 'DISPUTED' ? 'destructive' : 'default'}
+            variant={to === 'CANCELLED' ? 'destructive' : 'default'}
             disabled={form.formState.isSubmitting}
           >
             {to ? ts(`${copy ?? to}.action`) : ''}

@@ -15,6 +15,7 @@ import {
 } from '@garmentgate/shared';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { capabilitiesView, capabilitiesWrite } from './capabilities.mapper.js';
 import { PublicCodeService } from './public-code.service.js';
@@ -44,6 +45,7 @@ const STEP_ORDER = ['COMPANY_INFO', 'PROFILE', 'DOCUMENTS', 'SUBMITTED'] as cons
 export class OnboardingService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly notifier: Notifier,
     private readonly codes: PublicCodeService,
     private readonly audit: AuditService,
   ) {}
@@ -204,10 +206,6 @@ export class OnboardingService {
       });
     }
 
-    const admins = await this.prisma.user.findMany({
-      where: { role: 'ADMIN', status: 'ACTIVE' },
-      select: { id: true },
-    });
     const code = state.publicCode ?? company.id;
     await this.prisma.$transaction([
       this.prisma.company.update({
@@ -219,16 +217,13 @@ export class OnboardingService {
           kycRejectionReason: null,
         },
       }),
-      this.prisma.notification.createMany({
-        data: admins.map((admin) => ({
-          userId: admin.id,
-          type: 'KYC_SUBMITTED' as const,
-          title: `Verification pending: ${code}`,
-          body: `A ${company.type.toLowerCase()} submitted documents for review.`,
-          data: { companyId: company.id },
-        })),
-      }),
     ]);
+    await this.notifier.notify({
+      to: 'ADMINS',
+      type: 'KYC_SUBMITTED',
+      title: `Verification pending: ${code}`,
+      body: `A ${company.type.toLowerCase()} submitted documents for review.`,
+    });
     await this.audit.log({
       actorUserId: userId,
       action: 'kyc.submitted',

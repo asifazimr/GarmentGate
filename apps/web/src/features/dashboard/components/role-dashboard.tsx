@@ -6,19 +6,18 @@ import {
   Factory,
   FilePlus2,
   FileText,
-  Inbox,
   MessageSquare,
   PackageSearch,
   Truck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { EmptyState } from '@/components/patterns/empty-state';
 import { PageHeader } from '@/components/patterns/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ActivityFeed } from '@/features/activity/activity-feed';
 import { useMe } from '@/features/auth/api';
 import { NAV } from '@/features/shell/nav';
 
@@ -125,28 +124,20 @@ export function RoleDashboard({ role }: { role: DashboardRole }) {
         </ul>
       </section>
 
-      <section aria-labelledby="recent-activity" className="space-y-3">
-        <h2 id="recent-activity" className="text-muted-foreground text-sm font-medium">
-          {t('recentActivity')}
-        </h2>
-        <EmptyState
-          icon={role === 'buyer' ? FileText : Inbox}
-          title={t('noActivity')}
-          description={role === 'buyer' ? t('noActivityBuyer') : t('noActivityManufacturer')}
-          action={
-            role === 'buyer' ? (
-              <Button render={<Link href="/buyer/rfqs" />}>
-                <FilePlus2 />
-                {tb('rfq')}
-              </Button>
-            ) : (
-              <Button variant="outline" render={<Link href="/manufacturer/profile" />}>
-                {tm('profile')}
-              </Button>
-            )
-          }
-        />
-      </section>
+      <ActivityFeed
+        emptyAction={
+          role === 'buyer' ? (
+            <Button render={<Link href="/buyer/rfqs" />}>
+              <FilePlus2 />
+              {tb('rfq')}
+            </Button>
+          ) : (
+            <Button variant="outline" render={<Link href="/manufacturer/profile" />}>
+              {tm('profile')}
+            </Button>
+          )
+        }
+      />
     </div>
   );
 }

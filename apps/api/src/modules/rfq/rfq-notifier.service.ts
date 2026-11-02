@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { NotificationType } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
 
 /**
  * In-app notifications for the RFQ flow. Callers write the text for each audience: factories
@@ -8,7 +9,10 @@ import { PrismaService } from '../../prisma/prisma.service.js';
  */
 @Injectable()
 export class RfqNotifier {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifier: Notifier,
+  ) {}
 
   async send(
     userIds: string[],
@@ -19,9 +23,7 @@ export class RfqNotifier {
   ): Promise<void> {
     const unique = [...new Set(userIds)];
     if (unique.length === 0) return;
-    await this.prisma.notification.createMany({
-      data: unique.map((userId) => ({ userId, type, title, body, data })),
-    });
+    await this.notifier.notify({ to: { userIds: unique }, type, title, body, link: data });
   }
 
   async admins(): Promise<string[]> {

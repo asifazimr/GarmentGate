@@ -23,6 +23,7 @@ import {
 } from '@garmentgate/shared';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import type { AuthenticatedUser } from '../auth/auth.decorators.js';
 import { AuthService } from '../auth/auth.service.js';
@@ -32,6 +33,7 @@ import { MediaService } from '../media/media.service.js';
 import { inspectionView, orderInclude, type OrderRow } from '../orders/order-views.js';
 import { actorOf, OrdersService } from '../orders/orders.service.js';
 import { FilesService } from '../storage/files.service.js';
+import { PerformanceService } from '../trust/performance.service.js';
 
 const DAY = 86_400_000;
 const labelOf = (type: string) => (type === 'DURING_PRODUCTION' ? 'Inline' : 'Final random');
@@ -75,11 +77,13 @@ const startOfToday = () => new Date(Math.floor(Date.now() / DAY) * DAY);
 export class InspectionsService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly notifier: Notifier,
     private readonly orders: OrdersService,
     private readonly files: FilesService,
     private readonly media: MediaService,
     private readonly auth: AuthService,
     private readonly audit: AuditService,
+    private readonly performance: PerformanceService,
   ) {}
 
   // ── Booking (buyer or staff) ──────────────────────────────────────────────
@@ -204,14 +208,12 @@ export class InspectionsService {
     });
     if (count !== 1) throw new ConflictException('This inspection already has its report');
     if (dto.inspectorId && dto.inspectorId !== inspection.inspectorId) {
-      await this.prisma.notification.create({
-        data: {
-          userId: dto.inspectorId,
-          type: 'ORDER_UPDATE',
-          title: `New inspection: ${inspection.order.code}`,
-          body: `${labelOf(inspection.type)} inspection at ${inspection.order.manufacturerProfile.publicCode}.`,
-          data: { inspectionId: id },
-        },
+      await this.notifier.notify({
+        to: { userIds: [dto.inspectorId] },
+        type: 'QC_RESULT',
+        title: `New inspection: ${inspection.order.code}`,
+        body: `${labelOf(inspection.type)} inspection at ${inspection.order.manufacturerProfile.publicCode}.`,
+        link: { inspectionId: id },
       });
     }
     await this.audit.log({
@@ -363,6 +365,9 @@ export class InspectionsService {
       },
     });
     await this.announce(order, row.type, dto.result);
+    // A pass recalculates through the order hook (READY_TO_SHIP); a fail counts too.
+    if (row.type === 'PRE_SHIPMENT' && dto.result === 'FAIL')
+      await this.performance.recompute(order.manufacturerProfileId);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -418,7 +423,7 @@ export class InspectionsService {
     await this.orders.notifyParty(
       order,
       'BUYER',
-      'ORDER_UPDATE',
+      'QC_RESULT',
       `${order.code}: ${label.toLowerCase()} ${failed ? 'failed' : 'passed'}`,
       failed && type === 'PRE_SHIPMENT'
         ? 'The goods didn’t pass. See the report, then ask for rework or open a dispute.'
@@ -427,7 +432,7 @@ export class InspectionsService {
     await this.orders.notifyParty(
       order,
       'MANUFACTURER',
-      'ORDER_UPDATE',
+      'QC_RESULT',
       `${order.code}: ${label.toLowerCase()} ${failed ? 'failed' : 'passed'}`,
       failed
         ? 'See the defects in the report on the order.'
@@ -436,7 +441,7 @@ export class InspectionsService {
     await this.orders.notifyParty(
       order,
       'ADMIN',
-      'ORDER_UPDATE',
+      'QC_RESULT',
       `${order.code}: ${label.toLowerCase()} ${result}`,
       order.manufacturerProfile.publicCode,
     );

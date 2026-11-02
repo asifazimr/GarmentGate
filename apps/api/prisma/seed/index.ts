@@ -1067,6 +1067,68 @@ async function seedOrderLifecycle(p: {
         ],
       },
       events: { create: completedEvents },
+      inspections: {
+        create: [
+          {
+            type: 'PRE_SHIPMENT',
+            result: 'PASS',
+            aqlLevel: 'II',
+            aqlMajor: '2.5',
+            aqlMinor: '4.0',
+            lotSize: 5_000,
+            sampleSize: 200,
+            criticalDefects: 0,
+            majorDefects: 3,
+            minorDefects: 6,
+            inspectedAt: daysFromNow(-49),
+            summary: 'Within AQL; seams and measurements good.',
+          },
+        ],
+      },
+      reviews: {
+        create: [
+          {
+            direction: 'BUYER_TO_MANUFACTURER',
+            authorCompanyId: p.northbound.companyId,
+            subjectCompanyId: p.meghna.companyId,
+            manufacturerProfileId: p.meghna.profileId,
+            rating: 5,
+            qualityRating: 5,
+            communicationRating: 5,
+            deliveryRating: 4,
+            comment: 'Excellent quality and quick replies. Shipped a day early.',
+            commentFiltered: 'Excellent quality and quick replies. Shipped a day early.',
+            status: 'PUBLISHED',
+            createdAt: daysFromNow(-20),
+          },
+          {
+            direction: 'MANUFACTURER_TO_BUYER',
+            authorCompanyId: p.meghna.companyId,
+            subjectCompanyId: p.northbound.companyId,
+            manufacturerProfileId: p.meghna.profileId,
+            rating: 5,
+            qualityRating: 5,
+            communicationRating: 5,
+            deliveryRating: 5,
+            comment: 'Clear tech pack, balance paid on time.',
+            commentFiltered: 'Clear tech pack, balance paid on time.',
+            status: 'PUBLISHED',
+            createdAt: daysFromNow(-19),
+          },
+        ],
+      },
+    },
+  });
+  // Review averages as the trust service keeps them (the score itself is seeded history).
+  await prisma.manufacturerProfile.update({
+    where: { id: p.meghna.profileId },
+    data: {
+      reviewCount: 1,
+      ratingAvgX100: 467,
+      qualityAvgX100: 500,
+      communicationAvgX100: 500,
+      onTimeAvgX100: 400,
+      qcPassBps: 10_000,
     },
   });
 

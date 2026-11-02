@@ -380,10 +380,35 @@ enum NotificationType {
   QUOTE_RECEIVED
   QUOTE_OFFERED
   ORDER_UPDATE
+  MILESTONE_UPDATE
+  QC_RESULT
   MESSAGE_RECEIVED
   PAYMENT_UPDATE
   DISPUTE_UPDATE
+  REVIEW_RECEIVED
   SYSTEM
+}
+
+enum NotificationCategory {
+  QUOTES
+  MESSAGES
+  ORDERS
+  QC
+  PAYMENTS
+  DISPUTES
+  REVIEWS
+  ACCOUNT
+}
+
+enum ReviewDirection {
+  BUYER_TO_MANUFACTURER
+  MANUFACTURER_TO_BUYER
+}
+
+enum DisputeParty {
+  BUYER
+  MANUFACTURER
+  STAFF
 }
 
 enum FilePurpose {
@@ -465,6 +490,9 @@ model User {
   quotesPriced        Quote[]                   @relation("QuotePricedBy")
   kycReviews          Company[]                 @relation("KycReviewedBy")
   disputesOpened      Dispute[]                 @relation("DisputeOpenedBy")
+  disputesResolved    Dispute[]                 @relation("DisputeResolvedBy")
+  disputeEvidence     DisputeEvidence[]
+  notificationPrefs   NotificationPreference[]
   disputesAssigned    Dispute[]                 @relation("DisputeAssignedTo")
   accountWarnings     AccountWarning[]
   orderEvents         OrderEvent[]
@@ -569,6 +597,7 @@ model Company {
   ledgerAccounts      LedgerAccount[]
   conversations       Conversation[]
   reviewsWritten      Review[]
+  reviewsReceived     Review[]             @relation("ReviewSubject")
   shortlists          Shortlist[]
 
   @@index([type, kycStatus])
@@ -643,6 +672,14 @@ model ManufacturerProfile {
   performanceScore          Int      @default(0)
   /// Basis points (9450 = 94.5%).
   onTimeDeliveryBps         Int?
+  /// Final inspections passed first time, basis points.
+  qcPassBps                 Int?
+  /// Published buyer reviews and their averages ×100 (462 = 4.62), kept by the trust service.
+  reviewCount               Int      @default(0)
+  ratingAvgX100             Int?
+  qualityAvgX100            Int?
+  communicationAvgX100      Int?
+  onTimeAvgX100             Int?
   isListed                  Boolean  @default(false)
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
@@ -971,6 +1008,7 @@ model Conversation {
   subject       String
   rfqId         String?          @db.Uuid
   orderId       String?          @db.Uuid
+  disputeId     String?          @db.Uuid
   lastMessageAt DateTime?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
@@ -978,12 +1016,14 @@ model Conversation {
   company      Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   rfq          Rfq?                      @relation(fields: [rfqId], references: [id], onDelete: SetNull)
   order        Order?                    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  dispute      Dispute?                  @relation(fields: [disputeId], references: [id], onDelete: SetNull)
   participants ConversationParticipant[]
   messages     Message[]
 
   @@index([companyId, lastMessageAt])
   @@index([rfqId])
   @@index([orderId])
+  @@index([disputeId])
   @@map("conversations")
 }
 
@@ -1385,7 +1425,8 @@ model Shipment {
   order     Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
   documents ShipmentDocument[]
 
-  @@index([orderId])
+  /// One shipment per order.
+  @@unique([orderId], map: "shipments_one_per_order")
   @@index([trackingNumber])
   @@index([status, eta])
   @@map("shipments")
@@ -1412,10 +1453,14 @@ model ShipmentDocument {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Review {
-  id                    String       @id @default(uuid(7)) @db.Uuid
-  orderId               String       @db.Uuid
-  authorCompanyId       String       @db.Uuid
-  manufacturerProfileId String       @db.Uuid
+  id                    String          @id @default(uuid(7)) @db.Uuid
+  orderId               String          @db.Uuid
+  authorCompanyId       String          @db.Uuid
+  /// The company being reviewed (the factory's company, or the buyer).
+  subjectCompanyId      String          @db.Uuid
+  direction             ReviewDirection
+  /// The order's factory (both directions), for the factory's profile and score.
+  manufacturerProfileId String          @db.Uuid
   /// 1–5
   rating                Int
   qualityRating         Int?
@@ -1423,16 +1468,18 @@ model Review {
   deliveryRating        Int?
   comment               String?
   commentFiltered       String?
-  status                ReviewStatus @default(PENDING_MODERATION)
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
+  status                ReviewStatus    @default(PENDING_MODERATION)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
   order               Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
   authorCompany       Company             @relation(fields: [authorCompanyId], references: [id], onDelete: Cascade)
+  subjectCompany      Company             @relation("ReviewSubject", fields: [subjectCompanyId], references: [id], onDelete: Cascade)
   manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
 
   @@unique([orderId, authorCompanyId])
   @@index([manufacturerProfileId, status])
+  @@index([subjectCompanyId, direction])
   @@map("reviews")
 }
 
@@ -1448,13 +1495,17 @@ model Dispute {
   resolution          String?
   refundAmountMinor   BigInt?
   resolvedAt          DateTime?
+  resolvedById        String?       @db.Uuid
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
   order      Order             @relation(fields: [orderId], references: [id], onDelete: Restrict)
   openedBy   User              @relation("DisputeOpenedBy", fields: [openedById], references: [id], onDelete: Restrict)
   assignedTo User?             @relation("DisputeAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  resolvedBy User?             @relation("DisputeResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
   evidence   DisputeEvidence[]
+  /// Mediation threads: one with the buyer, one with the factory.
+  threads    Conversation[]
 
   @@index([orderId])
   @@index([status, createdAt])
@@ -1463,14 +1514,21 @@ model Dispute {
 }
 
 model DisputeEvidence {
-  id        String   @id @default(uuid(7)) @db.Uuid
-  disputeId String   @db.Uuid
-  fileId    String   @unique @db.Uuid
-  note      String?
-  createdAt DateTime @default(now())
+  id           String            @id @default(uuid(7)) @db.Uuid
+  disputeId    String            @db.Uuid
+  fileId       String            @unique @db.Uuid
+  note         String?
+  submittedBy  DisputeParty
+  uploadedById String            @db.Uuid
+  /// The other side sees it once sanitized and approved; staff always do.
+  reviewStatus MediaReviewStatus @default(PENDING)
+  reviewNote   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime          @default(now())
 
-  dispute Dispute   @relation(fields: [disputeId], references: [id], onDelete: Cascade)
-  file    FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  dispute    Dispute   @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  file       FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  uploadedBy User      @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
 
   @@index([disputeId])
   @@map("dispute_evidence")
@@ -1491,6 +1549,19 @@ model Notification {
 
   @@index([userId, readAt, createdAt])
   @@map("notifications")
+}
+
+/// A user's choice per category; missing rows fall back to DEFAULT_PREFERENCES in shared.
+model NotificationPreference {
+  userId   String               @db.Uuid
+  category NotificationCategory
+  inApp    Boolean
+  email    Boolean
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, category])
+  @@map("notification_preferences")
 }
 
 /// Append-only record of security- and money-relevant actions.

@@ -11,6 +11,9 @@ import { formatMoney } from '@/lib/format';
 import { InspectionsPanel } from '@/features/qc/components/inspections-panel';
 import { PayBalanceDialog } from '@/features/qc/components/pay-balance-dialog';
 import { ShipmentPanel } from '@/features/qc/components/shipment-panel';
+import { OpenDisputeDialog } from '@/features/trust/components/dispute-dialogs';
+import { BuyerDisputePanel } from '@/features/trust/components/dispute-panel';
+import { OrderReviewsCard } from '@/features/trust/components/reviews';
 import { purchaseOrderUrl, useBuyerOrder } from '../api';
 import { NextAction } from './next-action';
 import {
@@ -39,6 +42,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
   const [reordering, setReordering] = useState(false);
   const [moving, setMoving] = useState<OrderStatus | null>(null);
   const [paying, setPaying] = useState(false);
+  const [disputing, setDisputing] = useState(false);
 
   if (order.isPending) return <OrderLoading />;
   if (order.isError)
@@ -116,7 +120,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
         {finalFailed ? (
           <>
             <Button onClick={() => setMoving('IN_PRODUCTION')}>{t('actions.rework')}</Button>
-            <Button variant="outline" onClick={() => setMoving('DISPUTED')}>
+            <Button variant="outline" onClick={() => setDisputing(true)}>
               {t('actions.dispute')}
             </Button>
           </>
@@ -134,6 +138,8 @@ export function BuyerOrderPage({ code }: { code: string }) {
           <Button onClick={() => setReordering(true)}>{t('actions.reorder')}</Button>
         ) : null}
       </NextAction>
+
+      <BuyerDisputePanel code={o.code} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section aria-labelledby="timeline-heading">
@@ -198,7 +204,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
                     variant="ghost"
                     size="sm"
                     className="text-danger-ink"
-                    onClick={() => setMoving('DISPUTED')}
+                    onClick={() => setDisputing(true)}
                   >
                     {t('actions.dispute')}
                   </Button>
@@ -216,6 +222,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
               </div>
             ) : null}
           </SummaryCard>
+          {o.status === 'COMPLETED' ? <OrderReviewsCard code={o.code} side="BUYER" /> : null}
         </aside>
       </div>
 
@@ -232,6 +239,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
         copy={moving === 'IN_PRODUCTION' ? 'REWORK' : undefined}
         onClose={() => setMoving(null)}
       />
+      <OpenDisputeDialog code={o.code} open={disputing} onClose={() => setDisputing(false)} />
       <PayBalanceDialog code={o.code} open={paying} onClose={() => setPaying(false)} />
       <ReorderDialog
         code={o.code}

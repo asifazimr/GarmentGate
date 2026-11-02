@@ -65,7 +65,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/buyer/messages', label: 'messages', icon: MessageSquare, built: true },
     { href: '/buyer/factories', label: 'factories', icon: Factory, built: true },
     { href: '/buyer/shortlists', label: 'shortlists', icon: Heart, built: true },
-    { href: '/buyer/settings', label: 'settings', icon: Settings },
+    { href: '/buyer/settings', label: 'settings', icon: Settings, built: true },
   ],
   MANUFACTURER: [
     { href: '/manufacturer', label: 'dashboard', icon: LayoutDashboard, primary: true },
@@ -76,18 +76,18 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/manufacturer/profile', label: 'profile', icon: Factory, built: true },
     { href: '/manufacturer/messages', label: 'messages', icon: MessageSquare, built: true },
     { href: '/manufacturer/quotes', label: 'quotes', icon: Receipt },
-    { href: '/manufacturer/settings', label: 'settings', icon: Settings },
+    { href: '/manufacturer/settings', label: 'settings', icon: Settings, built: true },
   ],
   ADMIN: [
     { href: '/admin', label: 'verification', icon: ShieldCheck, primary: true },
     { href: '/admin/rfqs', label: 'rfqs', icon: FileText, primary: true },
     { href: '/admin/orders', label: 'orders', icon: Package, primary: true, built: true },
     { href: '/admin/messages', label: 'messages', icon: MessageSquare, primary: true, built: true },
-    { href: '/admin/disputes', label: 'disputes', icon: Scale },
+    { href: '/admin/disputes', label: 'disputes', icon: Scale, built: true },
     { href: '/admin/moderation', label: 'moderation', icon: ShieldAlert, built: true },
     { href: '/admin/margins', label: 'margins', icon: Percent, built: true },
     { href: '/admin/inspectors', label: 'inspectors', icon: ClipboardCheck, built: true },
-    { href: '/admin/settings', label: 'settings', icon: Gauge },
+    { href: '/admin/settings', label: 'settings', icon: Gauge, built: true },
   ],
   INSPECTOR: [
     {
@@ -97,6 +97,7 @@ export const NAV: Record<Role, NavItem[]> = {
       primary: true,
       built: true,
     },
+    { href: '/inspector/settings', label: 'settings', icon: Settings, primary: true, built: true },
   ],
 };
 

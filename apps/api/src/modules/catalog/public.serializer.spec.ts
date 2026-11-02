@@ -71,6 +71,12 @@ function manufacturerSource(): PublicManufacturerSource {
     exportMarkets: ['US', 'DE'],
     performanceScore: 92,
     onTimeDeliveryBps: 9450,
+    qcPassBps: 8700,
+    reviewCount: 4,
+    ratingAvgX100: 462,
+    qualityAvgX100: 475,
+    communicationAvgX100: 450,
+    onTimeAvgX100: 460,
     categories: [{ slug: 't-shirts', name: 'T-shirts' }],
     certifications: [
       {

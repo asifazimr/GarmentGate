@@ -3,6 +3,10 @@
 import {
   ChatEvents,
   type ConversationDetail,
+  NOTIFICATION_EVENT,
+  type NotificationList,
+  NotificationSchema,
+  notificationHref,
   type MessageEvent,
   type ReadEvent,
   type TypingEvent,
@@ -18,9 +22,14 @@ import {
   useRef,
   useSyncExternalStore,
 } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { io, type Socket } from 'socket.io-client';
+import { toast } from 'sonner';
+import { activityKey } from '@/features/activity/api';
 import { useMe } from '@/features/auth/api';
 import { refreshSession } from '@/lib/api';
+import { notificationsKey } from '@/features/shell/api';
 import { chatKeys, upsertMessage } from './api';
 
 /** "Who is typing where", kept outside React state and read with useSyncExternalStore. */
@@ -85,6 +94,9 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const me = useMe();
   const userId = me.data?.id;
+  const role = me.data?.role;
+  const router = useRouter();
+  const openLabel = useTranslations('shell.notifications')('view');
   const socketRef = useRef<Socket | null>(null);
   const joined = useRef(new Set<string>());
   const typing = useMemo(() => new TypingStore(), []);
@@ -156,6 +168,23 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
       ChatEvents.warning,
       () => void queryClient.invalidateQueries({ queryKey: chatKeys.warnings }),
     );
+    socket.on(NOTIFICATION_EVENT, (payload: unknown) => {
+      const parsed = NotificationSchema.safeParse(payload);
+      if (!parsed.success) return;
+      const n = parsed.data;
+      queryClient.setQueryData<NotificationList>(notificationsKey, (list) =>
+        list && !list.items.some((x) => x.id === n.id)
+          ? { items: [n, ...list.items].slice(0, 20), unreadCount: list.unreadCount + 1 }
+          : list,
+      );
+      void queryClient.invalidateQueries({ queryKey: notificationsKey });
+      void queryClient.invalidateQueries({ queryKey: activityKey });
+      const href = role ? notificationHref(role, n.link) : null;
+      toast(n.title, {
+        description: n.body,
+        ...(href && { action: { label: openLabel, onClick: () => router.push(href) } }),
+      });
+    });
     socket.on(ChatEvents.typing, (event: TypingEvent) => {
       if (event.userId !== userId) typing.set(event);
     });
@@ -166,7 +195,7 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [queryClient, typing, userId]);
+  }, [queryClient, typing, userId, role, router, openLabel]);
 
   const joinThread = useCallback((conversationId: string) => {
     joined.current.add(conversationId);

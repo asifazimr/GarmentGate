@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { AccountWarning, FlaggedMessage } from '@garmentgate/shared';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { ChatRealtime } from './chat-realtime.service.js';
 
@@ -21,6 +22,7 @@ export function warningLevelFor(violations: number): keyof typeof WARNING_THRESH
 export class ChatModerationService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly notifier: Notifier,
     private readonly audit: AuditService,
     private readonly realtime: ChatRealtime,
   ) {}
@@ -51,33 +53,23 @@ export class ChatModerationService {
       where: { id: userId },
       select: { firstName: true, lastName: true, email: true },
     });
-    const warning = await this.prisma.accountWarning.create({
+    await this.prisma.accountWarning.create({
       data: { userId, level, violations: count },
     });
-    const admins = await this.prisma.user.findMany({
-      where: { role: 'ADMIN', status: 'ACTIVE' },
-      select: { id: true },
+    await this.notifier.notify({
+      to: { userIds: [userId] },
+      type: 'SYSTEM',
+      title:
+        level === 'FINAL_WARNING'
+          ? 'Final warning: contact details'
+          : 'Please keep contact details off GarmentGate',
+      body: 'Messages with phone numbers, emails, links or messenger handles are hidden and reviewed. Repeated attempts can suspend your account.',
     });
-    await this.prisma.notification.createMany({
-      data: [
-        {
-          userId,
-          type: 'SYSTEM' as const,
-          title:
-            level === 'FINAL_WARNING'
-              ? 'Final warning: contact details'
-              : 'Please keep contact details off GarmentGate',
-          body: 'Messages with phone numbers, emails, links or messenger handles are hidden and reviewed. Repeated attempts can suspend your account.',
-          data: { warningId: warning.id },
-        },
-        ...admins.map((a) => ({
-          userId: a.id,
-          type: 'SYSTEM' as const,
-          title: `${level === 'FINAL_WARNING' ? 'Final warning' : 'Warning'} issued`,
-          body: `${user.firstName} ${user.lastName} (${user.email}): ${String(count)} contact-detail attempts in ${String(VIOLATION_WINDOW_DAYS)} days`,
-          data: { userId },
-        })),
-      ],
+    await this.notifier.notify({
+      to: 'ADMINS',
+      type: 'SYSTEM',
+      title: `${level === 'FINAL_WARNING' ? 'Final warning' : 'Warning'} issued`,
+      body: `${user.firstName} ${user.lastName} (${user.email}): ${String(count)} contact-detail attempts in ${String(VIOLATION_WINDOW_DAYS)} days`,
     });
     await this.audit.log({
       actorUserId: null,

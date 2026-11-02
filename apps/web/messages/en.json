@@ -256,10 +256,6 @@
   "dashboard": {
     "welcome": "Welcome back, {name}",
     "quickActions": "Quick actions",
-    "recentActivity": "Recent activity",
-    "noActivity": "Nothing here yet",
-    "noActivityBuyer": "Create your first request for quote and matched factories will start sending offers.",
-    "noActivityManufacturer": "When buyers request quotes that match your capabilities, they’ll appear here.",
     "buyer": {
       "subtitle": "Source from verified factories, with GarmentGate managing every step.",
       "actions": {
@@ -417,7 +413,9 @@
       "markAllRead": "Mark all as read",
       "empty": "You’re all caught up",
       "emptyBody": "New quotes, order updates and messages will show up here.",
-      "error": "Couldn’t load notifications"
+      "error": "Couldn’t load notifications",
+      "settings": "Notification settings",
+      "view": "View"
     },
     "profile": {
       "open": "Open account menu",
@@ -722,7 +720,9 @@
       "performance": "Performance score",
       "onTime": "On-time delivery",
       "noPhotos": "No approved photos yet",
-      "about": "About"
+      "about": "About",
+      "rating": "{count, plural, one {Rating (# review)} other {Rating (# reviews)}}",
+      "qcPass": "QC passed first time"
     },
     "products": {
       "title": "Products",
@@ -1225,7 +1225,8 @@
         "rfq-attachments": "RFQ file",
         "sample-photos": "Sample photo (buyer)",
         "milestone-media": "Production media (factory)",
-        "inspection-photos": "Inspection photo (GarmentGate QC)"
+        "inspection-photos": "Inspection photo (GarmentGate QC)",
+        "dispute-evidence": "Dispute evidence"
       },
       "document": "PDF document",
       "open": "Open sanitized copy",
@@ -1977,6 +1978,189 @@
       "yourReferenceHint": "Helps us match it on our statement faster.",
       "markSent": "I’ve sent it",
       "sent": "Thanks: we’ll confirm it when it arrives."
+    }
+  },
+  "activity": {
+    "title": "Recent activity",
+    "empty": "Nothing here yet",
+    "emptyBody": "Quotes, order updates, messages and payments will show up here as they happen.",
+    "more": "Show older activity"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Choose how GarmentGate keeps you informed.",
+    "saved": "Preferences saved",
+    "saveFailed": "Couldn’t save your preferences. Try again.",
+    "notifications": {
+      "title": "Notifications",
+      "description": "Pick what reaches you in the app and by email.",
+      "category": "Topic",
+      "inApp": "In app",
+      "email": "Email",
+      "inAppFor": "Show {category} in the app",
+      "emailFor": "Email me about {category}",
+      "footnote": "Account and security notices always appear in the app. Emails go to the address you sign in with.",
+      "categories": {
+        "QUOTES": {
+          "title": "Quotes",
+          "body": "Requests for quote, new quotes and offers."
+        },
+        "MESSAGES": {
+          "title": "Messages",
+          "body": "New messages from GarmentGate in your threads."
+        },
+        "ORDERS": {
+          "title": "Orders",
+          "body": "Status changes, samples and production milestones."
+        },
+        "QC": {
+          "title": "Quality control",
+          "body": "Inspection bookings and results."
+        },
+        "PAYMENTS": {
+          "title": "Payments",
+          "body": "Deposits, balances, releases and payouts."
+        },
+        "DISPUTES": {
+          "title": "Disputes",
+          "body": "Disputes opened on your orders and their outcome."
+        },
+        "REVIEWS": {
+          "title": "Reviews",
+          "body": "New reviews after an order is completed."
+        },
+        "ACCOUNT": {
+          "title": "Account",
+          "body": "Verification, security and important notices."
+        }
+      }
+    }
+  },
+  "trust": {
+    "disputes": {
+      "title": "Dispute",
+      "loadFailed": "Couldn’t load the dispute",
+      "openedOn": "Opened {date} · {reason}",
+      "resolvedOn": "Resolved {date}",
+      "mediating": "GarmentGate is reviewing this with both sides. Reply in the order thread if we ask for anything.",
+      "resolution": "Decision",
+      "refunded": "Refund: {amount}",
+      "reason": "What’s the problem?",
+      "reasons": {
+        "QUALITY": "Quality",
+        "QUANTITY": "Quantity",
+        "LATE_DELIVERY": "Late delivery",
+        "NOT_AS_DESCRIBED": "Not as described",
+        "PAYMENT": "Payment",
+        "OTHER": "Something else"
+      },
+      "description": "What went wrong?",
+      "descriptionPlaceholder": "For example: 120 of 2,000 pieces have uneven stitching on the side seam (photos attached).",
+      "evidence": "Evidence",
+      "noEvidence": "No evidence yet.",
+      "addEvidence": "Add photos or PDFs",
+      "evidenceHint": "JPG, PNG, WebP or PDF, up to 15 MB each",
+      "evidenceReview": "GarmentGate checks every file before the other side sees it.",
+      "evidenceAdded": "Evidence added",
+      "uploadFailed": "Upload failed. Try again.",
+      "removeFile": "Remove {name}",
+      "openFile": "Open {name}",
+      "processing": "Processing…",
+      "processingFailed": "Couldn’t process this file",
+      "from": {
+        "YOU": "From you",
+        "OTHER_SIDE": "From the other side",
+        "GARMENTGATE": "From GarmentGate"
+      },
+      "review": {
+        "PENDING": "Being checked",
+        "APPROVED": "Shared",
+        "REJECTED": "Not shared"
+      },
+      "open": {
+        "title": "Report a problem",
+        "body": "GarmentGate reviews the order with both sides and decides, including any refund from escrow. Production pauses while the dispute is open.",
+        "action": "Open dispute",
+        "done": "Dispute opened. GarmentGate will be in touch."
+      },
+      "resolve": {
+        "title": "Resolve the dispute",
+        "body": "Both sides are notified. The factory never sees refund amounts.",
+        "outcome": "Outcome",
+        "outcomes": {
+          "RESOLVED_FOR_BUYER": "In the buyer’s favour",
+          "RESOLVED_FOR_MANUFACTURER": "In the factory’s favour",
+          "SETTLED": "Settled by agreement"
+        },
+        "resolution": "Decision",
+        "resolutionHint": "Shown to both sides (the factory’s copy is scrubbed of the buyer’s names).",
+        "refund": "Refund to buyer ({currency})",
+        "refundHint": "Optional. Up to {max} is still in escrow.",
+        "refundInvalid": "Enter an amount like 250.00",
+        "refundTooHigh": "Only {max} is left in escrow",
+        "resumeTo": "Then the order goes to",
+        "action": "Resolve",
+        "done": "Dispute resolved"
+      },
+      "admin": {
+        "title": "Disputes",
+        "description": "Take a dispute on, check the evidence and resolve it from the order.",
+        "empty": "No disputes",
+        "emptyBody": "When a buyer reports a problem on an order, it shows up here.",
+        "toReview": "{count, plural, one {# file to review} other {# files to review}}",
+        "buyer": "Buyer",
+        "factory": "Factory",
+        "openedBy": "Opened by",
+        "assignedTo": "Handled by",
+        "unassigned": "Unassigned",
+        "original": "Original text (before contact filtering)",
+        "assign": "Take it on",
+        "assigned": "Dispute assigned to you",
+        "assignFailed": "Couldn’t take on the dispute",
+        "resolve": "Resolve",
+        "buyerThread": "Buyer thread",
+        "factoryThread": "Factory thread"
+      }
+    },
+    "reviews": {
+      "title": "Reviews",
+      "intro": {
+        "BUYER": "Rate the factory. Your review is shown on its profile with your country only.",
+        "MANUFACTURER": "Rate the buyer. Only GarmentGate and the buyer see it."
+      },
+      "yours": "Your review",
+      "theirs": {
+        "BUYER": "The factory’s review of you",
+        "MANUFACTURER": "The buyer’s review of you"
+      },
+      "theirsPending": "The other side has left a review. You’ll see it once you leave yours, or after the review period.",
+      "closed": "The review period for this order has ended.",
+      "closesOn": "Reviews close {date}",
+      "criteria": {
+        "BUYER": {
+          "quality": "Quality",
+          "communication": "Communication",
+          "onTime": "On-time delivery"
+        },
+        "MANUFACTURER": {
+          "quality": "Clear specs",
+          "communication": "Communication",
+          "onTime": "On-time payment"
+        }
+      },
+      "starsLabel": "{count, plural, one {# star} other {# stars}}",
+      "comment": "Comment (optional)",
+      "commentPlaceholder": {
+        "BUYER": "How was the quality, fit and finish? Would you order again?",
+        "MANUFACTURER": "Were the specs clear? Was the buyer responsive?"
+      },
+      "submit": "Submit review",
+      "submitted": "Thanks for your review",
+      "publicTitle": "Buyer reviews",
+      "count": "{count, plural, one {# review} other {# reviews}}",
+      "publicEmpty": "No reviews yet",
+      "publicEmptyBody": "Reviews appear here after buyers complete orders with this factory.",
+      "byBuyerFrom": "Buyer from {country}"
     }
   }
 }

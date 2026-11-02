@@ -1,6 +1,6 @@
 'use client';
 
-import type { Role } from '@garmentgate/shared';
+import type { ChatContext, Role } from '@garmentgate/shared';
 import { MessageSquare } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
@@ -14,9 +14,9 @@ const BASE: Record<Role, string> = {
   INSPECTOR: '/inspector',
 };
 
-/** Where an RFQ / order lives for each role (null: no page yet). */
+/** Where an RFQ / order lives for each role (null: no page yet). Disputes live on their order. */
 function contextHref(role: Role) {
-  return (kind: 'RFQ' | 'ORDER', code: string): string | null => {
+  return (kind: ChatContext['kind'], code: string): string | null => {
     if (kind === 'RFQ') return role === 'ADMIN' ? null : `${BASE[role]}/rfqs/${code}`;
     return `${BASE[role]}/orders/${code}`;
   };

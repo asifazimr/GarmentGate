@@ -16,6 +16,7 @@ import {
 import type { Server, Socket } from 'socket.io';
 import { z } from 'zod';
 import { TokenService } from '../auth/token.service.js';
+import { RealtimeService } from '../notifications/realtime.service.js';
 import { type ChatActor, ChatActorService } from './chat-actor.service.js';
 import { ChatRealtime, rooms } from './chat-realtime.service.js';
 
@@ -69,10 +70,12 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection {
     private readonly tokens: TokenService,
     private readonly actors: ChatActorService,
     private readonly realtime: ChatRealtime,
+    private readonly push: RealtimeService,
   ) {}
 
   afterInit(server: Server): void {
     this.realtime.attach(server);
+    this.push.attach(server);
     server.use((socket: ChatSocket, next) => {
       void this.authenticate(socket)
         .then(() => {

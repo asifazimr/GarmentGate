@@ -10,6 +10,7 @@ import {
 import type { Env } from '../../config/env.schema.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { MailService } from '../mail/mail.service.js';
 import { SearchService } from '../search/search.service.js';
@@ -42,6 +43,7 @@ type ListCompany = Prisma.CompanyGetPayload<{ include: typeof listInclude }>;
 export class AdminKycService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly notifier: Notifier,
     private readonly mail: MailService,
     private readonly audit: AuditService,
     private readonly config: ConfigService<Env, true>,
@@ -164,15 +166,15 @@ export class AdminKycService {
         where: { companyId: company.id },
         data: { isListed: true },
       }),
-      this.prisma.notification.createMany({
-        data: company.users.map((u) => ({
-          userId: u.id,
-          type: 'KYC_APPROVED' as const,
-          title: 'Your company is verified',
-          body: 'Welcome aboard. Your dashboard is ready.',
-        })),
-      }),
     ]);
+    // The decision email goes out below; this is the in-app side.
+    await this.notifier.notify({
+      to: { companyId: company.id },
+      type: 'KYC_APPROVED',
+      title: 'Your company is verified',
+      body: 'Welcome aboard. Your dashboard is ready.',
+      email: false,
+    });
     await this.syncListing(company.id);
     await this.audit.log({
       actorUserId: adminId,
@@ -202,15 +204,14 @@ export class AdminKycService {
           kycRejectionReason: reason,
         },
       }),
-      this.prisma.notification.createMany({
-        data: company.users.map((u) => ({
-          userId: u.id,
-          type: 'KYC_REJECTED' as const,
-          title: 'A few changes needed',
-          body: reason,
-        })),
-      }),
     ]);
+    await this.notifier.notify({
+      to: { companyId: company.id },
+      type: 'KYC_REJECTED',
+      title: 'A few changes needed',
+      body: reason,
+      email: false,
+    });
     await this.syncListing(company.id);
     await this.audit.log({
       actorUserId: adminId,

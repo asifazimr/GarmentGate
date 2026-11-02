@@ -11,6 +11,8 @@ import { formatMoney } from '@/lib/format';
 import { purchaseOrderUrl, useAdminOrder } from '../api';
 import { InspectionsPanel } from '@/features/qc/components/inspections-panel';
 import { ShipmentPanel } from '@/features/qc/components/shipment-panel';
+import { useAdminDispute } from '@/features/trust/api';
+import { AdminDisputePanel } from '@/features/trust/components/dispute-panel';
 import { NextAction } from './next-action';
 import { TransitionDialog } from './order-dialogs';
 import {
@@ -29,6 +31,7 @@ export function AdminOrderPage({ code }: { code: string }) {
   const locale = useLocale();
   const format = useFormatter();
   const order = useAdminOrder(code);
+  const dispute = useAdminDispute(code);
   const [moving, setMoving] = useState<OrderStatus | null>(null);
 
   if (order.isPending) return <OrderLoading />;
@@ -44,8 +47,15 @@ export function AdminOrderPage({ code }: { code: string }) {
   const o = order.data;
   const money = (minor: number) => formatMoney(minor, o.currency, locale);
   const margin = o.buyerTotalMinor - o.manufacturerTotalMinor;
-  // Samples have their own flow (buyer requests / approves): staff move everything else.
-  const moves = o.allowedTransitions.filter((s) => s !== 'SAMPLING' && s !== 'SAMPLE_APPROVED');
+  const openDispute =
+    dispute.data?.dispute?.status === 'OPEN' || dispute.data?.dispute?.status === 'UNDER_REVIEW';
+  // Samples have their own flow (buyer requests / approves), disputes are opened by the buyer
+  // and an open one is closed by resolving it: staff move everything else.
+  const moves = openDispute
+    ? []
+    : o.allowedTransitions.filter(
+        (s) => s !== 'SAMPLING' && s !== 'SAMPLE_APPROVED' && s !== 'DISPUTED',
+      );
 
   return (
     <div className="space-y-8">
@@ -93,13 +103,15 @@ export function AdminOrderPage({ code }: { code: string }) {
         {moves.map((to) => (
           <Button
             key={to}
-            variant={to === 'CANCELLED' || to === 'DISPUTED' ? 'ghost' : 'default'}
+            variant={to === 'CANCELLED' ? 'ghost' : 'default'}
             onClick={() => setMoving(to)}
           >
             {ts(`${to}.action`)}
           </Button>
         ))}
       </NextAction>
+
+      <AdminDisputePanel code={o.code} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section aria-labelledby="timeline-heading">

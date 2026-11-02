@@ -524,14 +524,23 @@ describe('order lifecycle (e2e)', () => {
     await ctx.prisma.order.update({ where: { code: other }, data: { status: 'IN_PRODUCTION' } });
     const send = (agent: Agent, body: object) =>
       agent.post(`/orders/${other}/transition`).send(body);
-    await send(buyer.agent, { to: 'DISPUTED' }).expect(400);
-    await send(buyer.agent, {
-      to: 'DISPUTED',
-      note: 'Colour does not match the approved sample',
-    }).expect(204);
+    // Disputes have their own endpoint (reason, description, evidence).
+    await send(buyer.agent, { to: 'DISPUTED', note: 'Colour is off' }).expect(400);
+    await buyer.agent
+      .post(`/orders/${other}/dispute`)
+      .send({ reason: 'QUALITY', description: 'Colour does not match the approved sample' })
+      .expect(201);
     await send(buyer.agent, { to: 'IN_PRODUCTION' }).expect(403);
-    await send(admin, { to: 'QC' }).expect(409); // only back where it was, or closed
-    await send(admin, { to: 'IN_PRODUCTION', note: 'Re-dye agreed' }).expect(204);
+    await send(admin, { to: 'IN_PRODUCTION' }).expect(409); // resolve the dispute first
+    const { dispute } = (await admin.get(`/orders/${other}/dispute`).expect(200)).body as {
+      dispute: { id: string };
+    };
+    const resolve = (resumeTo: string) =>
+      admin
+        .post(`/admin/disputes/${dispute.id}/resolve`)
+        .send({ outcome: 'SETTLED', resolution: 'Re-dye agreed with both sides', resumeTo });
+    await resolve('QC').expect(400); // only back where it was, or closed
+    await resolve('IN_PRODUCTION').expect(204);
     await send(buyer.agent, { to: 'CANCELLED' }).expect(403); // too late for the buyer
   });
 });

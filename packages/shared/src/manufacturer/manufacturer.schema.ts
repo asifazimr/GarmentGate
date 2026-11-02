@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PublicRatingSchema } from '../trust/reviews.schema.js';
 import { CertificationTypeSchema } from '../onboarding/onboarding.schema.js';
 import { CurrencySchema } from '../catalog/product.schema.js';
 import { ImageUrlsSchema, OwnedImageSchema } from '../media/media.schema.js';
@@ -50,6 +51,10 @@ export const PublicManufacturerSchema = z.strictObject({
   scores: z.strictObject({
     performanceScore: z.number().int().min(0).max(100),
     onTimeDeliveryBps: z.number().int().nullable(),
+    /** Final inspections passed first time. */
+    qcPassBps: z.number().int().nullable(),
+    /** Buyer reviews; null until there's at least one. */
+    rating: PublicRatingSchema.nullable(),
   }),
   photos: z.array(PublicImageSchema),
 });

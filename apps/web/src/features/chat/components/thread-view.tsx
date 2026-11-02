@@ -4,6 +4,7 @@ import {
   CHAT_FILE_MAX_BYTES,
   CHAT_FILE_TYPES,
   CHAT_MAX_FILES,
+  type ChatContext,
   type ChatMessage,
   type ConversationDetail,
   filterContactDetails,
@@ -63,7 +64,7 @@ export function ThreadView({
 }: {
   id: string;
   base: string;
-  contextHref: (kind: 'RFQ' | 'ORDER', code: string) => string | null;
+  contextHref: (kind: ChatContext['kind'], code: string) => string | null;
 }) {
   const t = useTranslations('chat');
   const thread = useConversation(id);
@@ -99,7 +100,7 @@ function Thread({
 }: {
   thread: ConversationDetail;
   base: string;
-  contextHref: (kind: 'RFQ' | 'ORDER', code: string) => string | null;
+  contextHref: (kind: ChatContext['kind'], code: string) => string | null;
 }) {
   const t = useTranslations('chat');
   const chat = useChatSocket();
