@@ -20,6 +20,13 @@ import {
   PublicManufacturerSchema,
   type PublicProduct,
   PublicProductSchema,
+  bandFor,
+  brandBadges,
+  FLOOR_AREA_BANDS,
+  type SupplierClaimRegion,
+  type SupplierClaimStatus,
+  type SupplierClaimTier,
+  WORKFORCE_BANDS,
 } from '@garmentgate/shared';
 
 export const NAME_REDACTED = '[name removed]';
@@ -173,6 +180,12 @@ export interface PublicManufacturerSource {
   communicationAvgX100: number | null;
   onTimeAvgX100: number | null;
   categories: CategorySource[];
+  supplierClaims?: {
+    region: SupplierClaimRegion;
+    tier: SupplierClaimTier;
+    brandNames: string[];
+    status: SupplierClaimStatus;
+  }[];
   certifications: {
     type: PublicManufacturer['certifications'][number]['type'];
     customName: string | null;
@@ -268,8 +281,8 @@ export function toPublicManufacturer(
       sampleLeadTimeDays: source.sampleLeadTimeDays,
       productionLeadTimeMinDays: source.productionLeadTimeMinDays,
       productionLeadTimeMaxDays: source.productionLeadTimeMaxDays,
-      workforceSize: source.workforceSize,
-      factorySizeSqm: source.factorySizeSqm,
+      workforceBand: bandFor(source.workforceSize, WORKFORCE_BANDS),
+      factorySizeBand: bandFor(source.factorySizeSqm, FLOOR_AREA_BANDS),
       machinery: machineryOf(source.machinery).map((m) => ({
         type: scrubText(m.type, patterns) ?? '',
         count: m.count,
@@ -284,6 +297,7 @@ export function toPublicManufacturer(
         name: c.type === 'OTHER' ? scrubText(c.customName, patterns) : null,
         validUntil: c.expiresAt ? c.expiresAt.toISOString().slice(0, 7) : null,
       })),
+    brandBadges: brandBadges(source.supplierClaims ?? []),
     scores: {
       performanceScore: source.performanceScore,
       onTimeDeliveryBps: source.onTimeDeliveryBps,

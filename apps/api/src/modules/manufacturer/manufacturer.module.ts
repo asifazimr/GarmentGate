@@ -13,5 +13,6 @@ import { ManufacturerProfileService } from './profile.service.js';
     ManufacturerProductsService,
     CapacityService,
   ],
+  exports: [ManufacturerContextService],
 })
 export class ManufacturerModule {}

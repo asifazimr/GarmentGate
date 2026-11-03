@@ -406,7 +406,8 @@
     "certifications": "Certifications",
     "payments": "Payments",
     "users": "Users",
-    "audit": "Audit log"
+    "audit": "Audit log",
+    "claims": "Supplier claims"
   },
   "shell": {
     "search": "Search…",
@@ -706,6 +707,7 @@
         "capabilities": "Capabilities",
         "photos": "Photos",
         "certifications": "Certifications",
+        "claims": "Brands supplied",
         "preview": "Buyer preview"
       },
       "save": "Save changes",
@@ -750,8 +752,11 @@
       "pcs": "{count, number} pcs",
       "days": "{count} days",
       "daysRange": "{min}–{max} days",
-      "people": "{count, number} people",
-      "sqm": "{count, number} m²",
+      "peopleRange": "{min, number}–{max, number} people",
+      "peopleOver": "{min, number}+ people",
+      "sqmRange": "{min, number}–{max, number} m²",
+      "sqmOver": "{min, number}+ m²",
+      "brandBadges": "Verified supplier record",
       "categories": "Categories",
       "machinery": "Machinery",
       "exportMarkets": "Exports to",
@@ -2577,6 +2582,180 @@
       "empty": "No certificates here",
       "emptyPending": "All caught up",
       "emptyBody": "Certificates appear here when factories add them from their profile."
+    },
+    "claims": {
+      "title": "Supplier claims",
+      "description": "Brands factories say they supply. Check the evidence; buyers only see a badge with the count, never the names.",
+      "tabs": {
+        "PENDING": "To review",
+        "VERIFIED": "Verified",
+        "REJECTED": "Rejected",
+        "ALL": "All"
+      },
+      "status": {
+        "PENDING": "To review",
+        "VERIFIED": "Verified",
+        "REJECTED": "Rejected"
+      },
+      "columns": {
+        "brands": "Brands",
+        "claim": "Claim",
+        "factory": "Factory",
+        "submitted": "Submitted",
+        "status": "Status"
+      },
+      "evidence": "Evidence",
+      "verify": "Verify",
+      "reject": "Reject",
+      "verified": "Claim verified",
+      "rejected": "Claim rejected",
+      "failed": "Couldn’t save the decision",
+      "rejectTitle": "Reject this claim?",
+      "rejectBody": "The factory sees your reason and can submit again with other evidence.",
+      "reason": "Reason",
+      "empty": "No claims",
+      "emptyPending": "All caught up",
+      "emptyBody": "Claims appear here when factories add brands from their profile."
+    }
+  },
+  "supplierClaims": {
+    "description": "Tell us which brands you supply and upload proof. Once verified, buyers see a badge such as “Supplies 3 major brands in the EU”. Brand names are never shown to buyers.",
+    "add": "Add brands",
+    "empty": "No supplier claims yet",
+    "emptyBody": "Verified brand experience is one of the strongest signals buyers look for.",
+    "remove": "Remove claim",
+    "privacy": "Brand names and evidence are seen only by GarmentGate staff.",
+    "dialogDescription": "Name the brands you supply in one region, then upload a purchase order, invoice or supplier certificate as evidence.",
+    "region": "Region",
+    "regionPlaceholder": "Choose a region",
+    "tier": "Brand size",
+    "tiers": {
+      "MAJOR": "Major brands",
+      "ESTABLISHED": "Established brands"
+    },
+    "regions": {
+      "EU": "EU",
+      "UK": "UK",
+      "US": "US",
+      "CANADA": "Canada",
+      "JAPAN": "Japan",
+      "AUSTRALIA": "Australia",
+      "MIDDLE_EAST": "Middle East",
+      "OTHER": "Other markets"
+    },
+    "regionIn": {
+      "EU": "the EU",
+      "UK": "the UK",
+      "US": "the US",
+      "CANADA": "Canada",
+      "JAPAN": "Japan",
+      "AUSTRALIA": "Australia",
+      "MIDDLE_EAST": "the Middle East",
+      "OTHER": "other markets"
+    },
+    "brands": "Brands",
+    "brandPlaceholder": "Brand name",
+    "addBrand": "Add",
+    "removeBrand": "Remove {brand}",
+    "brandsHint": "Press Enter after each brand. Up to 20.",
+    "evidence": "Evidence",
+    "evidenceUpload": "Upload a PDF or image",
+    "evidenceHint": "Prices and quantities may be blacked out. Up to 10 MB.",
+    "note": "Note for our team",
+    "submit": "Submit for review",
+    "badge": "{tier, select, MAJOR {{count, plural, one {Supplies a major brand in {region}} other {Supplies # major brands in {region}}}} other {{count, plural, one {Supplies an established brand in {region}} other {Supplies # established brands in {region}}}}}"
+  },
+  "capacityBooking": {
+    "page": {
+      "title": "Capacity",
+      "description": "Open line time for buyers to book, and keep your monthly pieces up to date for quote requests.",
+      "tabs": {
+        "lines": "Production lines",
+        "pieces": "Monthly pieces"
+      }
+    },
+    "calendar": {
+      "emptyTitle": "Add your first production line",
+      "emptyBody": "Describe each line’s daily output in SAM minutes and your CM rate, then open windows buyers can book.",
+      "addLine": "Add line",
+      "editLine": "Edit line {code}",
+      "openInView": "Open for booking",
+      "bookedInView": "Booked",
+      "lines": "Lines",
+      "ofCapacity": "of {capacity} line minutes",
+      "utilisation": "{percent}% booked",
+      "minutesUnit": "All figures in SAM minutes",
+      "previous": "Previous",
+      "next": "Next",
+      "today": "Today",
+      "view": "View",
+      "month": "Month",
+      "week": "Week",
+      "open": "Open for booking",
+      "booked": "Booked",
+      "closed": "Closed",
+      "nonWorking": "Not a working day",
+      "dragHint": "Drag across days to open a window",
+      "gridLabel": "Production line calendar",
+      "paused": "Paused",
+      "lineMeta": "{minutes, number} min/day · {rate}/100 min",
+      "cellOpen": "{open, number} minutes open, {booked, number} booked",
+      "cellFree": "not open for booking",
+      "past": "past"
+    },
+    "lineDialog": {
+      "newTitle": "Add a production line",
+      "editTitle": "Edit line {code}",
+      "description": "Buyers book line time in SAM minutes. They never see your line codes or exact headcount.",
+      "code": "Code",
+      "name": "Name",
+      "namePlaceholder": "Knit line 1 (tees, polos)",
+      "categories": "Products this line makes",
+      "workingDays": "Working days",
+      "dailySam": "SAM minutes per day",
+      "dailySamHint": "Operators × minutes per shift × efficiency, e.g. 30 × 480 × 75% = 10,800.",
+      "weekly": "{minutes, number} minutes a week",
+      "rate": "CM rate per 100 minutes",
+      "rateHint": "What you charge to cut, make and trim.",
+      "currency": "Currency",
+      "status": "Status",
+      "statusHint": "Paused lines can’t open new windows; retired lines leave the calendar.",
+      "statuses": {
+        "ACTIVE": "Active",
+        "PAUSED": "Paused",
+        "RETIRED": "Retired"
+      },
+      "save": "Save line",
+      "saved": "Line saved",
+      "delete": "Delete line",
+      "deleted": "Line deleted",
+      "cantDelete": "This line has bookings: retire it instead"
+    },
+    "slotDialog": {
+      "newTitle": "Open line {code} for booking",
+      "newDescription": "Buyers can book minutes in this window. You can shrink it later, but never below what’s booked.",
+      "editTitle": "Window on line {code}",
+      "start": "From",
+      "end": "To",
+      "offer": "Minutes to offer",
+      "offerHint": "Leave empty to offer the line’s full capacity.",
+      "capacity": "{days, plural, one {# working day} other {# working days}}, up to {minutes, number} minutes",
+      "rate": "Booked at your CM rate of {rate} per 100 minutes.",
+      "open": "Open window",
+      "opened": "Window opened",
+      "booked": "Booked",
+      "bookedOf": "{booked, number} of {total, number} min",
+      "notBelowBooked": "Not below what’s booked.",
+      "closed": "Closed",
+      "close": "Close window",
+      "closedToast": "Window closed",
+      "reopen": "Reopen",
+      "reopened": "Window reopened",
+      "delete": "Delete",
+      "deleted": "Window deleted",
+      "hasBookings": "This window has bookings",
+      "save": "Save",
+      "saved": "Window updated"
     }
   }
 }

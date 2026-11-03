@@ -27,3 +27,7 @@ export * from './admin/commission.js';
 export * from './admin/admin.schema.js';
 export * from './admin/csv.js';
 export * from './i18n/locales.js';
+export * from './capacity/lines.js';
+export * from './capacity/lines.schema.js';
+export * from './capacity/bands.js';
+export * from './capacity/claims.schema.js';

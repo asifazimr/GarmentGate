@@ -82,3 +82,12 @@ export function useLocalFlag(key: string): [boolean, (value: boolean) => void] {
   );
   return [value, set];
 }
+
+/** Today's UTC date (`2026-11-03`) in the browser; null while prerendering. */
+export function useTodayIso(): string | null {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => new Date().toISOString().slice(0, 10),
+    () => null,
+  );
+}

@@ -37,11 +37,12 @@ import {
   useReorderPhotos,
   useUpdateCapabilities,
 } from '../api';
+import { SupplierClaimsTab } from '@/features/capacity-booking/components/supplier-claims';
 import { CertificationDialog } from './certification-dialog';
 import { ImageManager } from './image-manager';
 
 const MAX_PHOTOS = 20;
-const TABS = ['capabilities', 'photos', 'certifications', 'preview'] as const;
+const TABS = ['capabilities', 'photos', 'certifications', 'claims', 'preview'] as const;
 type Tab = (typeof TABS)[number];
 
 export function ProfileEditor() {
@@ -88,6 +89,9 @@ export function ProfileEditor() {
               </TabsContent>
               <TabsContent value="certifications">
                 <CertificationsTab />
+              </TabsContent>
+              <TabsContent value="claims">
+                <SupplierClaimsTab />
               </TabsContent>
               <TabsContent value="preview">
                 <PreviewTab active={tab === 'preview'} />

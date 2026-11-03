@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PublicRatingSchema } from '../trust/reviews.schema.js';
+import { PublicBrandBadgeSchema } from '../capacity/claims.schema.js';
 import { CertificationTypeSchema } from '../onboarding/onboarding.schema.js';
 import { CurrencySchema } from '../catalog/product.schema.js';
 import { ImageUrlsSchema, OwnedImageSchema } from '../media/media.schema.js';
@@ -30,6 +31,11 @@ export const PublicImageSchema = z.strictObject({
   urls: ImageUrlsSchema,
 });
 
+const SizeBandSchema = z.strictObject({
+  min: z.number().int().positive(),
+  max: z.number().int().positive().nullable(),
+});
+
 export const PublicManufacturerSchema = z.strictObject({
   publicCode: z.string().regex(/^MFR-[A-Z]{2}-\d{4,}$/),
   country: z.string().length(2),
@@ -42,12 +48,15 @@ export const PublicManufacturerSchema = z.strictObject({
     sampleLeadTimeDays: z.number().int().nullable(),
     productionLeadTimeMinDays: z.number().int().nullable(),
     productionLeadTimeMaxDays: z.number().int().nullable(),
-    workforceSize: z.number().int().nullable(),
-    factorySizeSqm: z.number().int().nullable(),
+    /** Ranges, never exact figures: headcount and floor area can identify a factory. */
+    workforceBand: SizeBandSchema.nullable(),
+    factorySizeBand: SizeBandSchema.nullable(),
     machinery: z.array(z.strictObject({ type: z.string(), count: z.number().int() })),
     exportMarkets: z.array(z.string().length(2)),
   }),
   certifications: z.array(PublicCertificationSchema),
+  /** Verified supplier claims as badges ("Supplies to 3 major EU brands"): never brand names. */
+  brandBadges: z.array(PublicBrandBadgeSchema),
   scores: z.strictObject({
     performanceScore: z.number().int().min(0).max(100),
     onTimeDeliveryBps: z.number().int().nullable(),

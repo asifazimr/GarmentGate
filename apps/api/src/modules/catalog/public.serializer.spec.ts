@@ -78,6 +78,20 @@ function manufacturerSource(): PublicManufacturerSource {
     communicationAvgX100: 450,
     onTimeAvgX100: 460,
     categories: [{ slug: 't-shirts', name: 'T-shirts' }],
+    supplierClaims: [
+      {
+        region: 'EU',
+        tier: 'MAJOR',
+        brandNames: ['SentinelBrand One', 'SentinelBrand Two'],
+        status: 'VERIFIED',
+      },
+      {
+        region: 'US',
+        tier: 'ESTABLISHED',
+        brandNames: ['SentinelBrand Pending'],
+        status: 'PENDING',
+      },
+    ],
     certifications: [
       {
         type: 'GOTS',
@@ -186,6 +200,7 @@ describe('toPublicManufacturer', () => {
         'about',
         'capabilities',
         'categories',
+        'brandBadges',
         'certifications',
         'country',
         'headline',
@@ -197,19 +212,33 @@ describe('toPublicManufacturer', () => {
     expect(Object.keys(out.capabilities).sort()).toEqual(
       [
         'exportMarkets',
-        'factorySizeSqm',
+        'factorySizeBand',
         'machinery',
         'moqPcs',
         'monthlyCapacityPcs',
         'productionLeadTimeMaxDays',
         'productionLeadTimeMinDays',
         'sampleLeadTimeDays',
-        'workforceSize',
+        'workforceBand',
       ].sort(),
     );
     for (const cert of out.certifications) {
       expect(Object.keys(cert).sort()).toEqual(['name', 'type', 'validUntil']);
     }
+  });
+
+  it('shows workforce and floor area as ranges, never the exact figures', () => {
+    const out = toPublicManufacturer(manufacturerSource(), imageUrls);
+    expect(out.capabilities.workforceBand).toEqual({ min: 2500, max: 4999 });
+    expect(out.capabilities.factorySizeBand).toEqual({ min: 25000, max: null });
+    const json = JSON.stringify(out);
+    expect(json).not.toMatch(/\b3200\b|\b42000\b/);
+  });
+
+  it('turns verified supplier claims into badges without brand names', () => {
+    const out = toPublicManufacturer(manufacturerSource(), imageUrls);
+    expect(out.brandBadges).toEqual([{ region: 'EU', tier: 'MAJOR', brandCount: 2 }]);
+    expect(JSON.stringify(out)).not.toMatch(/SentinelBrand/i);
   });
 
   it('ignores extra fields on the source, including ones added to the schema later', () => {

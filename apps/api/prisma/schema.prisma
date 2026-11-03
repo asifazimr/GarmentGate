@@ -425,6 +425,7 @@ enum FilePurpose {
   SHIPMENT_DOCUMENT
   INSPECTION_PHOTO
   DISPUTE_EVIDENCE
+  SUPPLIER_CLAIM_EVIDENCE
   AVATAR
   OTHER
 }
@@ -484,28 +485,29 @@ model User {
 
   company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
-  sessions            Session[]
-  tokens              UserToken[]
-  notifications       Notification[]
-  auditLogs           AuditLog[]
-  uploadedFiles       FileAsset[]
-  conversationsJoined ConversationParticipant[]
-  messagesSent        Message[]
-  rfqsCreated         Rfq[]
-  quotesPriced        Quote[]                   @relation("QuotePricedBy")
-  kycReviews          Company[]                 @relation("KycReviewedBy")
-  disputesOpened      Dispute[]                 @relation("DisputeOpenedBy")
-  disputesResolved    Dispute[]                 @relation("DisputeResolvedBy")
-  disputeEvidence     DisputeEvidence[]
-  notificationPrefs   NotificationPreference[]
-  disputesAssigned    Dispute[]                 @relation("DisputeAssignedTo")
-  accountWarnings     AccountWarning[]          @relation("UserWarnings")
-  warningsIssued      AccountWarning[]          @relation("WarningIssuedBy")
-  orderEvents         OrderEvent[]
-  paymentsConfirmed   Payment[]                 @relation("PaymentConfirmedBy")
-  releasesApproved    OrderRelease[]            @relation("ReleaseApprovedBy")
-  inspectionsBooked   Inspection[]              @relation("InspectionBookedBy")
-  inspectionsAssigned Inspection[]              @relation("InspectionInspector")
+  sessions               Session[]
+  tokens                 UserToken[]
+  notifications          Notification[]
+  auditLogs              AuditLog[]
+  uploadedFiles          FileAsset[]
+  conversationsJoined    ConversationParticipant[]
+  messagesSent           Message[]
+  rfqsCreated            Rfq[]
+  quotesPriced           Quote[]                   @relation("QuotePricedBy")
+  kycReviews             Company[]                 @relation("KycReviewedBy")
+  disputesOpened         Dispute[]                 @relation("DisputeOpenedBy")
+  disputesResolved       Dispute[]                 @relation("DisputeResolvedBy")
+  disputeEvidence        DisputeEvidence[]
+  notificationPrefs      NotificationPreference[]
+  disputesAssigned       Dispute[]                 @relation("DisputeAssignedTo")
+  accountWarnings        AccountWarning[]          @relation("UserWarnings")
+  warningsIssued         AccountWarning[]          @relation("WarningIssuedBy")
+  supplierClaimsReviewed SupplierClaim[]           @relation("SupplierClaimReviewedBy")
+  orderEvents            OrderEvent[]
+  paymentsConfirmed      Payment[]                 @relation("PaymentConfirmedBy")
+  releasesApproved       OrderRelease[]            @relation("ReleaseApprovedBy")
+  inspectionsBooked      Inspection[]              @relation("InspectionBookedBy")
+  inspectionsAssigned    Inspection[]              @relation("InspectionInspector")
 
   @@index([companyId])
   @@index([role, status])
@@ -690,8 +692,8 @@ model ManufacturerProfile {
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
-  company         Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  categories      Category[]      @relation("ManufacturerCategories")
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  categories      Category[]       @relation("ManufacturerCategories")
   certifications  Certification[]
   products        Product[]
   rfqInvitations  RfqInvitation[]
@@ -701,6 +703,8 @@ model ManufacturerProfile {
   quotes          Quote[]
   orders          Order[]
   reviewsReceived Review[]
+  productionLines ProductionLine[]
+  supplierClaims  SupplierClaim[]
 
   @@index([isListed, performanceScore])
   @@map("manufacturer_profiles")
@@ -717,11 +721,12 @@ model Category {
   parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
   children Category[] @relation("CategoryTree")
 
-  manufacturers ManufacturerProfile[] @relation("ManufacturerCategories")
-  buyers        BuyerProfile[]        @relation("BuyerCategories")
-  products      Product[]
-  rfqs          Rfq[]
-  marginRules   MarginRule[]
+  manufacturers   ManufacturerProfile[] @relation("ManufacturerCategories")
+  buyers          BuyerProfile[]        @relation("BuyerCategories")
+  products        Product[]
+  rfqs            Rfq[]
+  marginRules     MarginRule[]
+  productionLines ProductionLine[]      @relation("ProductionLineCategories")
 
   @@index([parentId])
   @@map("categories")
@@ -976,7 +981,6 @@ model Quote {
   @@index([rfqId, status])
   @@index([manufacturerProfileId, status])
   @@index([status, createdAt])
-
   @@map("quotes")
 }
 
@@ -1656,6 +1660,8 @@ model FileAsset {
 
   paymentProof Payment?
 
+  supplierClaim SupplierClaim?
+
   @@index([ownerCompanyId, purpose])
   @@index([status, createdAt])
   @@map("file_assets")
@@ -1836,4 +1842,118 @@ model PlatformSetting {
   updatedAt DateTime @updatedAt
 
   @@map("platform_settings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Capacity booking
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ProductionLineStatus {
+  ACTIVE
+  PAUSED
+  RETIRED
+}
+
+/// A sewing line a factory offers for capacity booking, measured in SAM minutes.
+model ProductionLine {
+  id                    String               @id @default(uuid(7)) @db.Uuid
+  manufacturerProfileId String               @db.Uuid
+  /// The factory's own label (e.g. "L-04"); shown to the factory and staff only.
+  code                  String
+  name                  String
+  /// Standard allowed minutes the line produces in one working day.
+  dailySamMinutes       Int
+  /// ISO weekdays the line runs (1 = Monday … 7 = Sunday).
+  workingDays           Int[]
+  /// Cost of making, in minor units of `currency` per 100 SAM minutes (650 = 6.50 / 100 min).
+  /// The factory's price: buyers only ever see it marked up.
+  cmRateMinorPer100Min  Int
+  currency              Currency             @default(USD)
+  status                ProductionLineStatus @default(ACTIVE)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+  categories          Category[]          @relation("ProductionLineCategories")
+  slots               CapacitySlot[]
+
+  @@unique([manufacturerProfileId, code])
+  @@index([manufacturerProfileId, status])
+  @@map("production_lines")
+}
+
+enum CapacitySlotStatus {
+  OPEN
+  CLOSED
+}
+
+/// A window of a line's time opened for booking. Open slots of one line never overlap (DB
+/// exclusion constraint) and booked minutes never exceed the total (DB check).
+model CapacitySlot {
+  id            String             @id @default(uuid(7)) @db.Uuid
+  lineId        String             @db.Uuid
+  /// Inclusive dates (UTC).
+  startDate     DateTime           @db.Date
+  endDate       DateTime           @db.Date
+  totalMinutes  Int
+  bookedMinutes Int                @default(0)
+  status        CapacitySlotStatus @default(OPEN)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  line ProductionLine @relation(fields: [lineId], references: [id], onDelete: Cascade)
+
+  @@index([lineId, startDate])
+  @@index([status, startDate])
+  @@map("capacity_slots")
+}
+
+enum SupplierClaimRegion {
+  EU
+  UK
+  US
+  CANADA
+  JAPAN
+  AUSTRALIA
+  MIDDLE_EAST
+  OTHER
+}
+
+enum SupplierClaimTier {
+  /// Household names (shown as "major … brands").
+  MAJOR
+  ESTABLISHED
+}
+
+enum SupplierClaimStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+/// "We supply these brands": verified privately by staff. Buyers only see a badge built from
+/// region, tier and count ("Supplies to 3 major EU brands"), never the names or evidence.
+model SupplierClaim {
+  id                    String              @id @default(uuid(7)) @db.Uuid
+  manufacturerProfileId String              @db.Uuid
+  region                SupplierClaimRegion
+  tier                  SupplierClaimTier
+  /// STAFF AND THE FACTORY ONLY: identifies the factory's customers.
+  brandNames            String[]
+  evidenceFileId        String?             @unique @db.Uuid
+  note                  String?
+  status                SupplierClaimStatus @default(PENDING)
+  reviewNote            String?
+  reviewedAt            DateTime?
+  reviewedById          String?             @db.Uuid
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+  evidenceFile        FileAsset?          @relation(fields: [evidenceFileId], references: [id], onDelete: SetNull)
+  reviewedBy          User?               @relation("SupplierClaimReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([manufacturerProfileId, status])
+  @@index([status, createdAt])
+  @@map("supplier_claims")
 }

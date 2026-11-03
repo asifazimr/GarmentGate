@@ -1,5 +1,6 @@
 import type { Role } from '@garmentgate/shared';
 import {
+  Award,
   BadgeCheck,
   CalendarRange,
   ClipboardCheck,
@@ -47,6 +48,7 @@ export type NavLabel =
   | 'inspectors'
   | 'overview'
   | 'certifications'
+  | 'claims'
   | 'payments'
   | 'users'
   | 'audit';
@@ -91,6 +93,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/admin', label: 'overview', icon: LayoutDashboard, primary: true, built: true },
     { href: '/admin/kyc', label: 'verification', icon: ShieldCheck, built: true },
     { href: '/admin/certifications', label: 'certifications', icon: BadgeCheck, built: true },
+    { href: '/admin/claims', label: 'claims', icon: Award, built: true },
     { href: '/admin/orders', label: 'orders', icon: Package, primary: true, built: true },
     { href: '/admin/payments', label: 'payments', icon: Wallet, primary: true, built: true },
     { href: '/admin/disputes', label: 'disputes', icon: Scale, built: true },

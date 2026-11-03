@@ -308,6 +308,15 @@
   }
 }
 
+/* Diagonal hatching for unavailable days (calendars) */
+@utility bg-stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 4px,
+    color-mix(in oklab, var(--border-strong) 45%, transparent) 4px 5px
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

@@ -36,7 +36,8 @@ import { useCapacity, useUpdateCapacityMonth } from '../api';
 
 const monthDate = (month: string) => new Date(`${month}-01T00:00:00Z`);
 
-export function CapacityCalendar() {
+/** `embedded`: shown inside the Capacity page's tabs, which carry the page header. */
+export function CapacityCalendar({ embedded = false }: { embedded?: boolean }) {
   const t = useTranslations('manufacturer.capacity');
   const format = useFormatter();
   const calendar = useCapacity(12);
@@ -73,15 +74,24 @@ export function CapacityCalendar() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title={t('title')}
-        description={t('description')}
-        eyebrow={
-          defaultMonthlyCapacityPcs !== null
-            ? t('default', { count: defaultMonthlyCapacityPcs })
-            : undefined
-        }
-      />
+      {embedded ? (
+        <p className="text-muted-foreground max-w-2xl text-sm">
+          {t('description')}
+          {defaultMonthlyCapacityPcs !== null
+            ? ` ${t('default', { count: defaultMonthlyCapacityPcs })}.`
+            : ''}
+        </p>
+      ) : (
+        <PageHeader
+          title={t('title')}
+          description={t('description')}
+          eyebrow={
+            defaultMonthlyCapacityPcs !== null
+              ? t('default', { count: defaultMonthlyCapacityPcs })
+              : undefined
+          }
+        />
+      )}
 
       {defaultMonthlyCapacityPcs === null ? (
         <EmptyState

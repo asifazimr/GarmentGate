@@ -20,6 +20,11 @@ export const publicManufacturerInclude = {
   certifications: { select: { type: true, customName: true, status: true, expiresAt: true } },
   photos: { include: { file: fileWithRenditions }, orderBy: { sortOrder: 'asc' } },
   company: identityForScrubbing,
+  // Brand names are read only to count distinct brands; the serializer never returns them.
+  supplierClaims: {
+    where: { status: 'VERIFIED' },
+    select: { region: true, tier: true, brandNames: true, status: true },
+  },
 } satisfies Prisma.ManufacturerProfileInclude;
 
 export const publicProductInclude = {

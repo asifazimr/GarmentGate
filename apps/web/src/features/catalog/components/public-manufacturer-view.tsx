@@ -1,7 +1,17 @@
 'use client';
 
 import type { PublicManufacturer } from '@garmentgate/shared';
-import { BadgeCheck, Clock, Factory, Gauge, Globe2, Ruler, Timer, Users } from 'lucide-react';
+import {
+  BadgeCheck,
+  Clock,
+  Factory,
+  Gauge,
+  Globe2,
+  Ruler,
+  ShieldCheck,
+  Timer,
+  Users,
+} from 'lucide-react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,9 +26,17 @@ import { Rendition } from '@/components/patterns/rendition';
 export function PublicManufacturerView({ manufacturer: m }: { manufacturer: PublicManufacturer }) {
   const t = useTranslations('manufacturer.publicProfile');
   const tcert = useTranslations('certifications');
+  const tclaim = useTranslations('supplierClaims');
   const locale = useLocale();
   const format = useFormatter();
   const cap = m.capabilities;
+  /** Workforce and floor area are only ever shown as ranges ("250–499 people", "25,000+ m²"). */
+  const band = (b: { min: number; max: number | null } | null, unit: 'people' | 'sqm') =>
+    b === null
+      ? null
+      : b.max === null
+        ? t(`${unit}Over`, { min: b.min })
+        : t(`${unit}Range`, { min: b.min, max: b.max });
 
   const stats = [
     {
@@ -50,12 +68,12 @@ export function PublicManufacturerView({ manufacturer: m }: { manufacturer: Publ
     {
       icon: Users,
       label: t('workforce'),
-      value: cap.workforceSize !== null ? t('people', { count: cap.workforceSize }) : null,
+      value: band(cap.workforceBand, 'people'),
     },
     {
       icon: Ruler,
       label: t('factorySize'),
-      value: cap.factorySizeSqm !== null ? t('sqm', { count: cap.factorySizeSqm }) : null,
+      value: band(cap.factorySizeBand, 'sqm'),
     },
   ].filter((s) => s.value !== null);
 
@@ -74,6 +92,22 @@ export function PublicManufacturerView({ manufacturer: m }: { manufacturer: Publ
           </div>
           {m.headline ? (
             <p className="text-lg font-semibold tracking-[-0.015em]">{m.headline}</p>
+          ) : null}
+          {m.brandBadges.length > 0 ? (
+            <ul className="flex flex-wrap gap-2" aria-label={t('brandBadges')}>
+              {m.brandBadges.map((b) => (
+                <li key={`${b.tier}-${b.region}`}>
+                  <Badge variant="success" className="h-auto py-1">
+                    <ShieldCheck aria-hidden="true" />
+                    {tclaim('badge', {
+                      count: b.brandCount,
+                      tier: b.tier,
+                      region: tclaim(`regionIn.${b.region}`),
+                    })}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-6">

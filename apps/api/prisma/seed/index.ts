@@ -243,6 +243,74 @@ async function main(): Promise<void> {
   const northbound = need(buyer.get('northbound'), 'northbound');
   const gruenfeld = need(buyer.get('gruenfeld'), 'gruenfeld');
 
+  // ── Capacity booking: production lines, open windows, supplier claims ───
+  {
+    const monday = new Date();
+    monday.setUTCHours(0, 0, 0, 0);
+    do monday.setUTCDate(monday.getUTCDate() + 1);
+    while (monday.getUTCDay() !== 1);
+    const lines = [
+      { code: 'K1', name: 'Knit line 1 (tees)', cats: ['t-shirts'], daily: 10_800, rate: 650 },
+      {
+        code: 'K2',
+        name: 'Knit line 2 (polos)',
+        cats: ['polo-shirts', 't-shirts'],
+        daily: 8_400,
+        rate: 720,
+      },
+      { code: 'F1', name: 'Fleece line', cats: ['hoodies-sweatshirts'], daily: 7_200, rate: 780 },
+    ];
+    for (const [i, l] of lines.entries()) {
+      const line = await prisma.productionLine.create({
+        data: {
+          manufacturerProfileId: meghna.profileId,
+          code: l.code,
+          name: l.name,
+          dailySamMinutes: l.daily,
+          workingDays: [1, 2, 3, 4, 5, 6],
+          cmRateMinorPer100Min: l.rate,
+          categories: { connect: l.cats.map((slug) => ({ id: cat(slug) })) },
+        },
+      });
+      // Two-week windows, staggered per line; the fleece line opens later.
+      for (let w = i === 2 ? 2 : 0; w < 6; w += 2) {
+        const start = new Date(monday.getTime() + w * 7 * 86_400_000);
+        const end = new Date(start.getTime() + 12 * 86_400_000); // Mon → Sat of the next week
+        await prisma.capacitySlot.create({
+          data: { lineId: line.id, startDate: start, endDate: end, totalMinutes: l.daily * 12 },
+        });
+      }
+    }
+    const claims = [
+      {
+        region: 'EU',
+        tier: 'MAJOR',
+        brands: ['Nordvik Apparel', 'Maison Lumet', 'Hallberg & Co'],
+        status: 'VERIFIED',
+      },
+      { region: 'UK', tier: 'ESTABLISHED', brands: ['Brixley Basics'], status: 'PENDING' },
+    ] as const;
+    for (const c of claims) {
+      const file = await createFile(
+        meghna.companyId,
+        meghna.userId,
+        'SUPPLIER_CLAIM_EVIDENCE',
+        'purchase-orders.pdf',
+      );
+      await prisma.supplierClaim.create({
+        data: {
+          manufacturerProfileId: meghna.profileId,
+          region: c.region,
+          tier: c.tier,
+          brandNames: [...c.brands],
+          evidenceFileId: file.id,
+          status: c.status,
+          ...(c.status === 'VERIFIED' && { reviewedAt: daysFromNow(-20), reviewedById: admin.id }),
+        },
+      });
+    }
+  }
+
   // ── Margin rules ──────────────────────────────────────────────────────────
   // Markup on the buyer side, commission withheld from factory payouts (lower on repeat orders).
   const defaultRule = await prisma.marginRule.create({
