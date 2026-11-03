@@ -33,7 +33,9 @@ export function CommandMenu({ role }: { role: Role }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
+    const onKey = (event: Event) => {
+      // Browser autofill fires a plain "keydown" Event with no key: only real key presses count.
+      if (!(event instanceof KeyboardEvent)) return;
       if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         setOpen((value) => !value);
