@@ -112,7 +112,7 @@ function Wizard({ state }: { state: OnboardingState }) {
         </Alert>
       ) : null}
 
-      {!state.emailVerified ? <EmailBanner /> : null}
+      {state.emailVerificationRequired && !state.emailVerified ? <EmailBanner /> : null}
 
       <StepProgress steps={steps} current={current} reached={reached} onSelect={go} />
 

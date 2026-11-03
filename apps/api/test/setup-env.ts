@@ -10,6 +10,7 @@ Object.assign(process.env, {
   CORS_ORIGINS: 'http://localhost:3000',
   WEB_APP_URL: 'http://localhost:3000',
   SWAGGER_ENABLED: 'true',
+  REQUIRE_EMAIL_VERIFICATION: 'true',
   THROTTLE_TTL_MS: '60000',
   THROTTLE_LIMIT: '1000',
   JWT_ACCESS_SECRET: 'test-access-secret-that-is-long-enough-0123456789',

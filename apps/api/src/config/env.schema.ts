@@ -31,6 +31,11 @@ export const EnvSchema = z.object({
   /** Public URL of the web app, used in email links. */
   WEB_APP_URL: z.url(),
   SWAGGER_ENABLED: booleanString.default(true),
+  /**
+   * Companies must verify their email before submitting onboarding for review. Turn off only
+   * for internal testing; the verification email is still sent.
+   */
+  REQUIRE_EMAIL_VERIFICATION: booleanString.default(true),
 
   THROTTLE_TTL_MS: z.coerce.number().int().positive().default(60_000),
   THROTTLE_LIMIT: z.coerce.number().int().positive().default(100),

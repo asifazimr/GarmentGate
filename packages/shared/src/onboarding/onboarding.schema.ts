@@ -231,6 +231,8 @@ export const OnboardingStateSchema = z.object({
   kycStatus: KycStatusSchema,
   rejectionReason: z.string().nullable(),
   emailVerified: z.boolean(),
+  /** Whether submitting needs a verified email (off only for internal testing). */
+  emailVerificationRequired: z.boolean(),
   publicCode: z.string().nullable(),
   submittedAt: z.iso.datetime().nullable(),
   company: CompanyInfoSchema.nullable(),

@@ -53,7 +53,9 @@ export function DocumentsStep({
     }
   };
 
-  const hint = !state.emailVerified
+  // Email verification can be switched off for internal testing (REQUIRE_EMAIL_VERIFICATION).
+  const needsEmail = state.emailVerificationRequired && !state.emailVerified;
+  const hint = needsEmail
     ? t('submitHintEmail')
     : state.missingDocuments.length > 0
       ? t('submitHintDocs')
@@ -83,7 +85,7 @@ export function DocumentsStep({
           <Button
             type="button"
             size="lg"
-            disabled={!state.canSubmit || !state.emailVerified || submit.isPending}
+            disabled={!state.canSubmit || needsEmail || submit.isPending}
             onClick={() => void onSubmit()}
           >
             {submit.isPending ? t('submitting') : t('submit')}

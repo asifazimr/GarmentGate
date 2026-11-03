@@ -3,6 +3,7 @@ import { Test, type TestingModuleBuilder } from '@nestjs/testing';
 import { hash } from '@node-rs/argon2';
 import type { EmailTemplateName, EmailTemplates } from '@garmentgate/emails';
 import request from 'supertest';
+import { expect } from 'vitest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
 import { configureApp } from '../src/bootstrap.js';
@@ -131,4 +132,43 @@ export function cookiesFrom(res: { headers: Record<string, unknown> }): Record<s
       return [pair.slice(0, index), pair.slice(index + 1)];
     }),
   );
+}
+
+/** Step 1 of onboarding: valid company details. */
+export const companyInfo = (country: string) => ({
+  legalName: 'Test Knit Ltd.',
+  country,
+  city: 'Gazipur',
+  addressLine1: 'Plot 1',
+  registrationNumber: 'REG-1',
+  website: '',
+  yearEstablished: '2010',
+});
+
+/** Presign → POST the bytes to MinIO → attach, exactly as the browser does. */
+export async function uploadDocument(agent: ReturnType<typeof client>, type: string) {
+  const pdf = Buffer.from('%PDF-1.4\n% test document\n');
+  const presign = await agent
+    .post('/kyc/uploads')
+    .send({
+      purpose: 'KYC_DOCUMENT',
+      fileName: `${type}.pdf`,
+      contentType: 'application/pdf',
+      sizeBytes: pdf.length,
+    })
+    .expect(201);
+  const { fileId, url, fields } = presign.body as {
+    fileId: string;
+    url: string;
+    fields: Record<string, string>;
+  };
+
+  const form = new FormData();
+  for (const [key, value] of Object.entries(fields)) form.append(key, value);
+  form.append('file', new Blob([pdf], { type: 'application/pdf' }), `${type}.pdf`);
+  const upload = await fetch(url, { method: 'POST', body: form });
+  expect(upload.status).toBeLessThan(300);
+
+  await agent.post('/kyc/documents').send({ fileId, type }).expect(204);
+  return fileId;
 }

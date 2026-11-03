@@ -10,6 +10,7 @@ export const E2E_API_ENV: Record<string, string> = {
   CORS_ORIGINS: 'http://localhost:3000',
   WEB_APP_URL: 'http://localhost:3000',
   SWAGGER_ENABLED: 'false',
+  REQUIRE_EMAIL_VERIFICATION: 'true',
   // The journeys sign in a handful of times from one machine.
   THROTTLE_LIMIT: '1000',
   JWT_ACCESS_SECRET: 'e2e-access-secret-that-is-long-enough-0123456789',

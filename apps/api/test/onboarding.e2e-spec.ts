@@ -2,25 +2,17 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AuthResponseSchema, OnboardingStateSchema } from '@garmentgate/shared';
 import {
   client,
+  companyInfo,
   cookiesFrom,
   createAdmin,
   createTestApp,
   PASSWORD,
   registerAgent,
   type TestContext,
+  uploadDocument,
 } from './helpers.js';
 
 const TSHIRTS = '0198a000-0000-7000-8000-000000000001';
-
-const companyInfo = (country: string) => ({
-  legalName: 'Test Knit Ltd.',
-  country,
-  city: 'Gazipur',
-  addressLine1: 'Plot 1',
-  registrationNumber: 'REG-1',
-  website: '',
-  yearEstablished: '2010',
-});
 
 const capabilities = {
   categoryIds: [TSHIRTS],
@@ -34,34 +26,6 @@ const capabilities = {
   machinery: [{ type: 'Overlock', count: 100 }],
   exportMarkets: ['us', 'DE'],
 };
-
-/** Presign → POST the bytes to MinIO → attach, exactly as the browser does. */
-async function uploadDocument(agent: ReturnType<typeof client>, type: string) {
-  const pdf = Buffer.from('%PDF-1.4\n% test document\n');
-  const presign = await agent
-    .post('/kyc/uploads')
-    .send({
-      purpose: 'KYC_DOCUMENT',
-      fileName: `${type}.pdf`,
-      contentType: 'application/pdf',
-      sizeBytes: pdf.length,
-    })
-    .expect(201);
-  const { fileId, url, fields } = presign.body as {
-    fileId: string;
-    url: string;
-    fields: Record<string, string>;
-  };
-
-  const form = new FormData();
-  for (const [key, value] of Object.entries(fields)) form.append(key, value);
-  form.append('file', new Blob([pdf], { type: 'application/pdf' }), `${type}.pdf`);
-  const upload = await fetch(url, { method: 'POST', body: form });
-  expect(upload.status).toBeLessThan(300);
-
-  await agent.post('/kyc/documents').send({ fileId, type }).expect(204);
-  return fileId;
-}
 
 describe('Onboarding, KYC and roles (e2e)', () => {
   let ctx: TestContext;

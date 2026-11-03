@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import {
   type BuyerSourcingNeedsDto,
@@ -13,6 +14,8 @@ import {
   type OnboardingState,
   REQUIRED_KYC_DOCUMENTS,
 } from '@garmentgate/shared';
+import { ConfigService } from '@nestjs/config';
+import type { Env } from '../../config/env.schema.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { Notifier } from '../notifications/notifier.service.js';
@@ -43,12 +46,22 @@ const STEP_ORDER = ['COMPANY_INFO', 'PROFILE', 'DOCUMENTS', 'SUBMITTED'] as cons
 
 @Injectable()
 export class OnboardingService {
+  private readonly logger = new Logger(OnboardingService.name);
+  private readonly emailVerificationRequired: boolean;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifier: Notifier,
     private readonly codes: PublicCodeService,
     private readonly audit: AuditService,
-  ) {}
+    config: ConfigService<Env, true>,
+  ) {
+    this.emailVerificationRequired = config.get('REQUIRE_EMAIL_VERIFICATION', { infer: true });
+    if (!this.emailVerificationRequired)
+      this.logger.warn(
+        'REQUIRE_EMAIL_VERIFICATION=false: companies can submit onboarding without a verified email',
+      );
+  }
 
   async getState(userId: string): Promise<OnboardingState> {
     return this.toState(await this.loadUser(userId));
@@ -196,7 +209,7 @@ export class OnboardingService {
     const company = requireCompany(user, externalRole(user.role));
     assertEditable(company.kycStatus);
 
-    if (!state.emailVerified) {
+    if (state.emailVerificationRequired && !state.emailVerified) {
       throw new ForbiddenException('Verify your email address before submitting');
     }
     if (!state.canSubmit) {
@@ -295,6 +308,7 @@ export class OnboardingService {
       kycStatus: company?.kycStatus ?? 'NOT_SUBMITTED',
       rejectionReason: company?.kycRejectionReason ?? null,
       emailVerified: user.emailVerifiedAt !== null,
+      emailVerificationRequired: this.emailVerificationRequired,
       publicCode: mp?.publicCode ?? bp?.publicCode ?? null,
       submittedAt: company?.kycSubmittedAt?.toISOString() ?? null,
       company: company
