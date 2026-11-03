@@ -67,7 +67,7 @@ export function GmvChart({ series }: { series: Month[] }) {
           cursor={{ fill: 'var(--muted)', opacity: 0.5 }}
           content={
             <ChartTooltip
-              label={monthLabel}
+              formatMonth={monthLabel}
               rows={(m) => [{ name: t('charts.gmvSeries'), value: usd(m.gmvUsdMinor) }]}
             />
           }
@@ -102,7 +102,7 @@ export function RevenueChart({ series }: { series: Month[] }) {
           cursor={{ fill: 'var(--muted)', opacity: 0.5 }}
           content={
             <ChartTooltip
-              label={monthLabel}
+              formatMonth={monthLabel}
               rows={(m) => [
                 {
                   name: t('charts.markup'),
@@ -183,7 +183,7 @@ export function ConversionChart({ series }: { series: Month[] }) {
           cursor={{ stroke: 'var(--border-strong)' }}
           content={
             <ChartTooltip
-              label={monthLabel}
+              formatMonth={monthLabel}
               rows={(m) => [
                 {
                   name: t('charts.conversionSeries'),
@@ -227,19 +227,20 @@ type Month = AdminOverview['series'][number];
 function ChartTooltip({
   active,
   payload,
-  label,
+  formatMonth,
   rows,
 }: {
   active?: boolean;
   payload?: readonly { payload?: unknown }[];
-  label: (month: string) => string;
+  /** Not `label`: Recharts injects its own `label` (the hovered x value) into tooltip content. */
+  formatMonth: (month: string) => string;
   rows: (month: Month) => { name: string; value: string; color?: string }[];
 }) {
   const point = payload?.[0]?.payload as Month | undefined;
   if (!active || !point) return null;
   return (
     <div className="bg-popover text-popover-foreground min-w-44 rounded-lg border px-3 py-2 text-xs shadow-lg">
-      <p className="mb-1.5 font-medium">{label(point.month)}</p>
+      <p className="mb-1.5 font-medium">{formatMonth(point.month)}</p>
       <dl className="space-y-1">
         {rows(point).map((r) => (
           <div key={r.name} className="flex items-center justify-between gap-4">
