@@ -86,6 +86,23 @@ export const ProductStatusDomainSchema = z.enum([
   'ARCHIVED',
 ]);
 export const MediaReviewDomainSchema = z.enum(['PENDING', 'APPROVED', 'REJECTED']);
+export const CapacityBookingStatusSchema = z.enum([
+  'HELD',
+  'CONFIRMED',
+  'IN_PRODUCTION',
+  'COMPLETED',
+  'CANCELLED',
+  'EXPIRED',
+]);
+export type CapacityBookingStatus = z.infer<typeof CapacityBookingStatusSchema>;
+export const CapacityPartnershipStatusSchema = z.enum([
+  'REQUESTED',
+  'ACTIVE',
+  'DECLINED',
+  'CANCELLED',
+  'ENDED',
+]);
+export type CapacityPartnershipStatus = z.infer<typeof CapacityPartnershipStatusSchema>;
 
 /** Every status-bearing domain, keyed by name, for StatusBadge and filters. */
 export const STATUS_DOMAINS = {
@@ -101,6 +118,8 @@ export const STATUS_DOMAINS = {
   milestone: MilestoneStatusSchema,
   product: ProductStatusDomainSchema,
   media: MediaReviewDomainSchema,
+  booking: CapacityBookingStatusSchema,
+  partnership: CapacityPartnershipStatusSchema,
 } as const;
 export type StatusDomain = keyof typeof STATUS_DOMAINS;
 export type StatusOf<D extends StatusDomain> = z.infer<(typeof STATUS_DOMAINS)[D]>;
@@ -199,6 +218,21 @@ export const STATUS_TONES: { [D in StatusDomain]: Record<StatusOf<D>, StatusTone
     PENDING: 'warning',
     APPROVED: 'success',
     REJECTED: 'danger',
+  },
+  booking: {
+    HELD: 'warning',
+    CONFIRMED: 'info',
+    IN_PRODUCTION: 'progress',
+    COMPLETED: 'success',
+    CANCELLED: 'neutral',
+    EXPIRED: 'neutral',
+  },
+  partnership: {
+    REQUESTED: 'warning',
+    ACTIVE: 'success',
+    DECLINED: 'danger',
+    CANCELLED: 'neutral',
+    ENDED: 'neutral',
   },
 };
 

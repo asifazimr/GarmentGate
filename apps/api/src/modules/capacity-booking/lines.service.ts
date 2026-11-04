@@ -101,10 +101,11 @@ export class LinesService {
   /** Lines with booked minutes can't be deleted: retire them instead (bookings keep their line). */
   async remove(ctx: ManufacturerContext, id: string): Promise<void> {
     await this.ownLine(ctx, id);
-    const booked = await this.prisma.capacitySlot.count({
-      where: { lineId: id, bookedMinutes: { gt: 0 } },
-    });
-    if (booked > 0)
+    const [booked, bookings] = await Promise.all([
+      this.prisma.capacitySlot.count({ where: { lineId: id, bookedMinutes: { gt: 0 } } }),
+      this.prisma.capacityBooking.count({ where: { lineId: id } }),
+    ]);
+    if (booked > 0 || bookings > 0)
       throw new ConflictException('This line has bookings: set it to Retired instead');
     await this.prisma.productionLine.delete({ where: { id } });
   }

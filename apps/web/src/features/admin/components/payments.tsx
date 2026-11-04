@@ -64,8 +64,12 @@ type ToConfirm = FinanceInbox['toConfirm'][number];
 type ToRelease = FinanceInbox['toRelease'][number];
 type ToPay = FinanceInbox['toPay'][number];
 
+/** Order payments link to the order; capacity booking deposits (CB-…) to the bookings page. */
 const orderLink = (code: string) => (
-  <Link href={`/admin/orders/${code}`} className="font-mono text-xs font-medium hover:underline">
+  <Link
+    href={code.startsWith('CB-') ? '/admin/capacity' : `/admin/orders/${code}`}
+    className="font-mono text-xs font-medium hover:underline"
+  >
     {code}
   </Link>
 );

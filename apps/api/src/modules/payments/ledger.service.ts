@@ -21,7 +21,9 @@ export interface Posting {
   kind: LedgerTransactionKind;
   /** Unique per business event: posting the same key twice is a no-op. */
   key: string;
-  orderId: string;
+  /** The order the money belongs to, or the capacity booking (deposits before it became an order). */
+  orderId?: string | null;
+  capacityBookingId?: string | null;
   paymentId?: string | null;
   currency: Currency;
   description: string;
@@ -113,7 +115,8 @@ export class LedgerService {
       data: {
         kind: posting.kind,
         idempotencyKey: posting.key,
-        orderId: posting.orderId,
+        orderId: posting.orderId ?? null,
+        capacityBookingId: posting.capacityBookingId ?? null,
         paymentId: posting.paymentId ?? null,
         currency: posting.currency,
         description: posting.description,
@@ -128,6 +131,26 @@ export class LedgerService {
   /** Serializes money movements on one order (deposits, releases, refunds) inside a transaction. */
   async lockOrder(tx: Tx, orderId: string): Promise<void> {
     await tx.$queryRaw`SELECT "id" FROM "orders" WHERE "id" = ${orderId}::uuid FOR UPDATE`;
+  }
+
+  /** Serializes money movements on one capacity booking (deposit, refund, conversion). */
+  async lockBooking(tx: Tx, bookingId: string): Promise<void> {
+    await tx.$queryRaw`SELECT "id" FROM "capacity_bookings" WHERE "id" = ${bookingId}::uuid FOR UPDATE`;
+  }
+
+  /** Escrow held for one capacity booking (its postings only). */
+  async bookingEscrow(
+    bookingId: string,
+    client: Tx | PrismaService = this.prisma,
+  ): Promise<bigint> {
+    const [row] = await client.$queryRaw<{ credit: bigint; debit: bigint }[]>`
+      SELECT COALESCE(SUM(e."amountMinor") FILTER (WHERE e."direction" = 'CREDIT'), 0)::bigint AS "credit",
+             COALESCE(SUM(e."amountMinor") FILTER (WHERE e."direction" = 'DEBIT'), 0)::bigint AS "debit"
+        FROM "escrow_ledger_entries" e
+        JOIN "ledger_transactions" t ON t."id" = e."transactionId"
+        JOIN "ledger_accounts" a ON a."id" = e."accountId"
+       WHERE t."capacityBookingId" = ${bookingId}::uuid AND a."type" = 'BUYER_ESCROW'`;
+    return (row?.credit ?? 0n) - (row?.debit ?? 0n);
   }
 
   /** Signed balances of each account type for one order's postings. */

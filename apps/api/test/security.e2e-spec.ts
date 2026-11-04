@@ -111,6 +111,7 @@ describe('security (e2e)', () => {
   let rfqCode = '';
   let threadA = '';
   let kycFileA = '';
+  let bookingCode = '';
 
   beforeAll(async () => {
     ctx = await createTestApp();
@@ -203,6 +204,40 @@ describe('security (e2e)', () => {
       },
     });
     kycFileA = file.id;
+
+    // A capacity booking between buyer A and factory 1.
+    const line = (
+      await factory1.agent
+        .post('/manufacturer/lines')
+        .send({
+          code: 'SEC1',
+          name: 'Security line',
+          categoryIds: [TSHIRTS],
+          dailySamMinutes: 10_000,
+          workingDays: [1, 2, 3, 4, 5, 6, 7],
+          cmRateMinorPer100Min: 650,
+        })
+        .expect(201)
+    ).body as { id: string };
+    const start = new Date(Date.now() + 40 * DAY);
+    const slot = (
+      await factory1.agent
+        .post('/manufacturer/slots')
+        .send({
+          lineId: line.id,
+          startDate: start.toISOString().slice(0, 10),
+          endDate: new Date(start.getTime() + 4 * DAY).toISOString().slice(0, 10),
+        })
+        .expect(201)
+    ).body as { id: string };
+    bookingCode = (
+      (
+        await buyerA.agent
+          .post('/capacity/bookings')
+          .send({ slotId: slot.id, minutes: 5_000, categoryId: TSHIRTS, acceptTerms: true })
+          .expect(201)
+      ).body as { code: string }
+    ).code;
   }, 60_000);
 
   afterAll(async () => {
@@ -274,6 +309,24 @@ describe('security (e2e)', () => {
       ['get', `/conversations/${threadA}/messages`],
       ['post', `/conversations/${threadA}/messages`, { body: 'Hello there' }],
       ['get', `/kyc/files/${kycFileA}/url`],
+      ['get', `/capacity/bookings/${bookingCode}`],
+      ['post', `/capacity/bookings/${bookingCode}/deposit`, { method: 'BANK_TRANSFER' }],
+      ['post', `/capacity/bookings/${bookingCode}/cancel`, { reason: 'Not my booking at all' }],
+      [
+        'post',
+        `/capacity/bookings/${bookingCode}/convert`,
+        {
+          mode: 'CMT',
+          title: 'Tee',
+          quantity: 10,
+          samPerPiece: 10,
+          incoterm: 'FOB',
+          destinationCountry: 'DE',
+        },
+      ],
+      ['get', `/manufacturer/bookings/${bookingCode}`],
+      ['post', `/manufacturer/bookings/${bookingCode}/accept`],
+      ['post', `/manufacturer/bookings/${bookingCode}/decline`, { reason: 'Not my booking' }],
     ];
     const breaches: string[] = [];
     for (const agent of outsiders)

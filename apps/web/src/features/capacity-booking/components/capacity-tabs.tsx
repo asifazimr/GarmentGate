@@ -5,17 +5,22 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/patterns/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CapacityCalendar } from '@/features/manufacturer/components/capacity-calendar';
+import { useClientSearchParam } from '@/lib/client-hooks';
+import { BookingInbox } from './booking-inbox';
 import { LineCalendar } from './line-calendar';
 
-const TABS = ['lines', 'pieces'] as const;
+const TABS = ['lines', 'requests', 'pieces'] as const;
+type Tab = (typeof TABS)[number];
 
 /**
- * Capacity in two views: production lines in SAM minutes (what buyers can book) and the monthly
- * pieces used to route RFQs. They're kept separate on purpose.
+ * Capacity: production lines in SAM minutes (what buyers can book), the booking requests they
+ * receive, and the monthly pieces used to route RFQs (kept separate on purpose).
  */
 export function CapacityTabs() {
   const t = useTranslations('capacityBooking.page');
-  const [tab, setTab] = useState<(typeof TABS)[number]>('lines');
+  const hint = useClientSearchParam('tab');
+  const [chosen, setTab] = useState<Tab | null>(null);
+  const tab: Tab = chosen ?? TABS.find((x) => x === hint) ?? 'lines';
   return (
     <div className="space-y-6">
       <PageHeader title={t('title')} description={t('description')} />
@@ -36,6 +41,9 @@ export function CapacityTabs() {
         <div className="pt-6">
           <TabsContent value="lines">
             <LineCalendar />
+          </TabsContent>
+          <TabsContent value="requests">
+            <BookingInbox />
           </TabsContent>
           <TabsContent value="pieces">
             <CapacityCalendar embedded />

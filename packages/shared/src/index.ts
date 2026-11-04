@@ -31,3 +31,5 @@ export * from './capacity/lines.js';
 export * from './capacity/lines.schema.js';
 export * from './capacity/bands.js';
 export * from './capacity/claims.schema.js';
+export * from './capacity/booking.js';
+export * from './capacity/booking.schema.js';

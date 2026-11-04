@@ -485,29 +485,31 @@ model User {
 
   company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
-  sessions               Session[]
-  tokens                 UserToken[]
-  notifications          Notification[]
-  auditLogs              AuditLog[]
-  uploadedFiles          FileAsset[]
-  conversationsJoined    ConversationParticipant[]
-  messagesSent           Message[]
-  rfqsCreated            Rfq[]
-  quotesPriced           Quote[]                   @relation("QuotePricedBy")
-  kycReviews             Company[]                 @relation("KycReviewedBy")
-  disputesOpened         Dispute[]                 @relation("DisputeOpenedBy")
-  disputesResolved       Dispute[]                 @relation("DisputeResolvedBy")
-  disputeEvidence        DisputeEvidence[]
-  notificationPrefs      NotificationPreference[]
-  disputesAssigned       Dispute[]                 @relation("DisputeAssignedTo")
-  accountWarnings        AccountWarning[]          @relation("UserWarnings")
-  warningsIssued         AccountWarning[]          @relation("WarningIssuedBy")
-  supplierClaimsReviewed SupplierClaim[]           @relation("SupplierClaimReviewedBy")
-  orderEvents            OrderEvent[]
-  paymentsConfirmed      Payment[]                 @relation("PaymentConfirmedBy")
-  releasesApproved       OrderRelease[]            @relation("ReleaseApprovedBy")
-  inspectionsBooked      Inspection[]              @relation("InspectionBookedBy")
-  inspectionsAssigned    Inspection[]              @relation("InspectionInspector")
+  sessions                    Session[]
+  tokens                      UserToken[]
+  notifications               Notification[]
+  auditLogs                   AuditLog[]
+  uploadedFiles               FileAsset[]
+  conversationsJoined         ConversationParticipant[]
+  messagesSent                Message[]
+  rfqsCreated                 Rfq[]
+  capacityBookingsCreated     CapacityBooking[]         @relation("CapacityBookingCreatedBy")
+  capacityPartnershipsCreated CapacityPartnership[]     @relation("CapacityPartnershipCreatedBy")
+  quotesPriced                Quote[]                   @relation("QuotePricedBy")
+  kycReviews                  Company[]                 @relation("KycReviewedBy")
+  disputesOpened              Dispute[]                 @relation("DisputeOpenedBy")
+  disputesResolved            Dispute[]                 @relation("DisputeResolvedBy")
+  disputeEvidence             DisputeEvidence[]
+  notificationPrefs           NotificationPreference[]
+  disputesAssigned            Dispute[]                 @relation("DisputeAssignedTo")
+  accountWarnings             AccountWarning[]          @relation("UserWarnings")
+  warningsIssued              AccountWarning[]          @relation("WarningIssuedBy")
+  supplierClaimsReviewed      SupplierClaim[]           @relation("SupplierClaimReviewedBy")
+  orderEvents                 OrderEvent[]
+  paymentsConfirmed           Payment[]                 @relation("PaymentConfirmedBy")
+  releasesApproved            OrderRelease[]            @relation("ReleaseApprovedBy")
+  inspectionsBooked           Inspection[]              @relation("InspectionBookedBy")
+  inspectionsAssigned         Inspection[]              @relation("InspectionInspector")
 
   @@index([companyId])
   @@index([role, status])
@@ -594,19 +596,21 @@ model Company {
 
   kycReviewedBy User? @relation("KycReviewedBy", fields: [kycReviewedById], references: [id], onDelete: SetNull)
 
-  users               User[]
-  documents           CompanyDocument[]
-  buyerProfile        BuyerProfile?
-  manufacturerProfile ManufacturerProfile?
-  files               FileAsset[]
-  rfqs                Rfq[]
-  ordersAsBuyer       Order[]
-  marginRules         MarginRule[]
-  ledgerAccounts      LedgerAccount[]
-  conversations       Conversation[]
-  reviewsWritten      Review[]
-  reviewsReceived     Review[]             @relation("ReviewSubject")
-  shortlists          Shortlist[]
+  users                User[]
+  documents            CompanyDocument[]
+  buyerProfile         BuyerProfile?
+  manufacturerProfile  ManufacturerProfile?
+  files                FileAsset[]
+  rfqs                 Rfq[]
+  ordersAsBuyer        Order[]
+  capacityBookings     CapacityBooking[]
+  capacityPartnerships CapacityPartnership[]
+  marginRules          MarginRule[]
+  ledgerAccounts       LedgerAccount[]
+  conversations        Conversation[]
+  reviewsWritten       Review[]
+  reviewsReceived      Review[]              @relation("ReviewSubject")
+  shortlists           Shortlist[]
 
   @@index([type, kycStatus])
   @@index([kycStatus, kycSubmittedAt])
@@ -692,19 +696,21 @@ model ManufacturerProfile {
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
-  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  categories      Category[]       @relation("ManufacturerCategories")
-  certifications  Certification[]
-  products        Product[]
-  rfqInvitations  RfqInvitation[]
-  photos          FactoryPhoto[]
-  capacityMonths  CapacityMonth[]
-  shortlistItems  ShortlistItem[]
-  quotes          Quote[]
-  orders          Order[]
-  reviewsReceived Review[]
-  productionLines ProductionLine[]
-  supplierClaims  SupplierClaim[]
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  categories           Category[]            @relation("ManufacturerCategories")
+  certifications       Certification[]
+  products             Product[]
+  rfqInvitations       RfqInvitation[]
+  photos               FactoryPhoto[]
+  capacityMonths       CapacityMonth[]
+  shortlistItems       ShortlistItem[]
+  quotes               Quote[]
+  orders               Order[]
+  reviewsReceived      Review[]
+  productionLines      ProductionLine[]
+  capacityBookings     CapacityBooking[]
+  capacityPartnerships CapacityPartnership[]
+  supplierClaims       SupplierClaim[]
 
   @@index([isListed, performanceScore])
   @@map("manufacturer_profiles")
@@ -721,12 +727,14 @@ model Category {
   parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
   children Category[] @relation("CategoryTree")
 
-  manufacturers   ManufacturerProfile[] @relation("ManufacturerCategories")
-  buyers          BuyerProfile[]        @relation("BuyerCategories")
-  products        Product[]
-  rfqs            Rfq[]
-  marginRules     MarginRule[]
-  productionLines ProductionLine[]      @relation("ProductionLineCategories")
+  manufacturers        ManufacturerProfile[] @relation("ManufacturerCategories")
+  buyers               BuyerProfile[]        @relation("BuyerCategories")
+  products             Product[]
+  rfqs                 Rfq[]
+  marginRules          MarginRule[]
+  productionLines      ProductionLine[]      @relation("ProductionLineCategories")
+  capacityBookings     CapacityBooking[]
+  capacityPartnerships CapacityPartnership[]
 
   @@index([parentId])
   @@map("categories")
@@ -889,21 +897,24 @@ model Rfq {
   destinationCountry   String?   @db.Char(2)
   /// Set when the request started from a catalog product.
   productId            String?   @db.Uuid
+  /// Full-package conversion of a capacity booking: invite-only to the booked factory.
+  capacityBookingId    String?   @unique @db.Uuid
   status               RfqStatus @default(DRAFT)
   publishedAt          DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  buyerCompany  Company         @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
-  createdBy     User            @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  category      Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  product       Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
-  invitations   RfqInvitation[]
-  attachments   RfqAttachment[]
-  quotes        Quote[]
-  orders        Order[]
-  samples       Sample[]
-  conversations Conversation[]
+  buyerCompany    Company          @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
+  createdBy       User             @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  category        Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  product         Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
+  capacityBooking CapacityBooking? @relation("CapacityBookingRfq", fields: [capacityBookingId], references: [id], onDelete: SetNull)
+  invitations     RfqInvitation[]
+  attachments     RfqAttachment[]
+  quotes          Quote[]
+  orders          Order[]
+  samples         Sample[]
+  conversations   Conversation[]
 
   @@index([buyerCompanyId, status])
   @@index([status, deadline])
@@ -1151,6 +1162,7 @@ model Order {
   buyerCompany        Company             @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
   manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Restrict)
   rfq                 Rfq?                @relation(fields: [rfqId], references: [id], onDelete: SetNull)
+  capacityBooking     CapacityBooking?
   quote               Quote?              @relation(fields: [quoteId], references: [id], onDelete: SetNull)
 
   items              OrderItem[]
@@ -1270,7 +1282,9 @@ model Sample {
 
 model Payment {
   id                    String           @id @default(uuid(7)) @db.Uuid
-  orderId               String           @db.Uuid
+  /// Order payments. Booking deposits have capacityBookingId instead (both once the booking became an order).
+  orderId               String?          @db.Uuid
+  capacityBookingId     String?          @db.Uuid
   /// Human reference the payer quotes, e.g. PAY-ORD-2026-00017-D1.
   reference             String?          @unique
   /// What the payer says they used (their bank reference); unverified.
@@ -1298,13 +1312,15 @@ model Payment {
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
 
-  order        Order               @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  transactions LedgerTransaction[]
-  proofFile    FileAsset?          @relation(fields: [proofFileId], references: [id], onDelete: Restrict)
-  confirmedBy  User?               @relation("PaymentConfirmedBy", fields: [confirmedById], references: [id], onDelete: SetNull)
-  release      OrderRelease?       @relation(fields: [releaseId], references: [id], onDelete: Restrict)
+  order           Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  capacityBooking CapacityBooking?    @relation(fields: [capacityBookingId], references: [id], onDelete: Restrict)
+  transactions    LedgerTransaction[]
+  proofFile       FileAsset?          @relation(fields: [proofFileId], references: [id], onDelete: Restrict)
+  confirmedBy     User?               @relation("PaymentConfirmedBy", fields: [confirmedById], references: [id], onDelete: SetNull)
+  release         OrderRelease?       @relation(fields: [releaseId], references: [id], onDelete: Restrict)
 
   @@index([orderId, status])
+  @@index([capacityBookingId, status])
   @@index([status, createdAt])
   @@map("payments")
 }
@@ -1326,23 +1342,26 @@ model LedgerAccount {
 
 /// A balanced group of entries: sum(DEBIT) == sum(CREDIT), single currency.
 model LedgerTransaction {
-  id             String                @id @default(uuid(7)) @db.Uuid
-  kind           LedgerTransactionKind
-  orderId        String?               @db.Uuid
-  paymentId      String?               @db.Uuid
-  currency       Currency
-  description    String
-  idempotencyKey String                @unique
-  postedAt       DateTime              @default(now())
+  id                String                @id @default(uuid(7)) @db.Uuid
+  kind              LedgerTransactionKind
+  orderId           String?               @db.Uuid
+  capacityBookingId String?               @db.Uuid
+  paymentId         String?               @db.Uuid
+  currency          Currency
+  description       String
+  idempotencyKey    String                @unique
+  postedAt          DateTime              @default(now())
   /// Units of `currency` per USD when posted, and the USD value: for multi-currency reporting.
-  unitsPerUsd    Decimal               @default(1) @db.Decimal(20, 10)
-  amountUsdMinor BigInt                @default(0)
+  unitsPerUsd       Decimal               @default(1) @db.Decimal(20, 10)
+  amountUsdMinor    BigInt                @default(0)
 
-  order   Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  payment Payment?            @relation(fields: [paymentId], references: [id], onDelete: Restrict)
-  entries EscrowLedgerEntry[]
+  order           Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  capacityBooking CapacityBooking?    @relation(fields: [capacityBookingId], references: [id], onDelete: Restrict)
+  payment         Payment?            @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  entries         EscrowLedgerEntry[]
 
   @@index([orderId, postedAt])
+  @@index([capacityBookingId, postedAt])
   @@map("ledger_transactions")
 }
 
@@ -1873,9 +1892,11 @@ model ProductionLine {
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
 
-  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
-  categories          Category[]          @relation("ProductionLineCategories")
+  manufacturerProfile ManufacturerProfile   @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+  categories          Category[]            @relation("ProductionLineCategories")
   slots               CapacitySlot[]
+  bookings            CapacityBooking[]
+  partnerships        CapacityPartnership[]
 
   @@unique([manufacturerProfileId, code])
   @@index([manufacturerProfileId, status])
@@ -1901,7 +1922,8 @@ model CapacitySlot {
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
-  line ProductionLine @relation(fields: [lineId], references: [id], onDelete: Cascade)
+  line        ProductionLine              @relation(fields: [lineId], references: [id], onDelete: Cascade)
+  allocations CapacityBookingAllocation[]
 
   @@index([lineId, startDate])
   @@index([status, startDate])
@@ -1956,4 +1978,172 @@ model SupplierClaim {
   @@index([manufacturerProfileId, status])
   @@index([status, createdAt])
   @@map("supplier_claims")
+}
+
+enum CapacityBookingKind {
+  /// Some minutes of one window.
+  SLOT
+  /// A whole window: every free minute, nobody else can book it.
+  LINE
+  /// One month of a recurring partnership.
+  PARTNERSHIP
+}
+
+enum CapacityBookingStatus {
+  /// Minutes reserved; waiting for the factory to accept and the deposit to arrive.
+  HELD
+  CONFIRMED
+  IN_PRODUCTION
+  COMPLETED
+  CANCELLED
+  /// The hold ran out before it was confirmed: minutes released, deposit refunded in full.
+  EXPIRED
+}
+
+enum CapacityBookingActor {
+  BUYER
+  FACTORY
+  STAFF
+  SYSTEM
+}
+
+enum CapacityConversionMode {
+  /// Cut, make, trim at the booked rate × SAM per piece.
+  CMT
+  /// Through an invite-only RFQ to the booked factory.
+  FULL_PACKAGE
+}
+
+/// A buyer's reservation of line minutes. Prices are snapshotted when the hold is placed.
+model CapacityBooking {
+  id                        String                  @id @default(uuid(7)) @db.Uuid
+  /// e.g. CB-2026-00012
+  code                      String                  @unique
+  kind                      CapacityBookingKind
+  status                    CapacityBookingStatus   @default(HELD)
+  buyerCompanyId            String                  @db.Uuid
+  createdById               String                  @db.Uuid
+  manufacturerProfileId     String                  @db.Uuid
+  lineId                    String                  @db.Uuid
+  categoryId                String                  @db.Uuid
+  partnershipId             String?                 @db.Uuid
+  minutes                   Int
+  /// Minutes handed back to the line when the booking became an order (unused).
+  returnedMinutes           Int                     @default(0)
+  /// SAM per piece × 100 (1250 = 12.50 minutes), when the buyer gave one.
+  samPerPieceCenti          Int?
+  startDate                 DateTime                @db.Date
+  endDate                   DateTime                @db.Date
+  currency                  Currency
+  /// FACTORY AND STAFF ONLY.
+  factoryRateMinorPer100Min Int
+  /// BUYER AND STAFF ONLY.
+  buyerRateMinorPer100Min   Int
+  factoryAmountMinor        BigInt
+  buyerAmountMinor          BigInt
+  feeBps                    Int
+  depositBps                Int
+  depositMinor              BigInt
+  /// Cancellation tiers and the factory's share of a kept deposit, as agreed at booking time.
+  cancellationTiers         Json
+  factoryShareBps           Int
+  note                      String?
+  noteFiltered              String?
+  holdExpiresAt             DateTime
+  reminderSentAt            DateTime?
+  factoryAcceptedAt         DateTime?
+  depositPaidAt             DateTime?
+  confirmedAt               DateTime?
+  cancelledAt               DateTime?
+  cancelledBy               CapacityBookingActor?
+  cancelReason              String?
+  refundMinor               BigInt?
+  factoryCompensationMinor  BigInt?
+  compensationPaidAt        DateTime?
+  conversionMode            CapacityConversionMode?
+  convertedAt               DateTime?
+  orderId                   String?                 @unique @db.Uuid
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
+
+  buyerCompany        Company                     @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
+  createdBy           User                        @relation("CapacityBookingCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  manufacturerProfile ManufacturerProfile         @relation(fields: [manufacturerProfileId], references: [id], onDelete: Restrict)
+  line                ProductionLine              @relation(fields: [lineId], references: [id], onDelete: Restrict)
+  category            Category                    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  partnership         CapacityPartnership?        @relation(fields: [partnershipId], references: [id], onDelete: Restrict)
+  order               Order?                      @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  rfq                 Rfq?                        @relation("CapacityBookingRfq")
+  allocations         CapacityBookingAllocation[]
+  payments            Payment[]
+  ledgerTransactions  LedgerTransaction[]
+
+  @@index([buyerCompanyId, status])
+  @@index([manufacturerProfileId, status])
+  @@index([status, holdExpiresAt])
+  @@index([partnershipId])
+  @@map("capacity_bookings")
+}
+
+/// Which windows a booking's minutes come from (a partnership month may span several).
+model CapacityBookingAllocation {
+  id        String @id @default(uuid(7)) @db.Uuid
+  bookingId String @db.Uuid
+  slotId    String @db.Uuid
+  minutes   Int
+
+  booking CapacityBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  slot    CapacitySlot    @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, slotId])
+  @@index([slotId])
+  @@map("capacity_booking_allocations")
+}
+
+enum CapacityPartnershipStatus {
+  REQUESTED
+  ACTIVE
+  DECLINED
+  CANCELLED
+  ENDED
+}
+
+/// A recurring reservation: the same minutes on one line every month for 6–12 months. Accepting
+/// it creates one PARTNERSHIP booking per month, each with its own deposit due before the month.
+model CapacityPartnership {
+  id                        String                    @id @default(uuid(7)) @db.Uuid
+  /// e.g. CP-2026-00003
+  code                      String                    @unique
+  status                    CapacityPartnershipStatus @default(REQUESTED)
+  buyerCompanyId            String                    @db.Uuid
+  createdById               String                    @db.Uuid
+  manufacturerProfileId     String                    @db.Uuid
+  lineId                    String                    @db.Uuid
+  categoryId                String                    @db.Uuid
+  monthlyMinutes            Int
+  months                    Int
+  /// First day of the first month.
+  startMonth                DateTime                  @db.Date
+  samPerPieceCenti          Int?
+  currency                  Currency
+  factoryRateMinorPer100Min Int
+  buyerRateMinorPer100Min   Int
+  note                      String?
+  noteFiltered              String?
+  declineReason             String?
+  acceptedAt                DateTime?
+  cancelledAt               DateTime?
+  createdAt                 DateTime                  @default(now())
+  updatedAt                 DateTime                  @updatedAt
+
+  buyerCompany        Company             @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
+  createdBy           User                @relation("CapacityPartnershipCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Restrict)
+  line                ProductionLine      @relation(fields: [lineId], references: [id], onDelete: Restrict)
+  category            Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  bookings            CapacityBooking[]
+
+  @@index([buyerCompanyId, status])
+  @@index([manufacturerProfileId, status])
+  @@map("capacity_partnerships")
 }

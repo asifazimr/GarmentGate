@@ -40,12 +40,12 @@ async function verifiedFactory(ctx: TestContext) {
         create: {
           type: 'MANUFACTURER',
           legalName: 'Lineholt Garments Ltd.',
-          country: 'BD',
+          country: 'LK',
           kycStatus: 'VERIFIED',
           onboardingStep: 'SUBMITTED',
           manufacturerProfile: {
             create: {
-              publicCode: `MFR-BD-8${String(Date.now() + seq).slice(-3)}`,
+              publicCode: `MFR-LK-8${String(Date.now() + seq).slice(-3)}`,
               monthlyCapacityPcs: 50_000,
               moqPcs: 300,
               isListed: true,

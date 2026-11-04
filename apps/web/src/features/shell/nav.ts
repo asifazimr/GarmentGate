@@ -2,6 +2,7 @@ import type { Role } from '@garmentgate/shared';
 import {
   Award,
   BadgeCheck,
+  CalendarClock,
   CalendarRange,
   ClipboardCheck,
   Factory,
@@ -49,6 +50,8 @@ export type NavLabel =
   | 'overview'
   | 'certifications'
   | 'claims'
+  | 'bookCapacity'
+  | 'capacityBooking'
   | 'payments'
   | 'users'
   | 'audit';
@@ -72,6 +75,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/buyer', label: 'dashboard', icon: LayoutDashboard, primary: true, built: true },
     { href: '/buyer/search', label: 'discover', icon: Search, primary: true, built: true },
     { href: '/buyer/rfqs', label: 'rfqs', icon: FileText, primary: true, built: true },
+    { href: '/buyer/capacity', label: 'bookCapacity', icon: CalendarClock, built: true },
     { href: '/buyer/orders', label: 'orders', icon: Package, primary: true, built: true },
     { href: '/buyer/messages', label: 'messages', icon: MessageSquare, built: true },
     { href: '/buyer/factories', label: 'factories', icon: Factory, built: true },
@@ -96,6 +100,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/admin/claims', label: 'claims', icon: Award, built: true },
     { href: '/admin/orders', label: 'orders', icon: Package, primary: true, built: true },
     { href: '/admin/payments', label: 'payments', icon: Wallet, primary: true, built: true },
+    { href: '/admin/capacity', label: 'capacityBooking', icon: CalendarClock, built: true },
     { href: '/admin/disputes', label: 'disputes', icon: Scale, built: true },
     { href: '/admin/messages', label: 'messages', icon: MessageSquare, primary: true, built: true },
     { href: '/admin/moderation', label: 'moderation', icon: ShieldAlert, built: true },

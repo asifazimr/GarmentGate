@@ -93,6 +93,7 @@ export const NotificationLinkSchema = z.object({
   rfqCode: z.string().optional(),
   conversationId: z.string().optional(),
   inspectionId: z.string().optional(),
+  bookingCode: z.string().optional(),
 });
 export type NotificationLink = z.infer<typeof NotificationLinkSchema>;
 
@@ -137,6 +138,8 @@ export function notificationHref(role: Role, link: NotificationLink): string | n
     return role === 'INSPECTOR' ? `${home}/inspections/${link.inspectionId}` : null;
   if (link.conversationId && role !== 'INSPECTOR') return `${home}/messages/${link.conversationId}`;
   if (link.orderCode && role !== 'INSPECTOR') return `${home}/orders/${link.orderCode}`;
+  if (link.bookingCode && (role === 'BUYER' || role === 'MANUFACTURER' || role === 'ADMIN'))
+    return role === 'ADMIN' ? `${home}/capacity` : `${home}/capacity/bookings/${link.bookingCode}`;
   if (link.rfqCode && (role === 'BUYER' || role === 'MANUFACTURER'))
     return `${home}/rfqs/${link.rfqCode}`;
   return null;

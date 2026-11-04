@@ -38,6 +38,7 @@ const MESSAGE_EMAIL_GAP_MS = 30 * 60_000;
 const ACTION_LABEL: Record<string, string> = {
   orderCode: 'Open the order',
   rfqCode: 'Open the request',
+  bookingCode: 'Open the booking',
   conversationId: 'Read the message',
   inspectionId: 'Open the inspection',
 };

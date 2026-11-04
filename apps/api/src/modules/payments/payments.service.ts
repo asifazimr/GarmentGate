@@ -35,6 +35,7 @@ import {
   type ReleaseTrigger,
   releaseTranches,
   type StartPaymentDto,
+  type NotificationLink,
 } from '@garmentgate/shared';
 import type Stripe from 'stripe';
 import type { OrderRelease, Payment, Prisma } from '../../generated/prisma/client.js';
@@ -76,6 +77,31 @@ const OPEN = ['PENDING', 'PROCESSING'] as const;
 const PROOF_MAX_BYTES = 10 * 1024 * 1024;
 
 const n = (v: bigint | number) => Number(v);
+
+const payerInclude = {
+  order: { select: { code: true, buyerCompanyId: true } },
+  capacityBooking: { select: { code: true, buyerCompanyId: true } },
+} as const;
+
+/** Who paid and what for: an order, or a capacity booking's deposit. */
+function payerOf(payment: {
+  order: { code: string; buyerCompanyId: string } | null;
+  capacityBooking: { code: string; buyerCompanyId: string } | null;
+}): { companyId: string; code: string; link: NotificationLink } {
+  if (payment.order)
+    return {
+      companyId: payment.order.buyerCompanyId,
+      code: payment.order.code,
+      link: { orderCode: payment.order.code },
+    };
+  if (payment.capacityBooking)
+    return {
+      companyId: payment.capacityBooking.buyerCompanyId,
+      code: payment.capacityBooking.code,
+      link: { bookingCode: payment.capacityBooking.code },
+    };
+  throw new Error('Payment without an order or a booking');
+}
 const iso = (d: Date | null) => d?.toISOString() ?? null;
 
 /**
@@ -125,6 +151,13 @@ export class PaymentsService implements OnModuleInit {
   }
 
   // ── Release schedule ──────────────────────────────────────────────────────
+
+  private bookingSettled: ((bookingId: string) => Promise<void>) | null = null;
+
+  /** Capacity booking deposits settle here too; the booking module reacts (confirms the booking). */
+  onBookingDepositSettled(handler: (bookingId: string) => Promise<void>): void {
+    this.bookingSettled = handler;
+  }
 
   async releaseSchedule(
     client: PrismaService | Prisma.TransactionClient = this.prisma,
@@ -496,6 +529,326 @@ export class PaymentsService implements OnModuleInit {
     );
   }
 
+  // ── Capacity booking deposits ─────────────────────────────────────────────
+
+  /** Starts (or resumes) paying a booking's deposit into escrow. The caller checked the buyer. */
+  async startBookingDeposit(
+    booking: { id: string; code: string; currency: Currency },
+    amount: bigint,
+    method: PaymentMethod,
+  ): Promise<PaymentStart> {
+    if (amount <= 0n) throw new ConflictException('Already paid');
+    const provider = this.providerFor(method);
+    const open = await this.prisma.payment.findFirst({
+      where: {
+        capacityBookingId: booking.id,
+        direction: 'INBOUND',
+        status: { in: [...OPEN] },
+      },
+    });
+    if (open?.status === 'PROCESSING')
+      throw new ConflictException('A payment is already on its way: we’ll confirm it shortly');
+    if (open?.method === method && open.amountMinor === amount && provider.id === 'manual')
+      return this.startResult(open, provider, booking.code);
+    if (open)
+      await this.prisma.payment.update({ where: { id: open.id }, data: { status: 'CANCELLED' } });
+    const count = await this.prisma.payment.count({ where: { capacityBookingId: booking.id } });
+    const payment = await this.prisma.payment.create({
+      data: {
+        capacityBookingId: booking.id,
+        direction: 'INBOUND',
+        purpose: 'DEPOSIT',
+        amountMinor: amount,
+        currency: booking.currency,
+        method,
+        provider: provider.id,
+        reference: `PAY-${booking.code}-D${String(count + 1)}`,
+        status: 'PENDING',
+      },
+    });
+    return this.startResult(payment, provider, booking.code);
+  }
+
+  async markBookingDepositSent(
+    booking: { id: string; code: string },
+    paymentId: string,
+    dto: MarkSentDto,
+  ): Promise<void> {
+    const { count } = await this.prisma.payment.updateMany({
+      where: {
+        id: paymentId,
+        capacityBookingId: booking.id,
+        provider: 'manual',
+        status: 'PENDING',
+      },
+      data: { status: 'PROCESSING', payerReference: dto.payerReference ?? null },
+    });
+    if (count === 0) throw new NotFoundException('Payment not found');
+    await this.notifyAdmins(
+      `${booking.code}: deposit sent`,
+      'Check the bank and confirm it in Finance',
+      {
+        bookingCode: booking.code,
+      },
+    );
+  }
+
+  /** What a booking holds in escrow, and transfers still waiting for staff. */
+  async bookingDepositState(bookingId: string): Promise<{ paid: bigint; pending: boolean }> {
+    const [paid, pending] = await Promise.all([
+      this.ledger.bookingEscrow(bookingId),
+      this.prisma.payment.count({
+        where: { capacityBookingId: bookingId, direction: 'INBOUND', status: 'PROCESSING' },
+      }),
+    ]);
+    return { paid, pending: pending > 0 };
+  }
+
+  /**
+   * Settles a cancelled or expired booking's escrow: the refund goes back to the buyer, the
+   * factory's share to its payable and the rest to revenue, in one balanced posting per part.
+   * Open deposit payments are cancelled. Idempotent per booking (posting keys).
+   */
+  async settleBookingCancellation(
+    booking: { id: string; code: string; currency: Currency; buyerCompanyId: string },
+    factoryCompanyId: string,
+    split: { refundMinor: bigint; factoryMinor: bigint; platformMinor: bigint },
+    reason: string,
+  ): Promise<void> {
+    const total = split.refundMinor + split.factoryMinor + split.platformMinor;
+    await this.prisma.payment.updateMany({
+      where: { capacityBookingId: booking.id, direction: 'INBOUND', status: { in: [...OPEN] } },
+      data: { status: 'CANCELLED' },
+    });
+    if (total === 0n) return;
+    const card = await this.prisma.payment.findFirst({
+      where: {
+        capacityBookingId: booking.id,
+        direction: 'INBOUND',
+        status: 'SUCCEEDED',
+        method: 'CARD',
+        amountMinor: { gte: split.refundMinor },
+      },
+    });
+    let refundRef: string | null = null;
+    let refundId: string | null = null;
+    if (split.refundMinor > 0n) {
+      const refund = await this.prisma.payment.create({
+        data: {
+          capacityBookingId: booking.id,
+          direction: 'OUTBOUND',
+          purpose: 'REFUND',
+          amountMinor: split.refundMinor,
+          currency: booking.currency,
+          method: card ? 'CARD' : 'BANK_TRANSFER',
+          provider: card ? 'stripe' : 'manual',
+          reference: `REF-${booking.code}`,
+          status: 'PENDING',
+        },
+      });
+      refundId = refund.id;
+      try {
+        const result = await (card ? this.stripe : this.manual).refund({
+          refundPaymentId: refund.id,
+          providerRef: card?.providerRef ?? null,
+          amountMinor: split.refundMinor,
+          currency: booking.currency,
+        });
+        refundRef = result.providerRef;
+      } catch (error) {
+        await this.prisma.payment.update({
+          where: { id: refund.id },
+          data: {
+            status: 'FAILED',
+            failureReason: error instanceof Error ? error.message.slice(0, 300) : 'Refund failed',
+          },
+        });
+        throw new ConflictException('The refund failed at the payment provider');
+      }
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await this.ledger.lockBooking(tx, booking.id);
+      const escrow = await this.ledger.bookingEscrow(booking.id, tx);
+      if (escrow < total) throw new ConflictException(`Only ${String(escrow)} is in escrow`);
+      const { rates } = await this.fx.snapshot(booking.currency, tx);
+      const base = { capacityBookingId: booking.id, currency: booking.currency, rates };
+      const fromEscrow = (amount: bigint) => ({
+        account: 'BUYER_ESCROW' as const,
+        companyId: booking.buyerCompanyId,
+        direction: 'DEBIT' as const,
+        amountMinor: amount,
+      });
+      if (refundId && split.refundMinor > 0n) {
+        await tx.payment.update({
+          where: { id: refundId },
+          data: {
+            status: 'SUCCEEDED',
+            paidAt: new Date(),
+            providerRef: refundRef,
+            unitsPerUsd: rates[booking.currency] ?? '1',
+            amountUsdMinor: convertMinor(split.refundMinor, booking.currency, 'USD', rates),
+          },
+        });
+        await this.ledger.post(tx, {
+          ...base,
+          kind: 'REFUND',
+          key: `booking-refund:${booking.id}`,
+          paymentId: refundId,
+          description: `${booking.code} refund: ${reason}`,
+          lines: [
+            fromEscrow(split.refundMinor),
+            {
+              account: 'PLATFORM_CASH',
+              companyId: null,
+              direction: 'CREDIT',
+              amountMinor: split.refundMinor,
+            },
+          ],
+        });
+      }
+      if (split.factoryMinor > 0n)
+        await this.ledger.post(tx, {
+          ...base,
+          kind: 'RELEASE',
+          key: `booking-compensation:${booking.id}`,
+          description: `${booking.code} cancelled: the factory's share of the kept deposit`,
+          lines: [
+            fromEscrow(split.factoryMinor),
+            {
+              account: 'MANUFACTURER_PAYABLE',
+              companyId: factoryCompanyId,
+              direction: 'CREDIT',
+              amountMinor: split.factoryMinor,
+            },
+          ],
+        });
+      if (split.platformMinor > 0n)
+        await this.ledger.post(tx, {
+          ...base,
+          kind: 'COMMISSION',
+          key: `booking-fee:${booking.id}`,
+          description: `${booking.code} cancelled: GarmentGate's share of the kept deposit`,
+          lines: [
+            fromEscrow(split.platformMinor),
+            {
+              account: 'PLATFORM_REVENUE',
+              companyId: null,
+              direction: 'CREDIT',
+              amountMinor: split.platformMinor,
+            },
+          ],
+        });
+    });
+    if (split.refundMinor > 0n && !card)
+      await this.notifyAdmins(
+        `${booking.code}: refund to send`,
+        `Send ${String(split.refundMinor)} ${booking.currency} back by bank transfer (REF-${booking.code})`,
+        { bookingCode: booking.code },
+      );
+  }
+
+  /** Staff paid the factory its share of a forfeited deposit. */
+  async payBookingCompensation(
+    adminId: string,
+    booking: { id: string; code: string; currency: Currency },
+    factoryCompanyId: string,
+    amount: bigint,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await this.ledger.lockBooking(tx, booking.id);
+      const { rates } = await this.fx.snapshot(booking.currency, tx);
+      const payout = await tx.payment.create({
+        data: {
+          capacityBookingId: booking.id,
+          direction: 'OUTBOUND',
+          purpose: 'PAYOUT',
+          amountMinor: amount,
+          currency: booking.currency,
+          method: 'BANK_TRANSFER',
+          provider: 'manual',
+          reference: `OUT-${booking.code}`,
+          status: 'SUCCEEDED',
+          paidAt: new Date(),
+          confirmedById: adminId,
+          unitsPerUsd: rates[booking.currency] ?? '1',
+          amountUsdMinor: convertMinor(amount, booking.currency, 'USD', rates),
+        },
+      });
+      const posted = await this.ledger.post(tx, {
+        kind: 'PAYOUT',
+        key: `booking-payout:${booking.id}`,
+        capacityBookingId: booking.id,
+        paymentId: payout.id,
+        currency: booking.currency,
+        rates,
+        description: `${booking.code}: cancellation compensation paid to the factory`,
+        lines: [
+          {
+            account: 'MANUFACTURER_PAYABLE',
+            companyId: factoryCompanyId,
+            direction: 'DEBIT',
+            amountMinor: amount,
+          },
+          { account: 'PLATFORM_CASH', companyId: null, direction: 'CREDIT', amountMinor: amount },
+        ],
+      });
+      if (!posted) throw new ConflictException('Already paid');
+    });
+  }
+
+  /**
+   * A booking became an order: its escrow moves to the order (the order's deposit counts it).
+   * Two postings so each side's position stays right: out of the booking, into the order.
+   */
+  async carryBookingDepositIntoOrder(
+    booking: { id: string; code: string; currency: Currency; buyerCompanyId: string },
+    order: { id: string; code: string },
+  ): Promise<bigint> {
+    return this.prisma.$transaction(async (tx) => {
+      await this.ledger.lockBooking(tx, booking.id);
+      await this.ledger.lockOrder(tx, order.id);
+      const amount = await this.ledger.bookingEscrow(booking.id, tx);
+      if (amount <= 0n) return 0n;
+      const { rates } = await this.fx.snapshot(booking.currency, tx);
+      const escrow = (direction: 'DEBIT' | 'CREDIT') => ({
+        account: 'BUYER_ESCROW' as const,
+        companyId: booking.buyerCompanyId,
+        direction,
+        amountMinor: amount,
+      });
+      const cash = (direction: 'DEBIT' | 'CREDIT') => ({
+        account: 'PLATFORM_CASH' as const,
+        companyId: null,
+        direction,
+        amountMinor: amount,
+      });
+      await this.ledger.post(tx, {
+        kind: 'HOLD',
+        key: `booking-carry-out:${booking.id}`,
+        capacityBookingId: booking.id,
+        currency: booking.currency,
+        rates,
+        description: `${booking.code} deposit carried into ${order.code}`,
+        lines: [escrow('DEBIT'), cash('CREDIT')],
+      });
+      await this.ledger.post(tx, {
+        kind: 'DEPOSIT',
+        key: `booking-carry-in:${booking.id}`,
+        orderId: order.id,
+        currency: booking.currency,
+        rates,
+        description: `Deposit from capacity booking ${booking.code}`,
+        lines: [cash('DEBIT'), escrow('CREDIT')],
+      });
+      // The deposit payment now counts toward the order's deposit too.
+      await tx.payment.updateMany({
+        where: { capacityBookingId: booking.id, direction: 'INBOUND', status: 'SUCCEEDED' },
+        data: { orderId: order.id },
+      });
+      return amount;
+    });
+  }
+
   // ── Settlement ───────────────────────────────────────────────────────────
 
   /**
@@ -508,10 +861,16 @@ export class PaymentsService implements OnModuleInit {
   ): Promise<boolean> {
     const payment = await this.prisma.payment.findUniqueOrThrow({
       where: { id: paymentId },
-      include: { order: { select: { id: true, code: true, buyerCompanyId: true, status: true } } },
+      include: {
+        order: { select: { id: true, code: true, buyerCompanyId: true, status: true } },
+        capacityBooking: { select: { id: true, code: true, buyerCompanyId: true } },
+      },
     });
+    const payer = payerOf(payment);
     const settled = await this.prisma.$transaction(async (tx) => {
-      await this.ledger.lockOrder(tx, payment.orderId);
+      if (payment.orderId) await this.ledger.lockOrder(tx, payment.orderId);
+      else if (payment.capacityBookingId)
+        await this.ledger.lockBooking(tx, payment.capacityBookingId);
       const { rates } = await this.fx.snapshot(payment.currency, tx);
       const { count } = await tx.payment.updateMany({
         where: { id: payment.id, status: { in: [...OPEN] } },
@@ -528,6 +887,7 @@ export class PaymentsService implements OnModuleInit {
         kind: 'DEPOSIT',
         key: `payment:${payment.id}`,
         orderId: payment.orderId,
+        capacityBookingId: payment.orderId ? null : payment.capacityBookingId,
         paymentId: payment.id,
         currency: payment.currency,
         description: `${payment.purpose === 'DEPOSIT' ? 'Deposit' : 'Balance'} ${payment.reference ?? ''} received into escrow`,
@@ -541,7 +901,7 @@ export class PaymentsService implements OnModuleInit {
           },
           {
             account: 'BUYER_ESCROW',
-            companyId: payment.order.buyerCompanyId,
+            companyId: payer.companyId,
             direction: 'CREDIT',
             amountMinor: payment.amountMinor,
           },
@@ -552,13 +912,18 @@ export class PaymentsService implements OnModuleInit {
     if (!settled) return false;
 
     await this.notifyCompany(
-      payment.order.buyerCompanyId,
-      `${payment.order.code}: payment received`,
+      payer.companyId,
+      `${payer.code}: payment received`,
       `Thank you: ${payment.reference ?? ''} is in escrow.`,
-      { orderCode: payment.order.code },
+      payer.link,
     );
+    if (!payment.order) {
+      if (payment.capacityBookingId && this.bookingSettled)
+        await this.bookingSettled(payment.capacityBookingId);
+      return true;
+    }
     if (payment.purpose === 'DEPOSIT' && payment.order.status === 'DEPOSIT_PENDING') {
-      const order = await this.prisma.order.findUniqueOrThrow({ where: { id: payment.orderId } });
+      const order = await this.prisma.order.findUniqueOrThrow({ where: { id: payment.order.id } });
       const state = await this.paid(
         order.id,
         order.buyerUnitPriceMinor,
@@ -582,13 +947,13 @@ export class PaymentsService implements OnModuleInit {
   ): Promise<PresignUploadResponse> {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
-      include: { order: { select: { buyerCompanyId: true } } },
+      include: payerInclude,
     });
     if (!payment) throw new NotFoundException('Payment not found');
     // Proofs are staff-only; they're filed under the paying company.
     return this.files.reserveUpload({
       userId: adminId,
-      companyId: payment.order.buyerCompanyId,
+      companyId: payerOf(payment).companyId,
       purpose: 'PAYMENT_PROOF',
       folder: 'finance',
       fileName: dto.fileName,
@@ -602,7 +967,7 @@ export class PaymentsService implements OnModuleInit {
   async confirm(adminId: string, paymentId: string, dto: ConfirmPaymentDto): Promise<void> {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
-      include: { order: { select: { buyerCompanyId: true } } },
+      include: payerInclude,
     });
     if (payment?.direction !== 'INBOUND') throw new NotFoundException('Payment not found');
     if (payment.provider !== 'manual')
@@ -616,7 +981,7 @@ export class PaymentsService implements OnModuleInit {
       throw new ConflictException('That bank reference already settled another payment');
     const proof = await this.files.confirmUpload(
       dto.proofFileId,
-      payment.order.buyerCompanyId,
+      payerOf(payment).companyId,
       'PAYMENT_PROOF',
       PROOF_MAX_BYTES,
     );
@@ -638,7 +1003,7 @@ export class PaymentsService implements OnModuleInit {
   async reject(adminId: string, paymentId: string, reason: string): Promise<void> {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
-      include: { order: { select: { code: true, buyerCompanyId: true } } },
+      include: payerInclude,
     });
     if (!payment) throw new NotFoundException('Payment not found');
     const { count } = await this.prisma.payment.updateMany({
@@ -646,11 +1011,12 @@ export class PaymentsService implements OnModuleInit {
       data: { status: 'FAILED', failureReason: reason },
     });
     if (count === 0) throw new ConflictException('This payment is already settled');
+    const payer = payerOf(payment);
     await this.notifyCompany(
-      payment.order.buyerCompanyId,
-      `${payment.order.code}: payment not received`,
+      payer.companyId,
+      `${payer.code}: payment not received`,
       reason,
-      { orderCode: payment.order.code },
+      payer.link,
     );
     await this.audit.log({
       actorUserId: adminId,
@@ -1233,7 +1599,10 @@ export class PaymentsService implements OnModuleInit {
       this.prisma.payment.findMany({
         where: { direction: 'INBOUND', provider: 'manual', status: { in: [...OPEN] } },
         orderBy: [{ status: 'desc' }, { createdAt: 'asc' }],
-        include: { order: { select: { code: true, buyerCompany: party } } },
+        include: {
+          order: { select: { code: true, buyerCompany: party } },
+          capacityBooking: { select: { code: true, buyerCompany: party } },
+        },
       }),
       this.prisma.orderRelease.findMany({
         where: { status: { in: ['DUE', 'RELEASED'] } },
@@ -1260,22 +1629,28 @@ export class PaymentsService implements OnModuleInit {
       name: r.order.manufacturerProfile.company.legalName,
     });
     return {
-      toConfirm: payments.map((p) => ({
-        paymentId: p.id,
-        orderCode: p.order.code,
-        reference: p.reference ?? p.id,
-        purpose: p.purpose,
-        method: p.method,
-        amountMinor: n(p.amountMinor),
-        currency: p.currency,
-        status: p.status,
-        buyer: {
-          code: p.order.buyerCompany.buyerProfile?.publicCode ?? '',
-          name: p.order.buyerCompany.legalName,
-        },
-        payerReference: p.payerReference,
-        createdAt: p.createdAt.toISOString(),
-      })),
+      toConfirm: payments.flatMap((p) => {
+        const owner = p.order ?? p.capacityBooking;
+        if (!owner) return [];
+        return [
+          {
+            paymentId: p.id,
+            orderCode: owner.code,
+            reference: p.reference ?? p.id,
+            purpose: p.purpose,
+            method: p.method,
+            amountMinor: n(p.amountMinor),
+            currency: p.currency,
+            status: p.status,
+            buyer: {
+              code: owner.buyerCompany.buyerProfile?.publicCode ?? '',
+              name: owner.buyerCompany.legalName,
+            },
+            payerReference: p.payerReference,
+            createdAt: p.createdAt.toISOString(),
+          },
+        ];
+      }),
       toRelease: releases
         .filter((r) => r.status === 'DUE')
         .map((r) => ({

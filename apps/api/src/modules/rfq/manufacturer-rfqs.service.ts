@@ -62,7 +62,12 @@ export class ManufacturerRfqsService {
     const rfqs = await this.prisma.rfq.findMany({
       where: {
         OR: [
-          { status: 'OPEN', deadline: { gt: new Date() }, productId: null },
+          {
+            status: 'OPEN',
+            deadline: { gt: new Date() },
+            productId: null,
+            capacityBookingId: null,
+          },
           { invitations: { some: { manufacturerProfileId: ctx.profileId } } },
           { quotes: { some: { manufacturerProfileId: ctx.profileId } } },
         ],
@@ -237,11 +242,12 @@ export class ManufacturerRfqsService {
 
   /**
    * A factory sees an RFQ it was invited to or quoted on, or an open one it currently matches.
-   * Catalog requests (with a product) only ever go to that product's factory.
+   * Catalog requests (with a product) and capacity-booking conversions only ever go to that
+   * one factory.
    */
   private access(factory: MatchableFactory, rfq: RfqRow) {
     const invited = rfq.invitations.length > 0;
-    const inviteOnly = rfq.productId !== null;
+    const inviteOnly = rfq.productId !== null || rfq.capacityBookingId !== null;
     const { matched, reasons } = matchRfq(factory, {
       category: rfq.category,
       quantity: rfq.quantity,

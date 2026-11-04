@@ -407,7 +407,9 @@
     "payments": "Payments",
     "users": "Users",
     "audit": "Audit log",
-    "claims": "Supplier claims"
+    "claims": "Supplier claims",
+    "bookCapacity": "Book capacity",
+    "capacityBooking": "Capacity booking"
   },
   "shell": {
     "search": "Search…",
@@ -584,6 +586,21 @@
       "PENDING": "Awaiting review",
       "APPROVED": "Visible to buyers",
       "REJECTED": "Rejected"
+    },
+    "booking": {
+      "HELD": "Held",
+      "CONFIRMED": "Confirmed",
+      "IN_PRODUCTION": "In production",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled",
+      "EXPIRED": "Expired"
+    },
+    "partnership": {
+      "REQUESTED": "Requested",
+      "ACTIVE": "Active",
+      "DECLINED": "Declined",
+      "CANCELLED": "Cancelled",
+      "ENDED": "Ended"
     }
   },
   "marketing": {
@@ -2671,7 +2688,8 @@
       "description": "Open line time for buyers to book, and keep your monthly pieces up to date for quote requests.",
       "tabs": {
         "lines": "Production lines",
-        "pieces": "Monthly pieces"
+        "pieces": "Monthly pieces",
+        "requests": "Booking requests"
       }
     },
     "calendar": {
@@ -2756,6 +2774,318 @@
       "hasBookings": "This window has bookings",
       "save": "Save",
       "saved": "Window updated"
+    },
+    "minutesValue": "{minutes} min",
+    "piecesValue": "≈ {pieces} pcs",
+    "countdown": {
+      "over": "ended",
+      "days": "{days} d {hours} h",
+      "hours": "{hours} h {minutes} min",
+      "minutes": "{minutes} min"
+    },
+    "deposit": {
+      "body": "Pay the deposit to GarmentGate by bank transfer, quoting the reference. It stays in escrow; the booking is confirmed once it arrives and the factory has accepted."
+    },
+    "buyerPage": {
+      "title": "Book capacity",
+      "description": "Reserve line time at verified factories: you pay for SAM minutes, then turn them into an order.",
+      "tabs": {
+        "find": "Find capacity",
+        "bookings": "My bookings"
+      }
+    },
+    "search": {
+      "category": "Product",
+      "categoryPlaceholder": "Choose a category",
+      "quantity": "How much",
+      "quantityMode": "Enter quantity as",
+      "modes": {
+        "pieces": "Pieces × SAM",
+        "minutes": "Minutes"
+      },
+      "pieces": "Pieces",
+      "sam": "SAM per piece",
+      "samPlaceholder": "SAM, e.g. 12.5",
+      "minutes": "SAM minutes",
+      "helper": "{minutes, number} SAM minutes needed",
+      "samHint": "SAM = standard minutes to sew one piece (a basic tee is about 8–12).",
+      "from": "From",
+      "to": "To",
+      "submit": "Search",
+      "introTitle": "Find open line time",
+      "introBody": "Choose a product, how much you need and when. We show factories with open lines, by code only.",
+      "emptyTitle": "No open line time matches",
+      "emptyBody": "Try a wider date range, a parent category, or fewer minutes.",
+      "resultsLabel": "Factories with open line time",
+      "score": "Score {score}/100",
+      "profile": "Profile",
+      "line": "Line {number}",
+      "availability": "{free, number} of {total, number} minutes free",
+      "free": "Free",
+      "deposit": "({amount} deposit)",
+      "tooSmall": "not enough for your quantity",
+      "partnership": "Partnership",
+      "partnershipHint": "Ask for the same minutes on this line every month",
+      "book": "Book"
+    },
+    "partnership": {
+      "title": "Ask for a partnership",
+      "description": "The same minutes on this line every month, for 6 to 12 months, at today’s rate. Each month’s deposit is due two weeks before it starts.",
+      "monthlyMinutes": "Minutes per month",
+      "sam": "SAM per piece",
+      "startMonth": "First month",
+      "months": "Months",
+      "monthsHint": "6 to 12",
+      "note": "Note for the factory",
+      "terms": "I agree to the partnership and cancellation terms.",
+      "submit": "Send request",
+      "sent": "Partnership {code} requested"
+    },
+    "flow": {
+      "title": "Book line time",
+      "description": "Three steps: how much of the window, the terms, then the deposit.",
+      "progress": "Booking steps",
+      "steps": {
+        "slot": "Slot",
+        "terms": "Terms",
+        "pay": "Deposit"
+      },
+      "failed": "We couldn’t place the hold. Please try again.",
+      "availability": "Booked, your request and free minutes in this window",
+      "category": "Product",
+      "categoryPlaceholder": "Choose a category",
+      "sam": "SAM per piece",
+      "pieces": "≈ {pieces, number} pieces",
+      "samHint": "Optional: we’ll show how many pieces fit.",
+      "note": "Note for the factory",
+      "noteHint": "Product details only: contact details are removed.",
+      "next": "Continue",
+      "heldTitle": "Hold placed",
+      "payLater": "Pay later from the booking page",
+      "kind": "What to book",
+      "kinds": {
+        "SLOT": {
+          "title": "Some minutes",
+          "body": "Book the minutes you need; the rest stays open to others."
+        },
+        "LINE": {
+          "title": "The whole window",
+          "body": "Every free minute of the line for these dates."
+        }
+      },
+      "minutes": "Minutes",
+      "upTo": "Up to",
+      "rate": "Rate per 100 minutes",
+      "total": "Total",
+      "depositNow": "Deposit now ({percent}%)",
+      "termsTitle": "Check the terms",
+      "holdRule": "We hold these minutes for {hours} hours. The booking is confirmed when the factory accepts and your deposit arrives.",
+      "cancellation": "If you cancel a confirmed booking:",
+      "tier": "{days, plural, =0 {Later than that: {percent} back} other {# days or more before the start: {percent} back}}",
+      "expiryRule": "If the hold runs out or the factory declines, you get the whole deposit back.",
+      "accept": "I agree to the booking and cancellation terms.",
+      "back": "Back",
+      "holding": "Placing hold…",
+      "hold": "Place hold"
+    },
+    "convert": {
+      "title": "Convert {code} to an order",
+      "description": "Your deposit counts toward the order and unused minutes go back to the factory.",
+      "mode": "How to produce",
+      "modes": {
+        "CMT": {
+          "title": "CMT",
+          "body": "You supply fabric and trims; the order is priced at your booked rate × SAM per piece."
+        },
+        "FULL_PACKAGE": {
+          "title": "Full package",
+          "body": "The factory sources everything: we ask it for a quote first."
+        }
+      },
+      "style": "Style name",
+      "quantity": "Pieces",
+      "sam": "SAM per piece",
+      "minutesHint": "You booked {booked} minutes.",
+      "tooMany": "That needs {needed} minutes; you booked {booked}.",
+      "returned": "Uses {needed} minutes; {returned} go back to the factory.",
+      "packageDescription": "What the factory should quote",
+      "packageHint": "Fabric, trims, labels, packing. Contact details are removed.",
+      "specification": "Specification",
+      "submit": {
+        "CMT": "Create order",
+        "FULL_PACKAGE": "Request quote"
+      },
+      "orderCreated": "Order {code} created",
+      "rfqCreated": "Quote request {code} sent"
+    },
+    "dashboard": {
+      "emptyTitle": "No bookings yet",
+      "emptyBody": "Reserve line time ahead of the season, then turn it into an order.",
+      "find": "Find capacity",
+      "active": "Active",
+      "noActive": "Nothing active right now.",
+      "partnerships": "Partnerships",
+      "past": "Past",
+      "next": {
+        "PAY_DEPOSIT": "Pay the deposit",
+        "AWAIT_PAYMENT_CHECK": "Checking your transfer",
+        "AWAIT_FACTORY": "Waiting for the factory",
+        "CONVERT": "Convert to an order",
+        "AWAIT_QUOTE": "Waiting for the quote",
+        "TRACK_ORDER": "Track the order"
+      },
+      "holdEnds": "hold ends in",
+      "convertBy": "by {date}",
+      "partnershipTerms": "{minutes} min a month for {months} months from {start}",
+      "perMonth": "{amount} a month",
+      "cancelPartnership": "Cancel partnership",
+      "partnershipCancelled": "Partnership cancelled",
+      "cancelPartnershipTitle": "Cancel this partnership?",
+      "cancelPartnershipBody": "Months that haven’t started are cancelled: held months free, confirmed ones under the cancellation terms.",
+      "reason": "Reason"
+    },
+    "detail": {
+      "back": "My bookings",
+      "ended": {
+        "CANCELLED": "Booking cancelled",
+        "EXPIRED": "Hold expired"
+      },
+      "next": {
+        "PAY_DEPOSIT": {
+          "title": "Pay the deposit",
+          "body": "Your minutes are held. Pay the deposit before the hold runs out to keep them."
+        },
+        "AWAIT_PAYMENT_CHECK": {
+          "title": "Checking your transfer",
+          "body": "We’ll confirm your deposit as soon as it reaches our account."
+        },
+        "AWAIT_FACTORY": {
+          "title": "Waiting for the factory",
+          "body": "Your deposit is in escrow. The factory has until the hold ends to accept; if it doesn’t, you get it all back."
+        },
+        "CONVERT": {
+          "title": "Convert to an order",
+          "body": "Your line time is confirmed. Turn it into an order before production starts."
+        },
+        "AWAIT_QUOTE": {
+          "title": "Waiting for the quote",
+          "body": "The factory is preparing a full-package quote. Accept it to create the order."
+        },
+        "TRACK_ORDER": {
+          "title": "Order in progress",
+          "body": "This booking is now an order. Follow production there."
+        }
+      },
+      "convertBy": "Convert by {date}",
+      "pay": "Pay deposit",
+      "convert": "Convert to order",
+      "openRfq": "Open {code}",
+      "openOrder": "Open {code}",
+      "refunded": "{amount} refunded to you.",
+      "dates": "Dates",
+      "minutes": "Minutes",
+      "returned": "Returned to the factory",
+      "sam": "SAM per piece",
+      "rate": "Rate per 100 minutes",
+      "total": "Total",
+      "deposit": "Deposit paid",
+      "factory": "Factory",
+      "accepted": "Accepted",
+      "waiting": "Not yet",
+      "partOf": "Part of partnership {code}",
+      "checking": "We’re checking a transfer you marked as sent.",
+      "policy": "Cancellation",
+      "heldFree": "While held: free, full refund.",
+      "tier": "{days, plural, =0 {Later than that: {percent} back} other {# days or more before the start: {percent} back}}",
+      "refundToday": "Cancel today and get {amount} back.",
+      "cancel": "Cancel booking",
+      "cancelled": "Booking cancelled",
+      "cancelTitle": "Cancel this booking?",
+      "cancelBody": "The minutes go back to the factory. Your refund follows the cancellation terms.",
+      "reason": "Reason"
+    },
+    "inbox": {
+      "emptyTitle": "No booking requests yet",
+      "emptyBody": "Open windows on your lines and buyers can book them here.",
+      "toAnswer": "{count, plural, =0 {Nothing to answer} one {# request to answer} other {# requests to answer}}",
+      "allAnswered": "You’re all caught up.",
+      "booked": "Bookings",
+      "partnerships": "Partnerships",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "failed": "Couldn’t save your answer",
+      "lineLabel": "line {code}",
+      "awaitingDeposit": "Waiting for the deposit:",
+      "answerWithin": "Answer within",
+      "compensation": "You receive {amount} from the cancelled booking",
+      "order": "Order {code}",
+      "decline": "Decline",
+      "accept": "Accept",
+      "partnershipTerms": "{minutes} min a month for {months} months from {start}",
+      "perMonth": "{amount} a month",
+      "partnershipHint": "Accepting reserves every month at once from your open windows on this line.",
+      "declineTitle": "Decline this request?",
+      "declineBody": "The buyer sees your reason, and any deposit goes back to them.",
+      "reason": "Reason",
+      "back": "Capacity"
+    },
+    "admin": {
+      "title": "Capacity booking",
+      "description": "Booking fee, deposits and cancellation policy, and every booking with both sides’ real identities.",
+      "settings": "Settings",
+      "settingsHint": "New bookings use these; existing ones keep the terms they were booked with.",
+      "saved": "Settings saved",
+      "save": "Save settings",
+      "fields": {
+        "bookingFee": "Booking fee (%)",
+        "deposit": "Deposit (%)",
+        "factoryShare": "Factory share of a kept deposit (%)",
+        "holdHours": "Hold length (hours)",
+        "reminderHours": "Remind before expiry (hours)",
+        "convertLeadDays": "Convert lead time (days)"
+      },
+      "hints": {
+        "bookingFee": "Added to the factory’s CM rate for buyers.",
+        "deposit": "Of the buyer amount, paid into escrow.",
+        "factoryShare": "The rest is GarmentGate’s."
+      },
+      "tiers": "Cancellation tiers",
+      "tiersHint": "From the most days ahead to the fewest; the last starts at 0 days.",
+      "tierDays": "Days before start",
+      "tierRefund": "Refund (%)",
+      "removeTier": "Remove tier",
+      "addTier": "Add tier",
+      "bookings": "Bookings",
+      "columns": {
+        "code": "Booking",
+        "buyer": "Buyer",
+        "factory": "Factory",
+        "dates": "Dates",
+        "minutes": "Minutes",
+        "money": "Amounts",
+        "status": "Status"
+      },
+      "factoryGets": "factory {amount}",
+      "depositPaid": "deposit {paid} / {due}",
+      "awaitingFactory": "factory hasn’t answered",
+      "payFactory": "Pay factory {amount}",
+      "compensationPaid": "Payout recorded",
+      "failed": "That didn’t work",
+      "cancel": "Cancel",
+      "cancelled": "Booking cancelled, deposit refunded",
+      "cancelTitle": "Cancel {code}?",
+      "cancelBody": "Staff cancellations refund the buyer in full and free the minutes.",
+      "reason": "Reason",
+      "tabs": {
+        "ALL": "All",
+        "HELD": "Held",
+        "CONFIRMED": "Confirmed",
+        "IN_PRODUCTION": "In production",
+        "CANCELLED": "Cancelled",
+        "EXPIRED": "Expired"
+      },
+      "empty": "No bookings",
+      "emptyBody": "Bookings appear here when buyers hold line time."
     }
   }
 }
