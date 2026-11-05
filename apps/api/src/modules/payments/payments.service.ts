@@ -20,7 +20,6 @@ import {
   type LedgerBalances,
   type ManufacturerPayouts,
   type MarkSentDto,
-  type OrderActor,
   type OrderFinance,
   type OrderStatus,
   type PaymentMethod,
@@ -74,6 +73,15 @@ const DUE: Record<BuyerPaymentPurpose, readonly OrderStatus[]> = {
   BALANCE: ['READY_TO_SHIP'],
 };
 const OPEN = ['PENDING', 'PROCESSING'] as const;
+const PURPOSE_LABEL: Record<Payment['purpose'], string> = {
+  DEPOSIT: 'Deposit',
+  BALANCE: 'Balance',
+  SAMPLE_FEE: 'Sample fee',
+  PAYOUT: 'Payout',
+  REFUND: 'Refund',
+  LOGISTICS: 'Shipping',
+  INSURANCE_RECOVERY: 'Insurance recovery',
+};
 const PROOF_MAX_BYTES = 10 * 1024 * 1024;
 
 const n = (v: bigint | number) => Number(v);
@@ -130,7 +138,6 @@ export class PaymentsService implements OnModuleInit {
 
   onModuleInit(): void {
     this.hooks.register({
-      before: (order, to, who) => this.beforeTransition(order, to, who),
       within: (tx, order, to) => this.onTransition(tx, order, to),
     });
   }
@@ -182,23 +189,6 @@ export class PaymentsService implements OnModuleInit {
       entityId: SCHEDULE_KEY,
       metadata: { schedule: value },
     });
-  }
-
-  // ── Order hooks ───────────────────────────────────────────────────────────
-
-  private async beforeTransition(order: OrderRow, to: OrderStatus, who: OrderActor): Promise<void> {
-    if (to === 'SHIPPED' && who !== 'ADMIN') {
-      const { balance } = await this.paid(
-        order.id,
-        order.buyerUnitPriceMinor,
-        order.quantity,
-        order.depositBps,
-      );
-      if (!balance)
-        throw new ConflictException(
-          'Waiting for the buyer’s balance: GarmentGate will tell you when it’s in',
-        );
-    }
   }
 
   /**
@@ -527,6 +517,71 @@ export class PaymentsService implements OnModuleInit {
       `Check the bank for ${order.buyerCompany.buyerProfile?.publicCode ?? ''}'s transfer`,
       { orderCode: order.code },
     );
+  }
+
+  // ── Other order charges (shipping) ────────────────────────────────────────
+
+  /** Starts (or resumes) paying a separate order charge, e.g. GarmentGate's shipping. */
+  async startOrderCharge(
+    order: { id: string; code: string; currency: Currency },
+    purpose: 'LOGISTICS',
+    amount: bigint,
+    method: PaymentMethod,
+  ): Promise<PaymentStart> {
+    if (amount <= 0n) throw new ConflictException('Already paid');
+    const provider = this.providerFor(method);
+    const open = await this.prisma.payment.findFirst({
+      where: { orderId: order.id, purpose, direction: 'INBOUND', status: { in: [...OPEN] } },
+    });
+    if (open?.status === 'PROCESSING')
+      throw new ConflictException('A payment is already on its way: we’ll confirm it shortly');
+    if (open?.method === method && open.amountMinor === amount && provider.id === 'manual')
+      return this.startResult(open, provider, order.code);
+    if (open)
+      await this.prisma.payment.update({ where: { id: open.id }, data: { status: 'CANCELLED' } });
+    const count = await this.prisma.payment.count({ where: { orderId: order.id, purpose } });
+    const payment = await this.prisma.payment.create({
+      data: {
+        orderId: order.id,
+        direction: 'INBOUND',
+        purpose,
+        amountMinor: amount,
+        currency: order.currency,
+        method,
+        provider: provider.id,
+        reference: `PAY-${order.code.slice(4)}-L${String(count + 1)}`,
+        status: 'PENDING',
+      },
+    });
+    return this.startResult(payment, provider, order.code);
+  }
+
+  /** Whether the order's balance (and so its deposit) is paid in full. */
+  async balancePaid(order: {
+    id: string;
+    buyerUnitPriceMinor: number;
+    quantity: number;
+    depositBps: number;
+  }): Promise<boolean> {
+    return (await this.paid(order.id, order.buyerUnitPriceMinor, order.quantity, order.depositBps))
+      .balance;
+  }
+
+  /** Succeeded payments for one purpose of an order, and whether a transfer awaits staff. */
+  async orderChargeState(
+    orderId: string,
+    purpose: 'LOGISTICS',
+  ): Promise<{ paid: bigint; pending: boolean }> {
+    const [sum, pending] = await Promise.all([
+      this.prisma.payment.aggregate({
+        where: { orderId, purpose, direction: 'INBOUND', status: 'SUCCEEDED' },
+        _sum: { amountMinor: true },
+      }),
+      this.prisma.payment.count({
+        where: { orderId, purpose, direction: 'INBOUND', status: 'PROCESSING' },
+      }),
+    ]);
+    return { paid: sum._sum.amountMinor ?? 0n, pending: pending > 0 };
   }
 
   // ── Capacity booking deposits ─────────────────────────────────────────────
@@ -890,7 +945,7 @@ export class PaymentsService implements OnModuleInit {
         capacityBookingId: payment.orderId ? null : payment.capacityBookingId,
         paymentId: payment.id,
         currency: payment.currency,
-        description: `${payment.purpose === 'DEPOSIT' ? 'Deposit' : 'Balance'} ${payment.reference ?? ''} received into escrow`,
+        description: `${PURPOSE_LABEL[payment.purpose]} ${payment.reference ?? ''} received into escrow`,
         rates,
         lines: [
           {
@@ -1679,6 +1734,13 @@ export class PaymentsService implements OnModuleInit {
 
   /** Trial balance and reconciliation: debits = credits, cash = escrow + payable + revenue, cash = payments in − out. */
   async balances(): Promise<LedgerBalances> {
+    const partners = new Map(
+      (
+        await this.prisma.logisticsPartner.findMany({
+          select: { id: true, code: true, name: true },
+        })
+      ).map((p) => [p.id, p]),
+    );
     const [accounts, rates, companies, payments] = await Promise.all([
       this.ledger.balances(),
       this.fx.rates(),
@@ -1720,7 +1782,8 @@ export class PaymentsService implements OnModuleInit {
           .reduce((x, a) => x + a.credit, 0n);
         const cash = sum(currency, 'PLATFORM_CASH');
         const escrow = sum(currency, 'BUYER_ESCROW');
-        const payable = sum(currency, 'MANUFACTURER_PAYABLE');
+        // Factories and logistics partners alike: what GarmentGate owes.
+        const payable = sum(currency, 'MANUFACTURER_PAYABLE') + sum(currency, 'PARTNER_PAYABLE');
         const revenue = sum(currency, 'PLATFORM_REVENUE');
         const paymentsIn =
           payments.find((p) => p.currency === currency && p.direction === 'INBOUND')?._sum
@@ -1744,23 +1807,28 @@ export class PaymentsService implements OnModuleInit {
       }),
       accounts: accounts.map((a) => {
         const company = a.companyId ? byId.get(a.companyId) : undefined;
+        const partner = a.logisticsPartnerId ? partners.get(a.logisticsPartnerId) : undefined;
         return {
           type: a.type,
           currency: a.currency,
-          party: company
-            ? {
-                code:
-                  company.buyerProfile?.publicCode ?? company.manufacturerProfile?.publicCode ?? '',
-                name: company.legalName,
-              }
-            : null,
+          party: partner
+            ? { code: partner.code, name: partner.name }
+            : company
+              ? {
+                  code:
+                    company.buyerProfile?.publicCode ??
+                    company.manufacturerProfile?.publicCode ??
+                    '',
+                  name: company.legalName,
+                }
+              : null,
           balanceMinor: n(a.balance),
         };
       }),
       totalsUsdMinor: {
         cash: n(usd('PLATFORM_CASH')),
         escrow: n(usd('BUYER_ESCROW')),
-        payable: n(usd('MANUFACTURER_PAYABLE')),
+        payable: n(usd('MANUFACTURER_PAYABLE') + usd('PARTNER_PAYABLE')),
         revenue: n(usd('PLATFORM_REVENUE')),
       },
       rates: Object.fromEntries(Object.entries(rates)),

@@ -34,6 +34,7 @@ const ICONS = {
   PRODUCTION: Factory,
   INSPECTION: ClipboardCheck,
   QC_FAILED: ClipboardX,
+  CHOOSE_SHIPPING: Truck,
   PAY_BALANCE: CreditCard,
   SHIP: Truck,
   IN_TRANSIT: Truck,
@@ -53,6 +54,7 @@ export function NextAction({
   latestSample,
   inspections = [],
   balancePaid,
+  shippingChosen,
   values,
   children,
 }: {
@@ -61,6 +63,8 @@ export function NextAction({
   latestSample: OrderSample | null;
   inspections?: Pick<OrderInspection, 'type' | 'result'>[];
   balancePaid?: boolean;
+  /** Whether the buyer chose how it ships (unknown: leave undefined). */
+  shippingChosen?: boolean;
   /** Values for the copy, e.g. the deposit amount or the stage in progress. */
   values?: Record<string, string>;
   /** Buttons for the action. */
@@ -69,7 +73,12 @@ export function NextAction({
   const t = useTranslations('orders.next');
   const finalInspection =
     inspections.filter((i) => i.type === 'PRE_SHIPMENT').at(-1)?.result ?? null;
-  const { step, owner } = nextStep(status, { latestSample, finalInspection, balancePaid });
+  const { step, owner } = nextStep(status, {
+    latestSample,
+    finalInspection,
+    balancePaid,
+    shippingChosen,
+  });
   const yours = owner === role || (role === 'ADMIN' && owner !== null);
   const Icon = step === 'DONE' && role !== 'BUYER' ? CheckCircle2 : ICONS[step];
   const who =

@@ -209,11 +209,6 @@ export class OrdersService {
           ? [{ id: i.reportFile.id, file: i.reportFile, type: 'INSPECTION_REPORT' }]
           : [],
       ),
-      ...(order.shipments[0]?.documents ?? []).map((d) => ({
-        id: d.fileId,
-        file: d.file,
-        type: d.type,
-      })),
     ];
     const entries = await Promise.all([
       ...media.map(async (m): Promise<[string, Link]> => {
@@ -305,50 +300,14 @@ export class OrdersService {
           }
           return {};
         }
-        case 'SHIPPED': {
-          const booked = order.shipments[0];
-          if (booked) {
-            if (!booked.trackingNumber && !booked.transportDocNo && !dto.shipment) {
-              throw new BadRequestException('Add the tracking or bill of lading number first');
-            }
-            await tx.shipment.update({
-              where: { id: booked.id },
-              data: {
-                status: 'IN_TRANSIT',
-                shippedAt: now,
-                ...(dto.shipment && {
-                  mode: dto.shipment.mode,
-                  carrier: filterContactDetails(dto.shipment.carrier).filtered,
-                  trackingNumber: dto.shipment.trackingNumber,
-                }),
-              },
-            });
-            return {};
-          }
-          if (!dto.shipment) throw new BadRequestException('Book the shipment first');
-          await tx.shipment.create({
-            data: {
-              orderId: order.id,
-              mode: dto.shipment.mode,
-              carrier: filterContactDetails(dto.shipment.carrier).filtered,
-              trackingNumber: dto.shipment.trackingNumber,
-              incoterm: order.incoterm,
-              status: 'IN_TRANSIT',
-              shippedAt: now,
-              destinationPort: order.destinationPort,
-            },
-          });
+        case 'SHIPPED':
+          // Orders ship when their GarmentGate shipment leaves the hub (TrackingService, through
+          // advance()); only a dispute resumes one that had already left.
+          if (order.status !== 'DISPUTED')
+            throw new ConflictException(
+              'Orders ship when their GarmentGate shipment leaves the hub',
+            );
           return {};
-        }
-        case 'DELIVERED': {
-          const shipment = order.shipments[0];
-          if (shipment)
-            await tx.shipment.update({
-              where: { id: shipment.id },
-              data: { status: 'DELIVERED', deliveredAt: now },
-            });
-          return {};
-        }
         case 'COMPLETED':
           return { completedAt: now, disputedFrom: null };
         case 'CANCELLED':

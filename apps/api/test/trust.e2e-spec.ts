@@ -125,6 +125,7 @@ describe('trust: notifications, disputes and reviews (e2e)', () => {
   let ctx: TestContext;
   let url = '';
   let admin: Agent;
+  let adminEmail = '';
   let buyer: Awaited<ReturnType<typeof party>>;
   let factory: Awaited<ReturnType<typeof party>>;
   let socket: Socket;
@@ -197,7 +198,8 @@ describe('trust: notifications, disputes and reviews (e2e)', () => {
     await ctx.app.listen(0);
     const server = ctx.app.getHttpServer() as unknown as { address(): AddressInfo };
     url = `http://127.0.0.1:${String(server.address().port)}`;
-    admin = (await login(ctx, await createAdmin(ctx.prisma))).agent;
+    adminEmail = await createAdmin(ctx.prisma);
+    admin = (await login(ctx, adminEmail)).agent;
     buyer = await party(ctx, 'BUYER');
     factory = await party(ctx, 'MANUFACTURER');
     socket = io(url, {
@@ -426,8 +428,28 @@ describe('trust: notifications, disputes and reviews (e2e)', () => {
       status: 'COMPLETED',
       completedAt: new Date(),
       requestedShipDate: new Date(Date.now() - 10 * DAY),
-      shipments: {
-        create: [{ mode: 'SEA', status: 'DELIVERED', shippedAt: new Date(Date.now() - 12 * DAY) }],
+      // At GarmentGate's hub two days before the requested ship date: on time.
+      hubReceipts: {
+        create: [
+          {
+            hub: {
+              create: {
+                code: `HUB-BD-9${String(Date.now()).slice(-1)}`,
+                name: 'Trust test hub',
+                country: 'BD',
+                city: 'Gazipur',
+                addressLine1: 'Shed 1',
+              },
+            },
+            receivedById: (
+              await ctx.prisma.user.findUniqueOrThrow({ where: { email: adminEmail } })
+            ).id,
+            cartonsExpected: 10,
+            cartonsReceived: 10,
+            condition: 'GOOD',
+            receivedAt: new Date(Date.now() - 12 * DAY),
+          },
+        ],
       },
       inspections: { create: [{ type: 'PRE_SHIPMENT', result: 'PASS', inspectedAt: new Date() }] },
     });

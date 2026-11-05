@@ -14,7 +14,6 @@ import {
 import { formatMoney } from '@/lib/format';
 import { purchaseOrderUrl, useAdminOrder } from '../api';
 import { InspectionsPanel } from '@/features/qc/components/inspections-panel';
-import { ShipmentPanel } from '@/features/qc/components/shipment-panel';
 import { useAdminDispute } from '@/features/trust/api';
 import { AdminDisputePanel } from '@/features/trust/components/dispute-panel';
 import { NextAction } from './next-action';
@@ -28,6 +27,7 @@ import {
   SummaryCard,
 } from './order-parts';
 import { OrderTimeline } from './order-timeline';
+import { HsCodeCard } from '@/features/logistics/components/hs-code-card';
 
 export function AdminOrderPage({ code }: { code: string }) {
   const t = useTranslations('orders');
@@ -135,14 +135,6 @@ export function AdminOrderPage({ code }: { code: string }) {
                   status={o.status}
                   inspections={o.inspections}
                 />
-              ) : key === 'shipping' ? (
-                <ShipmentPanel
-                  role="ADMIN"
-                  code={o.code}
-                  status={o.status}
-                  shipment={o.shipment}
-                  defaultIncoterm={o.incoterm}
-                />
               ) : null
             }
           />
@@ -167,6 +159,7 @@ export function AdminOrderPage({ code }: { code: string }) {
             ]}
           />
           <OrderFinanceCard code={o.code} />
+          <HsCodeCard code={o.code} hsCode={o.hsCode} />
           <Card size="sm">
             <CardHeader>
               <CardTitle>{t('history')}</CardTitle>

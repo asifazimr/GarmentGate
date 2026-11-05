@@ -58,7 +58,7 @@ import {
   useRejectPayment,
 } from '../api';
 
-const PURPOSES = ['DEPOSIT', 'BALANCE', 'REFUND', 'PAYOUT'] as const;
+const PURPOSES = ['DEPOSIT', 'BALANCE', 'REFUND', 'PAYOUT', 'LOGISTICS'] as const;
 
 type ToConfirm = FinanceInbox['toConfirm'][number];
 type ToRelease = FinanceInbox['toRelease'][number];

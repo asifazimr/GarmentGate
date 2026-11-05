@@ -10,6 +10,7 @@ import {
 } from '@garmentgate/shared';
 import { FileText, Loader2, Scale } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { ErrorState } from '@/components/patterns/error-state';
@@ -99,6 +100,7 @@ export function AdminDisputePanel({ code }: { code: string }) {
             </div>
           ) : null}
           {d.refundMinor ? <Refund minor={d.refundMinor} currency={d.currency} /> : null}
+          {d.logistics ? <LogisticsClaimHint dispute={d} logistics={d.logistics} /> : null}
           {isOpen(d) ? (
             <div className="flex flex-wrap gap-2 border-t pt-4">
               {d.status === 'OPEN' ? (
@@ -122,6 +124,46 @@ export function AdminDisputePanel({ code }: { code: string }) {
         </>
       )}
     </Panel>
+  );
+}
+
+/** Shipped with GarmentGate: transit losses are settled through a logistics claim. */
+function LogisticsClaimHint({
+  dispute: d,
+  logistics,
+}: {
+  dispute: AdminDispute;
+  logistics: NonNullable<AdminDispute['logistics']>;
+}) {
+  const t = useTranslations('trust.disputes.admin');
+  return (
+    <div className="bg-info-soft text-info-ink flex flex-wrap items-center justify-between gap-3 rounded-lg p-3 text-sm">
+      <p className="min-w-0 flex-1 basis-60">
+        {logistics.claim
+          ? t('claimLinked', { code: logistics.claim.code })
+          : t('claimHint', { shipment: logistics.shipmentCode })}
+      </p>
+      {logistics.claim ? (
+        <span className="flex items-center gap-2">
+          <StatusBadge domain="claim" status={logistics.claim.status} />
+          <Button size="sm" variant="outline" render={<Link href="/admin/logistics?tab=claims" />}>
+            {t('viewClaims')}
+          </Button>
+        </span>
+      ) : isOpen(d) ? (
+        <Button
+          size="sm"
+          variant="outline"
+          render={
+            <Link
+              href={`/admin/logistics/shipments/${logistics.shipmentCode}?claim=${d.orderCode}&dispute=${d.id}`}
+            />
+          }
+        >
+          {t('openClaim')}
+        </Button>
+      ) : null}
+    </div>
   );
 }
 

@@ -7,7 +7,16 @@ import { hash } from '@node-rs/argon2';
 import { commissionAmount, filterContactDetails } from '@garmentgate/shared';
 import { createPrismaClient } from '../../src/prisma/create-prisma-client.js';
 import type { Currency, Prisma } from '../../src/generated/prisma/client.js';
-import { ADMIN, BUYERS, CATEGORIES, DEMO_PASSWORD, INSPECTOR, MANUFACTURERS } from './data.js';
+import {
+  ADMIN,
+  BUYERS,
+  CATEGORIES,
+  DEMO_PASSWORD,
+  INSPECTOR,
+  LOGISTICS_PARTNER,
+  MANUFACTURERS,
+} from './data.js';
+import { seedLogistics } from './logistics.js';
 import { Meilisearch } from 'meilisearch';
 import { SearchIndexer } from '../../src/modules/search/search-indexer.js';
 import { seedDocument, seedImage } from './media.js';
@@ -975,8 +984,21 @@ async function main(): Promise<void> {
     ],
   });
 
+  await seedLogistics(prisma, {
+    admin: admin.id,
+    passwordHash,
+    buyer: northbound,
+    factory: meghna,
+    accounts: { cash: accounts.cash.id, escrow: accounts.escrow.id },
+  });
+
   // ── Code sequences continue after the seeded codes ────────────────────────
-  const sequences: Record<string, number> = { 'RFQ-2026': 42, 'ORD-2026': 17 };
+  const sequences: Record<string, number> = {
+    'RFQ-2026': 42,
+    'ORD-2026': 18,
+    LP: 2,
+    'SHP-2026': 1,
+  };
   for (const code of [
     ...MANUFACTURERS.map((m) => m.publicCode),
     ...BUYERS.map((b) => b.publicCode),
@@ -1088,7 +1110,7 @@ async function seedOrderLifecycle(p: {
         : p.admin,
     createdAt: daysFromNow(-130 + i * 12),
   }));
-  await prisma.order.create({
+  const order00009 = await prisma.order.create({
     data: {
       code: 'ORD-2026-00009',
       buyerCompanyId: p.northbound.companyId,
@@ -1136,19 +1158,6 @@ async function seedOrderLifecycle(p: {
             decidedAt: daysFromNow(-106),
             buyerFeedback: 'Approved.',
             buyerFeedbackFiltered: 'Approved.',
-          },
-        ],
-      },
-      shipments: {
-        create: [
-          {
-            mode: 'SEA',
-            status: 'DELIVERED',
-            carrier: 'Maersk',
-            trackingNumber: 'MAEU7716342',
-            destinationPort: 'Los Angeles',
-            shippedAt: daysFromNow(-46),
-            deliveredAt: daysFromNow(-24),
           },
         ],
       },
@@ -1202,6 +1211,63 @@ async function seedOrderLifecycle(p: {
             createdAt: daysFromNow(-19),
           },
         ],
+      },
+    },
+  });
+  // Shipped on Meghna's own booking, before GarmentGate logistics: kept as read-only history.
+  await prisma.logisticsShipment.create({
+    data: {
+      code: 'SHP-2026-00001',
+      historical: true,
+      buyerCompanyId: p.northbound.companyId,
+      mode: 'SEA_LCL',
+      incoterm: 'FOB',
+      status: 'DELIVERED',
+      shipperMode: 'GARMENT_GATE_EXPORTER',
+      originCountry: 'BD',
+      destinationCountry: 'US',
+      destinationPort: 'Los Angeles',
+      currency: 'USD',
+      buyerPriceMinor: 0n,
+      partnerCostMinor: 0n,
+      cartons: 0,
+      grossWeightGrams: 0,
+      volumeLitres: 0,
+      departedAt: daysFromNow(-46),
+      deliveredAt: daysFromNow(-24),
+      createdById: p.admin,
+      orders: {
+        create: {
+          orderId: order00009.id,
+          cartons: 0,
+          grossWeightGrams: 0,
+          volumeLitres: 0,
+          buyerShareMinor: 0n,
+          costShareMinor: 0n,
+        },
+      },
+      legs: {
+        create: {
+          sequence: 1,
+          kind: 'PORT_TO_PORT',
+          status: 'COMPLETED',
+          fromLabel: 'Origin',
+          toLabel: 'Los Angeles',
+          carrier: 'Maersk',
+          trackingNumber: 'MAEU7716342',
+          departedAt: daysFromNow(-46),
+          arrivedAt: daysFromNow(-24),
+        },
+      },
+      events: {
+        create: {
+          status: 'DELIVERED',
+          source: 'SYSTEM',
+          publicNote: "Shipped on the factory's booking, before GarmentGate logistics.",
+          internalNote: 'Converted from the retired factory-booked shipment.',
+          occurredAt: daysFromNow(-46),
+          createdById: p.admin,
+        },
       },
     },
   });
@@ -1395,6 +1461,7 @@ function printLogins(): void {
   const rows = [
     ['ADMIN', ADMIN.email, '—'],
     ['INSPECTOR', INSPECTOR.email, '—'],
+    ['PARTNER', LOGISTICS_PARTNER.email, 'Bayline Cargo'],
     ...MANUFACTURERS.map((m) => ['MANUFACTURER', m.owner.email, `${m.publicCode} (${m.kyc})`]),
     ...BUYERS.map((b) => ['BUYER', b.owner.email, `${b.publicCode} (${b.kyc})`]),
   ];

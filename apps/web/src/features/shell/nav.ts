@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Shirt,
   Users,
+  Truck,
   Wallet,
 } from 'lucide-react';
 
@@ -52,9 +53,11 @@ export type NavLabel =
   | 'claims'
   | 'bookCapacity'
   | 'capacityBooking'
+  | 'logistics'
   | 'payments'
   | 'users'
-  | 'audit';
+  | 'audit'
+  | 'bookings';
 
 export interface NavItem {
   href: string;
@@ -101,6 +104,12 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/admin/orders', label: 'orders', icon: Package, primary: true, built: true },
     { href: '/admin/payments', label: 'payments', icon: Wallet, primary: true, built: true },
     { href: '/admin/capacity', label: 'capacityBooking', icon: CalendarClock, built: true },
+    {
+      href: '/admin/logistics',
+      label: 'logistics',
+      icon: Truck,
+      built: true,
+    },
     { href: '/admin/disputes', label: 'disputes', icon: Scale, built: true },
     { href: '/admin/messages', label: 'messages', icon: MessageSquare, primary: true, built: true },
     { href: '/admin/moderation', label: 'moderation', icon: ShieldAlert, built: true },
@@ -120,6 +129,10 @@ export const NAV: Record<Role, NavItem[]> = {
       built: true,
     },
     { href: '/inspector/settings', label: 'settings', icon: Settings, primary: true, built: true },
+  ],
+  PARTNER: [
+    { href: '/partner', label: 'bookings', icon: Truck, primary: true, built: true },
+    { href: '/partner/settings', label: 'settings', icon: Settings, primary: true, built: true },
   ],
 };
 

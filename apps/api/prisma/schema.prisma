@@ -29,6 +29,8 @@ enum Role {
   ADMIN
   /// GarmentGate's QC inspectors: staff-side, no company.
   INSPECTOR
+  /// Staff of a logistics partner: sees only GarmentGate's bookings for that partner.
+  PARTNER
 }
 
 enum UserStatus {
@@ -268,6 +270,10 @@ enum PaymentPurpose {
   SAMPLE_FEE
   PAYOUT
   REFUND
+  /// Freight, insurance and (DDP) duties GarmentGate charges for shipping an order.
+  LOGISTICS
+  /// Money an insurer paid GarmentGate on a logistics claim.
+  INSURANCE_RECOVERY
 }
 
 enum PaymentMethod {
@@ -289,6 +295,8 @@ enum LedgerAccountType {
   BUYER_ESCROW
   MANUFACTURER_PAYABLE
   PLATFORM_REVENUE
+  /// What GarmentGate owes a logistics partner (per partner).
+  PARTNER_PAYABLE
 }
 
 enum LedgerTransactionKind {
@@ -298,6 +306,8 @@ enum LedgerTransactionKind {
   REFUND
   COMMISSION
   PAYOUT
+  /// Logistics claims: compensation, insurer recovery, partner chargeback.
+  CLAIM
 }
 
 enum EntryDirection {
@@ -317,34 +327,6 @@ enum InspectionResult {
   PASS
   FAIL
   ON_HOLD
-}
-
-enum ShipmentMode {
-  SEA
-  AIR
-  ROAD
-  RAIL
-  COURIER
-}
-
-enum ShipmentStatus {
-  PENDING
-  BOOKED
-  IN_TRANSIT
-  AT_PORT
-  CUSTOMS
-  DELIVERED
-  EXCEPTION
-}
-
-enum ShipmentDocumentType {
-  COMMERCIAL_INVOICE
-  PACKING_LIST
-  BILL_OF_LADING
-  AIRWAY_BILL
-  CERTIFICATE_OF_ORIGIN
-  INSPECTION_CERTIFICATE
-  OTHER
 }
 
 enum ReviewStatus {
@@ -422,8 +404,11 @@ enum FilePurpose {
   SAMPLE_PHOTO
   PAYMENT_PROOF
   INSPECTION_REPORT
+  /// Legacy: papers of the retired factory-booked shipments (now logistics uploads).
   SHIPMENT_DOCUMENT
   INSPECTION_PHOTO
+  HUB_PHOTO
+  LOGISTICS_DOCUMENT
   DISPUTE_EVIDENCE
   SUPPLIER_CLAIM_EVIDENCE
   AVATAR
@@ -461,27 +446,29 @@ enum ScanStatus {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model User {
-  id              String       @id @default(uuid(7)) @db.Uuid
+  id                 String       @id @default(uuid(7)) @db.Uuid
   /// Always stored lowercased and trimmed.
-  email           String       @unique
-  passwordHash    String
-  role            Role
-  status          UserStatus   @default(ACTIVE)
-  locale          String       @default("en")
+  email              String       @unique
+  passwordHash       String
+  role               Role
+  /// PARTNER users: the logistics partner they work for.
+  logisticsPartnerId String?      @db.Uuid
+  status             UserStatus   @default(ACTIVE)
+  locale             String       @default("en")
   /// Show amounts converted to this currency too (null: only the transaction's own currency).
-  displayCurrency Currency?
-  firstName       String
-  lastName        String
-  emailVerifiedAt DateTime?
-  lastLoginAt     DateTime?
+  displayCurrency    Currency?
+  firstName          String
+  lastName           String
+  emailVerifiedAt    DateTime?
+  lastLoginAt        DateTime?
   /// Why staff suspended the account (shown to staff only).
-  suspendedReason String?
-  suspendedAt     DateTime?
-  companyId       String?      @db.Uuid
-  companyRole     CompanyRole?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  deletedAt       DateTime?
+  suspendedReason    String?
+  suspendedAt        DateTime?
+  companyId          String?      @db.Uuid
+  companyRole        CompanyRole?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  deletedAt          DateTime?
 
   company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
@@ -494,6 +481,7 @@ model User {
   messagesSent                Message[]
   rfqsCreated                 Rfq[]
   capacityBookingsCreated     CapacityBooking[]         @relation("CapacityBookingCreatedBy")
+  logisticsPartner            LogisticsPartner?         @relation(fields: [logisticsPartnerId], references: [id], onDelete: SetNull)
   capacityPartnershipsCreated CapacityPartnership[]     @relation("CapacityPartnershipCreatedBy")
   quotesPriced                Quote[]                   @relation("QuotePricedBy")
   kycReviews                  Company[]                 @relation("KycReviewedBy")
@@ -605,6 +593,8 @@ model Company {
   ordersAsBuyer        Order[]
   capacityBookings     CapacityBooking[]
   capacityPartnerships CapacityPartnership[]
+  consolidations       Consolidation[]
+  logisticsShipments   LogisticsShipment[]
   marginRules          MarginRule[]
   ledgerAccounts       LedgerAccount[]
   conversations        Conversation[]
@@ -1126,6 +1116,8 @@ model Order {
   manufacturerProfileId      String       @db.Uuid
   rfqId                      String?      @db.Uuid
   quoteId                    String?      @unique @db.Uuid
+  /// Harmonized System code (6–10 digits) for documents and duty estimates; set by staff.
+  hsCode                     String?
   title                      String
   specification              String?
   quantity                   Int
@@ -1159,11 +1151,16 @@ model Order {
   createdAt                  DateTime     @default(now())
   updatedAt                  DateTime     @updatedAt
 
-  buyerCompany        Company             @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
-  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Restrict)
-  rfq                 Rfq?                @relation(fields: [rfqId], references: [id], onDelete: SetNull)
+  buyerCompany        Company                  @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
+  manufacturerProfile ManufacturerProfile      @relation(fields: [manufacturerProfileId], references: [id], onDelete: Restrict)
+  rfq                 Rfq?                     @relation(fields: [rfqId], references: [id], onDelete: SetNull)
   capacityBooking     CapacityBooking?
-  quote               Quote?              @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  logisticsQuotes     LogisticsQuote[]
+  packing             OrderPacking?
+  pickups             PickupRequest[]
+  hubReceipts         HubReceipt[]
+  logisticsShipments  LogisticsShipmentOrder[]
+  quote               Quote?                   @relation(fields: [quoteId], references: [id], onDelete: SetNull)
 
   items              OrderItem[]
   milestones         OrderMilestone[]
@@ -1171,9 +1168,9 @@ model Order {
   payments           Payment[]
   ledgerTransactions LedgerTransaction[]
   inspections        Inspection[]
-  shipments          Shipment[]
   reviews            Review[]
   disputes           Dispute[]
+  logisticsClaims    LogisticsClaim[]
   conversations      Conversation[]
   releases           OrderRelease[]
   events             OrderEvent[]
@@ -1285,6 +1282,8 @@ model Payment {
   /// Order payments. Booking deposits have capacityBookingId instead (both once the booking became an order).
   orderId               String?          @db.Uuid
   capacityBookingId     String?          @db.Uuid
+  /// Logistics partner payouts are tied to the shipment they pay for.
+  logisticsShipmentId   String?          @db.Uuid
   /// Human reference the payer quotes, e.g. PAY-ORD-2026-00017-D1.
   reference             String?          @unique
   /// What the payer says they used (their bank reference); unverified.
@@ -1312,12 +1311,13 @@ model Payment {
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
 
-  order           Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  capacityBooking CapacityBooking?    @relation(fields: [capacityBookingId], references: [id], onDelete: Restrict)
-  transactions    LedgerTransaction[]
-  proofFile       FileAsset?          @relation(fields: [proofFileId], references: [id], onDelete: Restrict)
-  confirmedBy     User?               @relation("PaymentConfirmedBy", fields: [confirmedById], references: [id], onDelete: SetNull)
-  release         OrderRelease?       @relation(fields: [releaseId], references: [id], onDelete: Restrict)
+  order             Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  capacityBooking   CapacityBooking?    @relation(fields: [capacityBookingId], references: [id], onDelete: Restrict)
+  logisticsShipment LogisticsShipment?  @relation(fields: [logisticsShipmentId], references: [id], onDelete: Restrict)
+  transactions      LedgerTransaction[]
+  proofFile         FileAsset?          @relation(fields: [proofFileId], references: [id], onDelete: Restrict)
+  confirmedBy       User?               @relation("PaymentConfirmedBy", fields: [confirmedById], references: [id], onDelete: SetNull)
+  release           OrderRelease?       @relation(fields: [releaseId], references: [id], onDelete: Restrict)
 
   @@index([orderId, status])
   @@index([capacityBookingId, status])
@@ -1333,8 +1333,11 @@ model LedgerAccount {
   currency  Currency
   createdAt DateTime          @default(now())
 
-  company Company?            @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  entries EscrowLedgerEntry[]
+  logisticsPartnerId String? @db.Uuid
+
+  company          Company?            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  logisticsPartner LogisticsPartner?   @relation(fields: [logisticsPartnerId], references: [id], onDelete: Restrict)
+  entries          EscrowLedgerEntry[]
 
   @@unique([type, companyId, currency])
   @@map("ledger_accounts")
@@ -1443,56 +1446,6 @@ model InspectionPhoto {
   @@map("inspection_photos")
 }
 
-model Shipment {
-  id              String         @id @default(uuid(7)) @db.Uuid
-  orderId         String         @db.Uuid
-  mode            ShipmentMode
-  status          ShipmentStatus @default(PENDING)
-  incoterm        Incoterm?
-  /// Freight forwarder handling the booking.
-  forwarder       String?
-  carrier         String?
-  trackingNumber  String?
-  containerNumber String?
-  /// Bill of lading or air waybill number
-  transportDocNo  String?
-  originPort      String?
-  destinationPort String?
-  cartons         Int?
-  grossWeightKg   Int?
-  etd             DateTime?
-  eta             DateTime?
-  shippedAt       DateTime?
-  deliveredAt     DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-
-  order     Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  documents ShipmentDocument[]
-
-  /// One shipment per order.
-  @@unique([orderId], map: "shipments_one_per_order")
-  @@index([trackingNumber])
-  @@index([status, eta])
-  @@map("shipments")
-}
-
-model ShipmentDocument {
-  id           String               @id @default(uuid(7)) @db.Uuid
-  shipmentId   String               @db.Uuid
-  fileId       String               @unique @db.Uuid
-  type         ShipmentDocumentType
-  /// Manufacturer-issued papers name the factory; buyers get platform-issued versions.
-  buyerVisible Boolean              @default(false)
-  createdAt    DateTime             @default(now())
-
-  shipment Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
-  file     FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
-
-  @@index([shipmentId])
-  @@map("shipment_documents")
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Trust and operations
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1544,13 +1497,15 @@ model Dispute {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  order      Order             @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  openedBy   User              @relation("DisputeOpenedBy", fields: [openedById], references: [id], onDelete: Restrict)
-  assignedTo User?             @relation("DisputeAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
-  resolvedBy User?             @relation("DisputeResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
-  evidence   DisputeEvidence[]
+  order          Order             @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  openedBy       User              @relation("DisputeOpenedBy", fields: [openedById], references: [id], onDelete: Restrict)
+  assignedTo     User?             @relation("DisputeAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  resolvedBy     User?             @relation("DisputeResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  evidence       DisputeEvidence[]
   /// Mediation threads: one with the buyer, one with the factory.
-  threads    Conversation[]
+  threads        Conversation[]
+  /// A logistics insurance claim staff opened for this dispute.
+  logisticsClaim LogisticsClaim?
 
   @@index([orderId])
   @@index([status, createdAt])
@@ -1672,7 +1627,8 @@ model FileAsset {
   milestonePhoto    MilestonePhoto?
   inspectionReport  Inspection?
   inspectionPhoto   InspectionPhoto?
-  shipmentDocument  ShipmentDocument?
+  hubReceiptPhoto   HubReceiptPhoto?
+  shipmentUpload    ShipmentUpload?
   disputeEvidence   DisputeEvidence?
 
   samplePhoto SamplePhoto?
@@ -2146,4 +2102,630 @@ model CapacityPartnership {
   @@index([buyerCompanyId, status])
   @@index([manufacturerProfileId, status])
   @@map("capacity_partnerships")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Logistics (GarmentGate is the shipper: partners only ever see GarmentGate as the customer)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum LogisticsMode {
+  SAMPLE_COURIER
+  DOMESTIC
+  SEA_FCL
+  SEA_LCL
+  AIR
+  /// Door to door, duties paid by GarmentGate and recharged.
+  DDP
+  /// FCA at a GarmentGate hub: the buyer's own forwarder collects there. No freight charge.
+  HANDOVER
+}
+
+enum LogisticsPartnerKind {
+  FORWARDER
+  COURIER
+  TRUCKING
+  CUSTOMS_BROKER
+}
+
+enum RateUnit {
+  /// Chargeable weight: the greater of actual and volumetric weight.
+  PER_KG
+  /// Weight or measure: the greater of CBM and metric tonnes.
+  PER_CBM
+  PER_CONTAINER
+  FLAT
+}
+
+enum ContainerType {
+  GP20
+  GP40
+  HC40
+}
+
+enum HubOperator {
+  GARMENT_GATE
+  PARTNER
+}
+
+/// A forwarder, courier, trucker or customs broker GarmentGate contracts with.
+model LogisticsPartner {
+  id           String               @id @default(uuid(7)) @db.Uuid
+  /// e.g. LP-0007
+  code         String               @unique
+  name         String
+  kind         LogisticsPartnerKind
+  /// ISO 3166-1 alpha-2
+  country      String               @db.Char(2)
+  contactEmail String?
+  contactPhone String?
+  notes        String?
+  active       Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  rateCards      RateCard[]
+  hubs           Hub[]
+  pickups        PickupRequest[]
+  legs           ShipmentLeg[]
+  users          User[]
+  ledgerAccounts LedgerAccount[]
+
+  @@index([kind, active])
+  @@map("logistics_partners")
+}
+
+/// A warehouse where factories deliver and GarmentGate receives, checks, repacks and ships.
+model Hub {
+  id           String      @id @default(uuid(7)) @db.Uuid
+  /// e.g. HUB-BD-01
+  code         String      @unique
+  name         String
+  operator     HubOperator @default(GARMENT_GATE)
+  partnerId    String?     @db.Uuid
+  country      String      @db.Char(2)
+  city         String
+  addressLine1 String
+  addressLine2 String?
+  postalCode   String?
+  /// UN/LOCODE of the nearest port or airport (e.g. BDCGP).
+  port         String?
+  active       Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  partner   LogisticsPartner?   @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  pickups   PickupRequest[]
+  receipts  HubReceipt[]
+  shipments LogisticsShipment[]
+
+  @@index([country, active])
+  @@map("hubs")
+}
+
+/// What a partner charges GarmentGate on a route, per unit, for a period. STAFF ONLY.
+model RateCard {
+  id                 String         @id @default(uuid(7)) @db.Uuid
+  partnerId          String         @db.Uuid
+  mode               LogisticsMode
+  originCountry      String         @db.Char(2)
+  /// UN/LOCODE; null = any port in the country.
+  originPort         String?
+  destinationCountry String         @db.Char(2)
+  destinationPort    String?
+  unit               RateUnit
+  containerType      ContainerType?
+  /// Minor units of `currency` per unit.
+  costMinor          Int
+  minChargeMinor     Int            @default(0)
+  currency           Currency       @default(USD)
+  transitDaysMin     Int
+  transitDaysMax     Int
+  validFrom          DateTime       @db.Date
+  validTo            DateTime       @db.Date
+  active             Boolean        @default(true)
+  notes              String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  partner LogisticsPartner @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+
+  @@index([mode, originCountry, destinationCountry, active])
+  @@index([partnerId])
+  @@map("rate_cards")
+}
+
+/// GarmentGate's markup on freight, by mode and route. The most specific active rule wins.
+model LogisticsMarginRule {
+  id                 String         @id @default(uuid(7)) @db.Uuid
+  name               String
+  /// null = every mode / country.
+  mode               LogisticsMode?
+  originCountry      String?        @db.Char(2)
+  destinationCountry String?        @db.Char(2)
+  markupBps          Int
+  /// At least this much margin per shipment, in minor units of the shipment's currency.
+  minMarginMinor     Int            @default(0)
+  active             Boolean        @default(true)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@map("logistics_margin_rules")
+}
+
+/// Import duty by HS code prefix and destination country, for landed-cost ESTIMATES only.
+model DutyRate {
+  id                 String   @id @default(uuid(7)) @db.Uuid
+  /// 2–10 digits; the longest matching prefix wins.
+  hsPrefix           String
+  destinationCountry String   @db.Char(2)
+  rateBps            Int
+  note               String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([hsPrefix, destinationCountry])
+  @@map("duty_rates")
+}
+
+enum LogisticsQuoteStatus {
+  OFFERED
+  ACCEPTED
+  /// Replaced by a newer quote or choice before it was paid.
+  SUPERSEDED
+}
+
+/**
+ * A shipping price offered to the buyer for one order, locked when offered. Partner cost and
+ * margin are STAFF ONLY; the buyer sees freight, insurance, duty estimate and total.
+ */
+model LogisticsQuote {
+  id                 String               @id @default(uuid(7)) @db.Uuid
+  orderId            String               @db.Uuid
+  status             LogisticsQuoteStatus @default(OFFERED)
+  mode               LogisticsMode
+  incoterm           Incoterm
+  originCountry      String               @db.Char(2)
+  destinationCountry String               @db.Char(2)
+  destinationPort    String?
+  insured            Boolean
+  /// The cargo the price is based on (estimated from the quantity until the factory packs).
+  weightGrams        Int
+  volumeLitres       Int
+  cargoEstimated     Boolean
+  provider           String
+  rateCardId         String?              @db.Uuid
+  partnerId          String?              @db.Uuid
+  marginRuleName     String?
+  currency           Currency
+  partnerCostMinor   BigInt
+  freightMinor       BigInt
+  insuranceMinor     BigInt
+  /// DDP only: GarmentGate pays import duty and recharges this estimate.
+  dutyEstimateMinor  BigInt               @default(0)
+  totalMinor         BigInt
+  transitDaysMin     Int
+  transitDaysMax     Int
+  validUntil         DateTime
+  acceptedAt         DateTime?
+  createdAt          DateTime             @default(now())
+
+  consolidationId String? @db.Uuid
+
+  /// HANDOVER only: the buyer's forwarder. Staff use it to arrange the collection; never sent
+  /// to the factory or partners.
+  forwarderName      String?
+  forwarderContact   String?
+  forwarderReference String?
+
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  consolidation Consolidation? @relation(fields: [consolidationId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, status])
+  @@map("logistics_quotes")
+}
+
+enum PickupStatus {
+  REQUESTED
+  SCHEDULED
+  COLLECTED
+  RECEIVED
+  CANCELLED
+}
+
+enum HubReceiptCondition {
+  GOOD
+  DAMAGED
+  SHORT
+  OVER
+}
+
+enum LogisticsShipmentStatus {
+  PLANNED
+  BOOKED
+  IN_TRANSIT
+  AT_DESTINATION
+  CUSTOMS
+  OUT_FOR_DELIVERY
+  DELIVERED
+  EXCEPTION
+  CANCELLED
+}
+
+enum ShipmentLegKind {
+  FACTORY_TO_HUB
+  HUB_TO_PORT
+  PORT_TO_PORT
+  PORT_TO_BUYER
+  /// GarmentGate hands the cargo to the buyer's forwarder at the hub.
+  HUB_HANDOVER
+}
+
+enum ShipmentLegStatus {
+  PENDING
+  BOOKED
+  IN_TRANSIT
+  COMPLETED
+  CANCELLED
+}
+
+enum LogisticsDocumentType {
+  COMMERCIAL_INVOICE
+  PACKING_LIST
+  BILL_OF_LADING
+  /// SWITCH_BL mode: the first B/L names the factory as shipper and stays with staff.
+  ORIGINAL_BILL_OF_LADING
+  CERTIFICATE_OF_ORIGIN
+  INSURANCE_CERTIFICATE
+  SHIPPING_LABEL
+  CARTON_MARKING
+}
+
+enum ShipmentEventSource {
+  STAFF
+  PARTNER
+  FACTORY
+  SYSTEM
+}
+
+/// What the factory packed: the real cargo, replacing the estimate from the quantity.
+model OrderPacking {
+  id               String   @id @default(uuid(7)) @db.Uuid
+  orderId          String   @unique @db.Uuid
+  cartons          Int
+  piecesPerCarton  Int?
+  grossWeightGrams Int
+  netWeightGrams   Int?
+  volumeLitres     Int
+  /// Carton outer dimensions, when all cartons are the same.
+  cartonLengthCm   Int?
+  cartonWidthCm    Int?
+  cartonHeightCm   Int?
+  updatedById      String   @db.Uuid
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_packings")
+}
+
+/// The factory asks GarmentGate to collect the goods and take them to a hub (never anywhere else).
+model PickupRequest {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  orderId      String       @db.Uuid
+  hubId        String       @db.Uuid
+  pickupDate   DateTime     @db.Date
+  status       PickupStatus @default(REQUESTED)
+  /// Trucker GarmentGate assigned (staff only).
+  partnerId    String?      @db.Uuid
+  note         String?
+  noteFiltered String?
+  scheduledAt  DateTime?
+  collectedAt  DateTime?
+  createdById  String       @db.Uuid
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  order    Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  hub      Hub               @relation(fields: [hubId], references: [id], onDelete: Restrict)
+  partner  LogisticsPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  receipts HubReceipt[]
+
+  @@index([orderId, status])
+  @@index([hubId, status, pickupDate])
+  @@map("pickup_requests")
+}
+
+/// What arrived at a hub: counted, checked, possibly repacked and relabelled.
+model HubReceipt {
+  id               String              @id @default(uuid(7)) @db.Uuid
+  hubId            String              @db.Uuid
+  orderId          String              @db.Uuid
+  pickupId         String?             @db.Uuid
+  receivedById     String              @db.Uuid
+  receivedAt       DateTime            @default(now())
+  cartonsExpected  Int
+  cartonsReceived  Int
+  grossWeightGrams Int?
+  condition        HubReceiptCondition
+  repacked         Boolean             @default(false)
+  relabelled       Boolean             @default(false)
+  notes            String?
+
+  hub    Hub               @relation(fields: [hubId], references: [id], onDelete: Restrict)
+  order  Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  pickup PickupRequest?    @relation(fields: [pickupId], references: [id], onDelete: SetNull)
+  photos HubReceiptPhoto[]
+
+  @@index([orderId])
+  @@index([hubId, receivedAt])
+  @@map("hub_receipts")
+}
+
+model HubReceiptPhoto {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  receiptId String   @db.Uuid
+  fileId    String   @unique @db.Uuid
+  createdAt DateTime @default(now())
+
+  receipt HubReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  file    FileAsset  @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@map("hub_receipt_photos")
+}
+
+/// One buyer's orders shipped together: one price for the combined cargo, split by weight.
+model Consolidation {
+  id                 String        @id @default(uuid(7)) @db.Uuid
+  /// e.g. CON-2026-00004
+  code               String        @unique
+  buyerCompanyId     String        @db.Uuid
+  mode               LogisticsMode
+  destinationCountry String        @db.Char(2)
+  currency           Currency
+  /// What the orders would have cost shipped one by one, and together.
+  separateTotalMinor BigInt
+  combinedTotalMinor BigInt
+  createdAt          DateTime      @default(now())
+
+  buyerCompany Company             @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
+  quotes       LogisticsQuote[]
+  shipments    LogisticsShipment[]
+
+  @@index([buyerCompanyId])
+  @@map("consolidations")
+}
+
+/// A movement GarmentGate runs, carrying one or more orders of one buyer, in legs.
+model LogisticsShipment {
+  id                 String                  @id @default(uuid(7)) @db.Uuid
+  /// e.g. SHP-2026-00012: the only reference on labels, markings and partner documents.
+  code               String                  @unique
+  buyerCompanyId     String                  @db.Uuid
+  mode               LogisticsMode
+  incoterm           Incoterm
+  status             LogisticsShipmentStatus @default(PLANNED)
+  shipperMode        String
+  originHubId        String?                 @db.Uuid
+  originCountry      String                  @db.Char(2)
+  destinationCountry String                  @db.Char(2)
+  destinationPort    String?
+  consolidationId    String?                 @db.Uuid
+  currency           Currency
+  /// What the buyer(s) paid for this movement, and what partners are expected to cost.
+  buyerPriceMinor    BigInt
+  partnerCostMinor   BigInt
+  insuranceMinor     BigInt                  @default(0)
+  cartons            Int
+  grossWeightGrams   Int
+  volumeLitres       Int
+  etd                DateTime?
+  eta                DateTime?
+  departedAt         DateTime?
+  deliveredAt        DateTime?
+  /// Converted from a factory-booked shipment (before GarmentGate logistics): read-only history.
+  historical         Boolean                 @default(false)
+  createdById        String                  @db.Uuid
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  buyerCompany  Company                  @relation(fields: [buyerCompanyId], references: [id], onDelete: Restrict)
+  originHub     Hub?                     @relation(fields: [originHubId], references: [id], onDelete: SetNull)
+  consolidation Consolidation?           @relation(fields: [consolidationId], references: [id], onDelete: SetNull)
+  orders        LogisticsShipmentOrder[]
+  legs          ShipmentLeg[]
+  events        ShipmentEvent[]
+  documents     LogisticsDocument[]
+  uploads       ShipmentUpload[]
+  payments      Payment[]
+  claims        LogisticsClaim[]
+
+  @@index([buyerCompanyId, status])
+  @@index([status, eta])
+  @@map("logistics_shipments")
+}
+
+model LogisticsShipmentOrder {
+  shipmentId       String  @db.Uuid
+  orderId          String  @db.Uuid
+  /// False once the order is taken off the shipment (it can then join another).
+  active           Boolean @default(true)
+  cartons          Int
+  grossWeightGrams Int
+  volumeLitres     Int
+  /// This order's share of the shipment's buyer price and partner cost.
+  buyerShareMinor  BigInt
+  costShareMinor   BigInt
+
+  shipment LogisticsShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  order    Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@id([shipmentId, orderId])
+  @@index([orderId])
+  @@map("logistics_shipment_orders")
+}
+
+model ShipmentLeg {
+  id              String            @id @default(uuid(7)) @db.Uuid
+  shipmentId      String            @db.Uuid
+  sequence        Int
+  kind            ShipmentLegKind
+  status          ShipmentLegStatus @default(PENDING)
+  partnerId       String?           @db.Uuid
+  /// Neutral labels only: hub codes, port codes, "Destination".
+  fromLabel       String
+  toLabel         String
+  carrier         String?
+  trackingNumber  String?
+  containerNumber String?
+  transportDocNo  String?
+  costMinor       BigInt?
+  etd             DateTime?
+  eta             DateTime?
+  departedAt      DateTime?
+  arrivedAt       DateTime?
+  /// The partner accepted the booking.
+  acceptedAt      DateTime?
+  /// GarmentGate paid the partner for this leg.
+  paidAt          DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  shipment LogisticsShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  partner  LogisticsPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  events   ShipmentEvent[]
+  uploads  ShipmentUpload[]
+  claims   LogisticsClaim[]
+
+  @@unique([shipmentId, sequence])
+  @@index([partnerId, status])
+  @@index([trackingNumber])
+  @@map("shipment_legs")
+}
+
+/// The tracking timeline. `publicNote` is filtered and scrubbed; `internalNote` is staff only.
+model ShipmentEvent {
+  id           String                   @id @default(uuid(7)) @db.Uuid
+  shipmentId   String                   @db.Uuid
+  legId        String?                  @db.Uuid
+  status       LogisticsShipmentStatus?
+  source       ShipmentEventSource
+  location     String?
+  publicNote   String?
+  internalNote String?
+  occurredAt   DateTime
+  createdById  String?                  @db.Uuid
+  createdAt    DateTime                 @default(now())
+
+  shipment LogisticsShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  leg      ShipmentLeg?      @relation(fields: [legId], references: [id], onDelete: SetNull)
+
+  @@index([shipmentId, occurredAt])
+  @@map("shipment_events")
+}
+
+/// Documents GarmentGate issued for a shipment (rendered on request; the number is kept).
+model LogisticsDocument {
+  id         String                @id @default(uuid(7)) @db.Uuid
+  shipmentId String                @db.Uuid
+  type       LogisticsDocumentType
+  /// e.g. SHP-2026-00012-CI
+  number     String                @unique
+  issuedById String?               @db.Uuid
+  createdAt  DateTime              @default(now())
+
+  shipment LogisticsShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@index([shipmentId])
+  @@map("logistics_documents")
+}
+
+enum ShipmentUploadKind {
+  BILL_OF_LADING
+  AIRWAY_BILL
+  PROOF_OF_DELIVERY
+  PHOTO
+  OTHER
+}
+
+/// Papers and photos a partner (or staff) uploads for a shipment. STAFF ONLY until reviewed.
+model ShipmentUpload {
+  id            String             @id @default(uuid(7)) @db.Uuid
+  shipmentId    String             @db.Uuid
+  legId         String?            @db.Uuid
+  fileId        String             @unique @db.Uuid
+  kind          ShipmentUploadKind
+  uploadedById  String             @db.Uuid
+  /// Staff published the sanitized copy (or photo renditions) to the buyer.
+  buyerVisible  Boolean            @default(false)
+  publishedAt   DateTime?
+  publishedById String?            @db.Uuid
+  createdAt     DateTime           @default(now())
+
+  shipment LogisticsShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  leg      ShipmentLeg?      @relation(fields: [legId], references: [id], onDelete: SetNull)
+  file     FileAsset         @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([shipmentId])
+  @@map("shipment_uploads")
+}
+
+enum LogisticsClaimType {
+  LOSS
+  DAMAGE
+  SHORTAGE
+  DELAY
+}
+
+enum LogisticsClaimStatus {
+  OPEN
+  SUBMITTED
+  SETTLED
+  REJECTED
+}
+
+/**
+ * Something went wrong with an order in GarmentGate's care. Staff open it (often from the
+ * buyer's dispute), submit it to the cargo insurer, then settle: compensation to the buyer,
+ * recovery from the insurer (capped at the insured value), chargeback to the liable partner.
+ */
+model LogisticsClaim {
+  id                     String               @id @default(uuid(7)) @db.Uuid
+  /// e.g. CLM-2026-00004
+  code                   String               @unique
+  shipmentId             String               @db.Uuid
+  orderId                String               @db.Uuid
+  disputeId              String?              @unique @db.Uuid
+  /// The leg the loss happened on (its partner can be charged back).
+  legId                  String?              @db.Uuid
+  type                   LogisticsClaimType
+  status                 LogisticsClaimStatus @default(OPEN)
+  /// Staff only.
+  description            String
+  /// What the buyer reads: filtered and scrubbed.
+  publicNote             String?
+  currency               Currency
+  claimedMinor           BigInt
+  /// 110% of CIF when the order was insured, else 0 (snapshot when opened).
+  insuredValueMinor      BigInt
+  insurerReference       String?
+  compensationMinor      BigInt               @default(0)
+  insurerRecoveryMinor   BigInt               @default(0)
+  partnerChargebackMinor BigInt               @default(0)
+  resolution             String?
+  createdById            String               @db.Uuid
+  settledById            String?              @db.Uuid
+  settledAt              DateTime?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+
+  shipment LogisticsShipment @relation(fields: [shipmentId], references: [id], onDelete: Restrict)
+  order    Order             @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  dispute  Dispute?          @relation(fields: [disputeId], references: [id], onDelete: SetNull)
+  leg      ShipmentLeg?      @relation(fields: [legId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([shipmentId])
+  @@index([status, createdAt])
+  @@map("logistics_claims")
 }

@@ -11,9 +11,11 @@ import { countryName } from '@/lib/countries';
 import { useMoney } from '@/lib/use-money';
 import { InspectionsPanel } from '@/features/qc/components/inspections-panel';
 import { PayDialog } from '@/features/qc/components/pay-dialog';
-import { ShipmentPanel } from '@/features/qc/components/shipment-panel';
 import { OpenDisputeDialog } from '@/features/trust/components/dispute-dialogs';
 import { BuyerDisputePanel } from '@/features/trust/components/dispute-panel';
+import { ShippingCard } from '@/features/logistics/components/shipping-card';
+import { TrackingCard } from '@/features/logistics/components/tracking-card';
+import { useOrderLogistics } from '@/features/logistics/order-api';
 import { OrderReviewsCard } from '@/features/trust/components/reviews';
 import { purchaseOrderUrl, useBuyerOrder } from '../api';
 import { NextAction } from './next-action';
@@ -39,6 +41,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
   const showMoney = useMoney();
   const format = useFormatter();
   const order = useBuyerOrder(code);
+  const logistics = useOrderLogistics(code);
   const [requesting, setRequesting] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [reordering, setReordering] = useState(false);
@@ -92,12 +95,11 @@ export function BuyerOrderPage({ code }: { code: string }) {
         latestSample={latest}
         inspections={o.inspections}
         balancePaid={o.balancePaid}
+        shippingChosen={logistics.data ? logistics.data.accepted !== null : undefined}
         values={{
           deposit: money(o.depositMinor),
           balance: money(o.totalMinor - o.depositMinor),
           stage: stage ? t(`timeline.phases.${stage.stage}`) : '',
-          tracking: o.shipment?.trackingNumber ?? '',
-          carrier: o.shipment?.carrier ?? '',
         }}
       >
         {o.status === 'DRAFT' ? (
@@ -150,6 +152,9 @@ export function BuyerOrderPage({ code }: { code: string }) {
 
       <BuyerDisputePanel code={o.code} />
 
+      <TrackingCard code={o.code} />
+      <ShippingCard code={o.code} />
+
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section aria-labelledby="timeline-heading">
           <h2 id="timeline-heading" className="mb-4 text-lg font-semibold tracking-[-0.01em]">
@@ -166,14 +171,6 @@ export function BuyerOrderPage({ code }: { code: string }) {
                   code={o.code}
                   status={o.status}
                   inspections={o.inspections}
-                />
-              ) : key === 'shipping' ? (
-                <ShipmentPanel
-                  role="BUYER"
-                  code={o.code}
-                  status={o.status}
-                  shipment={o.shipment}
-                  defaultIncoterm={o.incoterm}
                 />
               ) : null
             }

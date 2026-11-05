@@ -27,12 +27,6 @@ export interface TimelineOrder {
   milestones: OrderMilestone[];
   events: OrderEvent[];
   inspections: { photos: OrderMedia[] }[];
-  shipment: {
-    carrier: string | null;
-    trackingNumber: string | null;
-    shippedAt: string | null;
-    deliveredAt: string | null;
-  } | null;
 }
 
 type PhaseState = 'done' | 'current' | 'upcoming' | 'skipped' | 'warning';
@@ -174,7 +168,7 @@ export function buildPhases(order: TimelineOrder): {
       };
     }
     if (key === 'shipping') {
-      const shipped = order.shipment?.shippedAt;
+      const shipped = reached('SHIPPED');
       return {
         ...base,
         state,
@@ -186,7 +180,7 @@ export function buildPhases(order: TimelineOrder): {
       };
     }
     if (key === 'delivered') {
-      const delivered = order.shipment?.deliveredAt ?? reached('DELIVERED');
+      const delivered = reached('DELIVERED');
       return { ...base, state, date: delivered ? { kind: 'done', iso: delivered } : null };
     }
     return {

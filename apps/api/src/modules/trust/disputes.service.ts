@@ -49,6 +49,7 @@ const disputeInclude = {
   evidence: { orderBy: { createdAt: 'asc' }, include: { file: fileWithRenditions } },
   openedBy: { select: { firstName: true, lastName: true } },
   assignedTo: { select: { firstName: true, lastName: true } },
+  logisticsClaim: { select: { code: true, status: true } },
 } satisfies Prisma.DisputeInclude;
 type DisputeRow = Prisma.DisputeGetPayload<{ include: typeof disputeInclude }>;
 type Side = 'BUYER' | 'MANUFACTURER' | 'ADMIN';
@@ -447,6 +448,10 @@ export class DisputesService {
     const refundMinor = d.refundAmountMinor === null ? null : Number(d.refundAmountMinor);
     if (side === 'BUYER') return { ...base, refundMinor, currency: order.currency };
     const position = await this.ledger.orderPosition(order.id);
+    const onShipment = await this.prisma.logisticsShipmentOrder.findFirst({
+      where: { orderId: order.id, active: true },
+      select: { shipment: { select: { code: true, departedAt: true } } },
+    });
     return {
       ...base,
       originalDescription: d.description,
@@ -464,6 +469,9 @@ export class DisputesService {
       assignedTo: d.assignedTo ? `${d.assignedTo.firstName} ${d.assignedTo.lastName}` : null,
       disputedFrom: order.disputedFrom,
       refundableMinor: Number(position.escrow),
+      logistics: onShipment?.shipment.departedAt
+        ? { shipmentCode: onShipment.shipment.code, claim: d.logisticsClaim }
+        : null,
     };
   }
 }

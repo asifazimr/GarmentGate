@@ -36,7 +36,6 @@ export const EnvSchema = z.object({
    * for internal testing; the verification email is still sent.
    */
   REQUIRE_EMAIL_VERIFICATION: booleanString.default(true),
-
   THROTTLE_TTL_MS: z.coerce.number().int().positive().default(60_000),
   THROTTLE_LIMIT: z.coerce.number().int().positive().default(100),
 

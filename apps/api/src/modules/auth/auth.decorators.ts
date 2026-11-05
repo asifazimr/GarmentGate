@@ -30,7 +30,7 @@ export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
 
 /** Every signed-in role, inspectors included (session and notification routes). */
-export const AnyRole = () => Roles('BUYER', 'MANUFACTURER', 'ADMIN', 'INSPECTOR');
+export const AnyRole = () => Roles('BUYER', 'MANUFACTURER', 'ADMIN', 'INSPECTOR', 'PARTNER');
 
 /** Injects the authenticated user. Throws if used on a public route without a user. */
 export const CurrentUser = createParamDecorator(

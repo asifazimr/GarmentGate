@@ -54,11 +54,21 @@ export class PerformanceService implements OnModuleInit {
       this.prisma.order.findMany({
         where: {
           manufacturerProfileId: profileId,
-          shipments: { some: { shippedAt: { not: null } } },
+          OR: [
+            { hubReceipts: { some: {} } },
+            { logisticsShipments: { some: { shipment: { historical: true } } } },
+          ],
         },
         select: {
           requestedShipDate: true,
-          shipments: { select: { shippedAt: true }, take: 1, orderBy: { createdAt: 'desc' } },
+          // The factory's part ends at GarmentGate's hub: the first receipt is its ship date.
+          hubReceipts: { select: { receivedAt: true }, take: 1, orderBy: { receivedAt: 'asc' } },
+          // Before logistics, factories shipped themselves: that departure is the ship date.
+          logisticsShipments: {
+            where: { shipment: { historical: true } },
+            select: { shipment: { select: { departedAt: true } } },
+            take: 1,
+          },
         },
       }),
       this.prisma.inspection.findMany({
@@ -80,12 +90,12 @@ export class PerformanceService implements OnModuleInit {
         ? (quality + communication + onTime) / 3
         : null;
 
-    // Shipped by the end of the requested day counts as on time.
-    const dated = shipped.filter((o) => o.requestedShipDate && o.shipments[0]?.shippedAt);
+    // At the hub by the end of the requested ship day counts as on time.
+    const shipDate = (o: (typeof shipped)[number]) =>
+      o.hubReceipts[0]?.receivedAt ?? o.logisticsShipments[0]?.shipment.departedAt ?? null;
+    const dated = shipped.filter((o) => o.requestedShipDate && shipDate(o));
     const shippedOnTime = dated.filter(
-      (o) =>
-        (o.shipments[0]?.shippedAt?.getTime() ?? Infinity) <=
-        (o.requestedShipDate?.getTime() ?? 0) + DAY,
+      (o) => (shipDate(o)?.getTime() ?? Infinity) <= (o.requestedShipDate?.getTime() ?? 0) + DAY,
     ).length;
 
     // First-time pass: the earliest reported final inspection of each order passed.

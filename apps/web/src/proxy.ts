@@ -62,6 +62,7 @@ function canView(path: string, claims: AccessTokenClaims, home: string): boolean
   const under = (prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
   if (under(ROLE_HOME.ADMIN)) return claims.role === 'ADMIN';
   if (under(ROLE_HOME.INSPECTOR)) return claims.role === 'INSPECTOR';
+  if (under(ROLE_HOME.PARTNER)) return claims.role === 'PARTNER';
   if (under(ROLE_HOME.BUYER)) return claims.role === 'BUYER' && claims.kyc === 'VERIFIED';
   if (under(ROLE_HOME.MANUFACTURER))
     return claims.role === 'MANUFACTURER' && claims.kyc === 'VERIFIED';

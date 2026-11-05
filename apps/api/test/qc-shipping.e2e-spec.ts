@@ -9,16 +9,15 @@ import {
   OrderFinanceSchema,
   PaymentStartSchema,
 } from '@garmentgate/shared';
-import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { pdfText } from '../src/modules/chat/chat-scan.processor.js';
 import {
   client,
   createAdmin,
   createTestApp,
   PASSWORD,
   type TestContext,
+  shipThroughGarmentGate,
   uniqueEmail,
 } from './helpers.js';
 
@@ -99,21 +98,6 @@ async function waitFor<T>(fn: () => Promise<T | null>, timeoutMs = 20_000): Prom
   }
   throw new Error('Timed out');
 }
-
-const pdfOf = async (req: ReturnType<Agent['get']>) => {
-  const res = await req
-    .buffer(true)
-    .parse((r, cb) => {
-      const chunks: Buffer[] = [];
-      r.on('data', (c: Buffer) => chunks.push(c));
-      r.on('end', () => {
-        cb(null, Buffer.concat(chunks));
-      });
-    })
-    .expect(200);
-  expect(res.headers['content-type']).toBe('application/pdf');
-  return pdfText(new Uint8Array(res.body as Buffer));
-};
 
 describe('QC and shipping (e2e)', () => {
   let ctx: TestContext;
@@ -471,138 +455,11 @@ describe('QC and shipping (e2e)', () => {
     expect((await job(id)).canReport).toBe(false);
   });
 
-  it('lets the factory book the shipment with clean references and filtered text', async () => {
-    const shipment = {
-      mode: 'SEA',
-      forwarder: `${FACTORY} logistics, call +880 1711 234567`,
-      carrier: 'Maersk',
-      trackingNumber: 'MAEU123456',
-      containerNumber: 'MSKU1234565',
-      transportDocNo: 'MAEU-BL-778812',
-      originPort: 'Chattogram',
-      cartons: 120,
-      grossWeightKg: 1450,
-      etd: new Date(Date.now() + 3 * DAY).toISOString(),
-      eta: new Date(Date.now() + 35 * DAY).toISOString(),
-    };
-    await buyer.agent.put(`/orders/${code}/shipment`).send(shipment).expect(403);
-    await factory.agent
-      .put(`/orders/${code}/shipment`)
-      .send({ ...shipment, trackingNumber: 'ring me: +8801711234567!' })
-      .expect(400);
-    await factory.agent
-      .put(`/orders/${code}/shipment`)
-      .send({ ...shipment, eta: new Date(Date.now()).toISOString() })
-      .expect(400); // arrives before it leaves
-    await factory.agent.put(`/orders/${code}/shipment`).send(shipment).expect(204);
-
-    const b = await asBuyer();
-    expect(b.shipment).toMatchObject({
-      status: 'BOOKED',
-      mode: 'SEA',
-      incoterm: 'FOB',
-      carrier: 'Maersk',
-      trackingNumber: 'MAEU123456',
-      destinationPort: 'Los Angeles',
-      generatedDocuments: [
-        'COMMERCIAL_INVOICE',
-        'PACKING_LIST',
-        'BILL_OF_LADING',
-        'CERTIFICATE_OF_ORIGIN',
-      ],
-    });
-    expect(b.shipment?.forwarder).not.toMatch(/Ostrava|1711/);
-    expect((await asFactory()).shipment?.generatedDocuments).toEqual([]);
-  });
-
-  it('keeps uploaded papers from the buyer until staff publish the sanitized copy', async () => {
-    const pdf = await PDFDocument.create();
-    pdf.addPage();
-    pdf.setAuthor(FACTORY); // metadata the sanitizer must drop
-    const bytes = Buffer.from(await pdf.save());
-    await buyer.agent
-      .post(`/orders/${code}/shipment/uploads`)
-      .send({ fileName: 'pl.pdf', contentType: 'application/pdf', sizeBytes: bytes.length })
-      .expect(403);
-    const presign = (
-      await factory.agent
-        .post(`/orders/${code}/shipment/uploads`)
-        .send({
-          fileName: `${FACTORY} packing list.pdf`,
-          contentType: 'application/pdf',
-          sizeBytes: bytes.length,
-        })
-        .expect(201)
-    ).body as { fileId: string; url: string; fields: Record<string, string> };
-    await upload(presign.url, presign.fields, bytes, 'application/pdf');
-    await factory.agent
-      .post(`/orders/${code}/shipment/documents`)
-      .send({ fileId: presign.fileId, type: 'PACKING_LIST' })
-      .expect(204);
-
-    expect((await asBuyer()).shipment?.documents).toEqual([]);
-    const [doc] = (await asFactory()).shipment?.documents ?? [];
-    expect(doc).toMatchObject({
-      type: 'PACKING_LIST',
-      name: `${code}-packing-list.pdf`,
-      buyerVisible: false,
-    });
-
-    await factory.agent
-      .patch(`/orders/${code}/shipment/documents/${doc?.id ?? ''}`)
-      .send({ buyerVisible: true })
-      .expect(403);
-    const processed = await waitFor(async () => {
-      const d = (await asFactory()).shipment?.documents[0];
-      return d?.processing === 'READY' || d?.processing === 'FAILED' ? d : null;
-    });
-    expect(processed.processing).toBe('READY');
-    await admin
-      .patch(`/orders/${code}/shipment/documents/${doc?.id ?? ''}`)
-      .send({ buyerVisible: true })
-      .expect(204);
-    const [visible] = (await asBuyer()).shipment?.documents ?? [];
-    expect(visible).toMatchObject({ type: 'PACKING_LIST', name: `${code}-packing-list.pdf` });
-    expect(visible?.url).toContain('sanitized/');
-    expect(JSON.stringify(visible)).not.toContain('Ostrava');
-  });
-
-  it('issues the buyer’s papers under GarmentGate’s name, never the factory’s', async () => {
-    const invoice = await pdfOf(
-      buyer.agent.get(`/orders/${code}/shipment/documents/generated/COMMERCIAL_INVOICE`),
-    );
-    for (const s of [
-      'COMMERCIAL INVOICE',
-      BUYER,
-      'USD 4.55',
-      'USD 4,550.00',
-      'Bangladesh',
-      'MAEU-BL-778812',
-    ]) {
-      expect(invoice).toContain(s);
-    }
-    expect(invoice).not.toMatch(/Ostrava|USD 3\.80|1711/);
-    for (const type of ['PACKING_LIST', 'BILL_OF_LADING', 'CERTIFICATE_OF_ORIGIN']) {
-      const text = await pdfOf(
-        buyer.agent.get(`/orders/${code}/shipment/documents/generated/${type}`),
-      );
-      expect(text).not.toMatch(/Ostrava|Gazipur/);
-    }
-    await factory.agent
-      .get(`/orders/${code}/shipment/documents/generated/COMMERCIAL_INVOICE`)
-      .expect(403);
-    await buyer.agent.get(`/orders/${code}/shipment/documents/generated/AIRWAY_BILL`).expect(400);
-  });
-
-  it('ships once the balance is in, and releases the last tranche when the buyer confirms delivery', async () => {
-    await move(factory.agent, 'SHIPPED', 409); // balance not in yet
+  it('ships through GarmentGate once the balance is in, and releases the last tranche on delivery', async () => {
+    await move(factory.agent, 'SHIPPED', 403); // only a GarmentGate departure ships an order
     await pay('BALANCE');
     expect((await asBuyer()).balancePaid).toBe(true);
-    await move(factory.agent, 'SHIPPED'); // uses the booked shipment
-    expect((await asBuyer()).shipment).toMatchObject({
-      status: 'IN_TRANSIT',
-      trackingNumber: 'MAEU123456',
-    });
+    await shipThroughGarmentGate(ctx, code);
 
     for (const r of (await finance()).releases.filter((x) => x.status === 'DUE')) {
       await admin.post(`/admin/finance/releases/${r.id}/approve`).expect(204);
@@ -616,6 +473,5 @@ describe('QC and shipping (e2e)', () => {
       ['DELIVERED', 'RELEASED'],
     ]);
     expect(f).toMatchObject({ escrowMinor: 0, releasedMinor: 380_000, commissionMinor: 75_000 });
-    expect((await asBuyer()).shipment?.status).toBe('DELIVERED');
   });
 });

@@ -409,7 +409,9 @@
     "audit": "Audit log",
     "claims": "Supplier claims",
     "bookCapacity": "Book capacity",
-    "capacityBooking": "Capacity booking"
+    "capacityBooking": "Capacity booking",
+    "logistics": "Logistics",
+    "bookings": "Bookings"
   },
   "shell": {
     "search": "Search…",
@@ -453,7 +455,8 @@
       "BUYER": "Buyer",
       "MANUFACTURER": "Manufacturer",
       "ADMIN": "Admin",
-      "INSPECTOR": "Inspector"
+      "INSPECTOR": "Inspector",
+      "PARTNER": "Logistics partner"
     }
   },
   "patterns": {
@@ -539,15 +542,6 @@
       "FAILED": "Failed",
       "CANCELLED": "Cancelled"
     },
-    "shipment": {
-      "PENDING": "Not booked",
-      "BOOKED": "Booked",
-      "IN_TRANSIT": "In transit",
-      "AT_PORT": "At port",
-      "CUSTOMS": "In customs",
-      "DELIVERED": "Delivered",
-      "EXCEPTION": "Exception"
-    },
     "sample": {
       "REQUESTED": "Requested",
       "IN_PROGRESS": "In progress",
@@ -601,6 +595,37 @@
       "DECLINED": "Declined",
       "CANCELLED": "Cancelled",
       "ENDED": "Ended"
+    },
+    "freight": {
+      "PLANNED": "Planned",
+      "BOOKED": "Booked",
+      "IN_TRANSIT": "In transit",
+      "AT_DESTINATION": "At destination",
+      "CUSTOMS": "In customs",
+      "OUT_FOR_DELIVERY": "Out for delivery",
+      "DELIVERED": "Delivered",
+      "EXCEPTION": "Needs attention",
+      "CANCELLED": "Cancelled"
+    },
+    "pickup": {
+      "REQUESTED": "Requested",
+      "SCHEDULED": "Scheduled",
+      "COLLECTED": "Collected",
+      "RECEIVED": "At the hub",
+      "CANCELLED": "Cancelled"
+    },
+    "leg": {
+      "PENDING": "Pending",
+      "BOOKED": "Booked",
+      "IN_TRANSIT": "In transit",
+      "COMPLETED": "Done",
+      "CANCELLED": "Cancelled"
+    },
+    "claim": {
+      "OPEN": "Open",
+      "SUBMITTED": "With insurer",
+      "SETTLED": "Settled",
+      "REJECTED": "Rejected"
     }
   },
   "marketing": {
@@ -1404,7 +1429,6 @@
     "factoryThread": "Factory thread",
     "summary": "Summary",
     "history": "History",
-    "shipment": "{carrier} · tracking {tracking}",
     "list": {
       "title": "Orders",
       "description": {
@@ -1458,7 +1482,6 @@
       "cancel": "Cancel order",
       "shipSample": "Mark sample shipped",
       "toInspection": "Ready for inspection",
-      "ship": "Mark shipped",
       "rework": "Send back for rework",
       "payBalance": "Pay the balance",
       "payDeposit": "Pay the deposit"
@@ -1622,10 +1645,10 @@
         "done": "Inspection passed"
       },
       "SHIPPED": {
-        "title": "Mark as shipped",
-        "body": "The goods have left on the booked shipment. The buyer gets the tracking details and documents.",
-        "action": "Mark shipped",
-        "done": "Marked shipped"
+        "title": "Ship",
+        "body": "Orders ship when their GarmentGate shipment leaves the hub.",
+        "action": "Ship",
+        "done": "Shipped"
       },
       "DELIVERED": {
         "title": "Confirm delivery?",
@@ -1716,11 +1739,11 @@
         },
         "SHIP": {
           "title": "Balance received: getting ready to ship",
-          "body": "The shipment details and your documents appear below once it’s booked."
+          "body": "The factory delivers to GarmentGate’s hub; tracking and your documents appear here once it leaves."
         },
         "IN_TRANSIT": {
-          "title": "On its way: {carrier} {tracking}",
-          "body": "Confirm delivery when the goods arrive: that releases the final payment to the factory."
+          "title": "On its way with GarmentGate",
+          "body": "Follow it under GarmentGate tracking. Confirm delivery when the goods arrive: that releases the final payment to the factory."
         },
         "CONFIRM_COMPLETION": {
           "title": "Delivered: is everything right?",
@@ -1745,6 +1768,10 @@
         "PAY_BALANCE": {
           "title": "Inspection passed: pay the {balance} balance",
           "body": "The factory ships as soon as it arrives. Funds stay in escrow until each milestone."
+        },
+        "CHOOSE_SHIPPING": {
+          "title": "Choose how this order ships",
+          "body": "GarmentGate’s freight or your own forwarder collecting at our hub. The factory books its pickup once you’ve chosen."
         }
       },
       "MANUFACTURER": {
@@ -1777,8 +1804,8 @@
           "body": "GarmentGate’s inspector visits to check a random AQL sample. Have the packed goods ready."
         },
         "SHIP": {
-          "title": "Balance received: ship it",
-          "body": "Book the shipment and upload your papers, then mark it shipped when it leaves."
+          "title": "Balance received: send it to the hub",
+          "body": "Add packing details, book the pickup to GarmentGate’s hub and print the carton markings. The order ships when it leaves the hub."
         },
         "IN_TRANSIT": {
           "title": "Shipped",
@@ -1805,8 +1832,12 @@
           "body": "See the defects below. The buyer decides on rework; GarmentGate will be in touch."
         },
         "PAY_BALANCE": {
-          "title": "Inspection passed: book the shipment",
-          "body": "You can ship once the buyer’s balance is in. We’ll tell you when it arrives."
+          "title": "Inspection passed: get it to the hub",
+          "body": "Add packing details and book the pickup. It leaves the hub once the buyer’s balance is in."
+        },
+        "CHOOSE_SHIPPING": {
+          "title": "Waiting for the buyer’s shipping choice",
+          "body": "Add your packing details meanwhile. You’ll book the pickup to GarmentGate’s hub once the buyer has chosen."
         }
       },
       "ADMIN": {
@@ -1839,8 +1870,8 @@
           "body": "Assign an inspector below; their report moves the order on."
         },
         "SHIP": {
-          "title": "Factory to ship",
-          "body": "Waiting for tracking."
+          "title": "Factory to deliver to the hub",
+          "body": "Receive it at the hub, then build and send the shipment in Logistics."
         },
         "IN_TRANSIT": {
           "title": "In transit",
@@ -1869,6 +1900,10 @@
         "PAY_BALANCE": {
           "title": "Balance due",
           "body": "Confirm the buyer’s transfer in Finance when it arrives."
+        },
+        "CHOOSE_SHIPPING": {
+          "title": "Buyer to choose shipping",
+          "body": "The factory can’t book its pickup until the buyer picks GarmentGate freight or its own forwarder."
         }
       }
     },
@@ -1985,80 +2020,6 @@
       "email": "Work email",
       "create": "Create and send invite",
       "added": "Invite sent to {email}"
-    },
-    "shipment": {
-      "title": "Shipment",
-      "notBooked": "Book the shipment once the final inspection has passed.",
-      "book": "Book shipment",
-      "edit": "Edit",
-      "save": "Save changes",
-      "bookTitle": "Book the shipment",
-      "editTitle": "Update the shipment",
-      "bookBody": "The buyer sees these details (without your company’s name) and gets GarmentGate’s documents built from them.",
-      "booked": "Shipment booked",
-      "updated": "Shipment updated",
-      "privacy": "Only carrier references go in the number fields. Contact details are removed from every field.",
-      "modes": {
-        "SEA": "Sea freight",
-        "AIR": "Air freight",
-        "ROAD": "Road",
-        "RAIL": "Rail",
-        "COURIER": "Courier"
-      },
-      "fields": {
-        "mode": "Mode",
-        "incoterm": "Incoterm",
-        "forwarder": "Forwarder",
-        "carrier": "Carrier",
-        "tracking": "Tracking no.",
-        "container": "Container",
-        "transportDoc": "B/L or AWB no.",
-        "route": "Route",
-        "etd": "Departs (ETD)",
-        "eta": "Arrives (ETA)",
-        "cartons": "Cartons",
-        "weight": "Gross weight"
-      },
-      "form": {
-        "forwarder": "Forwarder",
-        "carrier": "Carrier",
-        "trackingNumber": "Tracking number",
-        "containerNumber": "Container number",
-        "transportDocNo": "Bill of lading / AWB number",
-        "originPort": "Port of loading",
-        "destinationPort": "Port of discharge",
-        "weightKg": "Gross weight (kg)"
-      },
-      "documents": "Documents",
-      "issuedByUs": "Issued by GarmentGate as your seller and exporter.",
-      "docTypes": {
-        "COMMERCIAL_INVOICE": "Commercial invoice",
-        "PACKING_LIST": "Packing list",
-        "BILL_OF_LADING": "Bill of lading",
-        "AIRWAY_BILL": "Air waybill",
-        "CERTIFICATE_OF_ORIGIN": "Certificate of origin",
-        "INSPECTION_CERTIFICATE": "Inspection certificate",
-        "OTHER": "Other document"
-      },
-      "visible": "Visible to buyer",
-      "hidden": "Not shown to buyer",
-      "processing": "Sanitizing…",
-      "failed": "Couldn’t process",
-      "open": "Open",
-      "publish": "Publish",
-      "hide": "Hide",
-      "published": "Published to the buyer",
-      "hiddenDone": "Hidden from the buyer",
-      "publishFailed": "Couldn’t update the document",
-      "upload": "Upload a document",
-      "uploadTitle": "Upload a shipping document",
-      "uploadBody": "PDF only. Metadata is removed, and GarmentGate checks it before the buyer sees it.",
-      "docType": "Document",
-      "choosePdf": "Choose a PDF",
-      "pdfHint": "PDF up to 20 MB",
-      "uploadAction": "Upload",
-      "uploaded": "Document uploaded",
-      "uploadFailed": "The upload failed: try again"
     },
     "pay": {
       "title": {
@@ -2238,7 +2199,11 @@
           "evidence": "Evidence",
           "assignee": "Handled by",
           "opened": "Opened"
-        }
+        },
+        "claimHint": "This order left with GarmentGate ({shipment}). If the goods were lost or damaged in transit, settle it through a logistics claim.",
+        "claimLinked": "Logistics claim {code} covers this dispute.",
+        "openClaim": "Open logistics claim",
+        "viewClaims": "View claims"
       }
     },
     "reviews": {
@@ -2421,7 +2386,9 @@
         "DEPOSIT": "Deposit",
         "BALANCE": "Balance",
         "REFUND": "Refund",
-        "PAYOUT": "Payout"
+        "PAYOUT": "Payout",
+        "LOGISTICS": "Shipping",
+        "INSURANCE_RECOVERY": "Insurance recovery"
       },
       "method": {
         "BANK_TRANSFER": "Bank transfer",
@@ -3086,6 +3053,729 @@
       },
       "empty": "No bookings",
       "emptyBody": "Bookings appear here when buyers hold line time."
+    }
+  },
+  "logistics": {
+    "modes": {
+      "SAMPLE_COURIER": "Sample courier",
+      "DOMESTIC": "Domestic trucking",
+      "SEA_FCL": "Sea, full container",
+      "SEA_LCL": "Sea, shared container",
+      "AIR": "Air freight",
+      "DDP": "Door to door, duties paid",
+      "HANDOVER": "Hand-over to your forwarder"
+    },
+    "units": {
+      "PER_KG": "kg",
+      "PER_CBM": "CBM",
+      "PER_CONTAINER": "container",
+      "FLAT": "shipment",
+      "GP20": "20′ container",
+      "GP40": "40′ container",
+      "HC40": "40′ high cube"
+    },
+    "partnerKinds": {
+      "FORWARDER": "Freight forwarder",
+      "COURIER": "Courier",
+      "TRUCKING": "Trucking",
+      "CUSTOMS_BROKER": "Customs broker"
+    },
+    "admin": {
+      "title": "Logistics",
+      "description": "GarmentGate ships every order: partners only ever deal with GarmentGate, and neither side sees the other’s name or address.",
+      "tabs": {
+        "orders": "Orders",
+        "shipments": "Shipments",
+        "rates": "Rate cards",
+        "margins": "Margins",
+        "partners": "Partners",
+        "hubs": "Hubs",
+        "duties": "Duty rates",
+        "settings": "Settings",
+        "claims": "Claims",
+        "reports": "Reports"
+      }
+    },
+    "rates": {
+      "description": "What partners charge GarmentGate per kg, CBM, container or shipment. Staff only: buyers see GarmentGate’s price, never these costs.",
+      "add": "Add rate card",
+      "empty": "No rate cards yet",
+      "emptyBody": "Add a partner first, then the routes they quote.",
+      "columns": {
+        "route": "Route",
+        "mode": "Mode",
+        "cost": "Cost",
+        "transit": "Transit",
+        "validity": "Valid",
+        "status": "Status"
+      },
+      "min": "min {amount}",
+      "days": "{min}–{max} days",
+      "active": "Active",
+      "retired": "Retired",
+      "edit": "Edit",
+      "retire": "Retire",
+      "retiredToast": "Rate card retired",
+      "failed": "That didn’t work",
+      "saved": "Rate card saved",
+      "save": "Save rate card",
+      "choose": "Choose",
+      "newTitle": "Add a rate card",
+      "editTitle": "Edit rate card",
+      "dialogDescription": "Leave a port empty to cover every port in that country.",
+      "fields": {
+        "partner": "Partner",
+        "mode": "Mode",
+        "origin": "From country",
+        "originPort": "From port (optional)",
+        "destination": "To country",
+        "destinationPort": "To port (optional)",
+        "unit": "Charged per",
+        "container": "Container",
+        "cost": "Cost per unit",
+        "currency": "Currency",
+        "minCharge": "Minimum charge",
+        "transitMin": "Transit from (days)",
+        "transitMax": "to (days)",
+        "validFrom": "Valid from",
+        "validTo": "Valid until",
+        "notes": "Notes"
+      }
+    },
+    "preview": {
+      "title": "Price a route",
+      "description": "What GarmentGate would pay and charge, from today’s rate cards and margins.",
+      "mode": "Mode",
+      "originCountry": "From",
+      "destinationCountry": "To",
+      "destinationPort": "Port (optional)",
+      "choose": "Choose",
+      "weight": "Gross weight (kg)",
+      "volume": "Volume (CBM)",
+      "goodsValue": "Goods value (for insurance)",
+      "shipDate": "Ship date",
+      "submit": "Price it",
+      "none": "No valid rate card covers that route and date.",
+      "failed": "Couldn’t price that route",
+      "partner": "Partner",
+      "cost": "Cost",
+      "price": "Buyer price",
+      "insurance": "Insurance",
+      "transit": "Transit",
+      "noMargin": "No margin rule",
+      "days": "{min}–{max} d"
+    },
+    "partners": {
+      "description": "Forwarders, couriers, truckers and customs brokers. They only ever see GarmentGate as their customer.",
+      "add": "Add partner",
+      "empty": "No partners yet",
+      "emptyBody": "Add the companies that move goods for GarmentGate.",
+      "columns": {
+        "name": "Partner",
+        "kind": "Type",
+        "country": "Country",
+        "contact": "Contact",
+        "rateCards": "Rate cards",
+        "status": "Status"
+      },
+      "active": "Active",
+      "inactive": "Inactive",
+      "edit": "Edit",
+      "saved": "Partner saved",
+      "save": "Save partner",
+      "choose": "Choose",
+      "newTitle": "Add a partner",
+      "editTitle": "Edit {code}",
+      "dialogDescription": "Contacts are for GarmentGate staff only.",
+      "fields": {
+        "name": "Company name",
+        "kind": "Type",
+        "country": "Country",
+        "email": "Operations email",
+        "phone": "Phone",
+        "notes": "Notes",
+        "active": "Active: their rate cards can be used"
+      },
+      "users": "Portal users",
+      "invited": "Invitation sent",
+      "failed": "That didn’t work",
+      "usersTitle": "People at {name}",
+      "usersBody": "They sign in to the partner portal and only see GarmentGate’s bookings with this partner. Inviting emails them a link to set a password.",
+      "noUsers": "Nobody yet.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "invite": "Invite"
+    },
+    "hubs": {
+      "description": "Warehouses where factories deliver. Factories see the hub’s address; buyers never do.",
+      "add": "Add hub",
+      "empty": "No hubs yet",
+      "emptyBody": "Add the warehouses where goods are received, checked and consolidated.",
+      "columns": {
+        "hub": "Hub",
+        "place": "Location",
+        "port": "Port",
+        "operator": "Run by",
+        "status": "Status"
+      },
+      "garmentGate": "GarmentGate",
+      "partner": "A partner",
+      "active": "Active",
+      "inactive": "Inactive",
+      "edit": "Edit",
+      "saved": "Hub saved",
+      "save": "Save hub",
+      "choose": "Choose",
+      "newTitle": "Add a hub",
+      "editTitle": "Edit {code}",
+      "dialogDescription": "The code includes the country, like HUB-BD-01.",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "country": "Country",
+        "city": "City",
+        "addressLine1": "Address",
+        "addressLine2": "Address line 2",
+        "postalCode": "Postal code",
+        "port": "Nearest port (UN/LOCODE)",
+        "operator": "Run by",
+        "partner": "Partner",
+        "active": "Active: factories can deliver here"
+      }
+    },
+    "margins": {
+      "description": "GarmentGate’s markup on freight. The most specific active rule wins: mode, then destination, then origin.",
+      "add": "Add rule",
+      "empty": "No margin rules",
+      "emptyBody": "Without a rule, freight is passed on at cost.",
+      "columns": {
+        "name": "Rule",
+        "mode": "Mode",
+        "route": "Route",
+        "markup": "Markup"
+      },
+      "any": "Any",
+      "inactive": "Inactive",
+      "atLeast": "at least {amount}",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleted": "Rule deleted",
+      "failed": "That didn’t work",
+      "saved": "Rule saved",
+      "save": "Save rule",
+      "newTitle": "Add a margin rule",
+      "editTitle": "Edit margin rule",
+      "dialogDescription": "Leave mode or countries empty to cover them all.",
+      "fields": {
+        "name": "Name",
+        "mode": "Mode",
+        "originCountry": "From",
+        "destinationCountry": "To",
+        "markup": "Markup (%)",
+        "minMargin": "Minimum margin per shipment",
+        "active": "Active"
+      },
+      "minMarginHint": "In the shipment’s currency."
+    },
+    "duties": {
+      "description": "Import duty by HS code and destination, used for landed-cost estimates only. The longest matching HS prefix wins.",
+      "add": "Add duty rate",
+      "empty": "No duty rates yet",
+      "emptyBody": "Buyers see landed costs without duty until you add rates.",
+      "columns": {
+        "hs": "HS prefix",
+        "country": "Destination",
+        "rate": "Duty",
+        "note": "Note"
+      },
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleted": "Duty rate deleted",
+      "failed": "That didn’t work",
+      "saved": "Duty rate saved",
+      "save": "Save rate",
+      "choose": "Choose",
+      "newTitle": "Add a duty rate",
+      "editTitle": "Edit duty rate",
+      "dialogDescription": "Use as many HS digits as the rate applies to (6109 covers all T-shirts).",
+      "fields": {
+        "hs": "HS code prefix",
+        "rate": "Duty (%)",
+        "country": "Destination country",
+        "note": "Note"
+      },
+      "noteHint": "e.g. the tariff source or a trade agreement."
+    },
+    "settings": {
+      "shipperMode": "Who ships",
+      "insuranceRate": "Insurance rate (%)",
+      "insuranceHint": "Of 110% of the CIF value.",
+      "minPremium": "Minimum premium",
+      "validity": "Quotes valid for (days)",
+      "save": "Save settings",
+      "saved": "Settings saved",
+      "modes": {
+        "GARMENT_GATE_EXPORTER": {
+          "title": "GarmentGate exports",
+          "body": "GarmentGate is shipper on every document, straight from the factory or a hub."
+        },
+        "SWITCH_BL": {
+          "title": "Switch B/L",
+          "body": "The first bill of lading names the factory (staff only); the switched one names GarmentGate."
+        },
+        "HUB_CONSOLIDATION": {
+          "title": "Through a hub",
+          "body": "Every order goes through a GarmentGate hub, where it is checked, relabelled and consolidated."
+        }
+      }
+    },
+    "shipping": {
+      "title": "Shipping",
+      "description": "GarmentGate ships your order and stays the shipper on every document. Choose how, see the landed cost, and pay into escrow.",
+      "paid": "Paid",
+      "checking": "Checking payment",
+      "toPay": "To pay",
+      "destination": "Ship to",
+      "port": "Port (optional)",
+      "incoterm": "Delivery terms",
+      "choose": "Choose",
+      "insure": "Insure the cargo",
+      "insuredIncluded": "Insurance included on these terms",
+      "cargoBasis": "Priced on an estimate of {kg} kg and {cbm} CBM for your quantity; GarmentGate re-checks it when the factory packs.",
+      "getPrices": "See prices",
+      "pricing": "Pricing…",
+      "none": "No shipping prices for that destination yet. GarmentGate will contact you with a quote.",
+      "noDdp": "Duties-paid delivery needs the product’s HS code, which GarmentGate adds when confirming your order.",
+      "failed": "Couldn’t get shipping prices",
+      "chosen": "Shipping chosen",
+      "transit": "{min}–{max} days",
+      "freight": "Freight",
+      "insurance": "Insurance",
+      "dutyDdp": "Import duty (estimate)",
+      "landed": "Landed cost ≈ {amount}/pc",
+      "estimate": "Estimate",
+      "goods": "Goods",
+      "duty": "Import duty {rate} on {basis}",
+      "dutyUnknown": "Import duty (not estimated)",
+      "landedTotal": "Landed cost",
+      "estimateNote": "Estimated for HS {hs}. Actual duty depends on the customs ruling, trade agreements and local taxes.",
+      "estimateNoHs": "Duty isn’t included until GarmentGate confirms the HS code. Actual duty depends on customs.",
+      "validUntil": "Price valid until {date}",
+      "to": "To {place}, {incoterm}.",
+      "due": "{amount} due before the goods ship.",
+      "paidNote": "Paid: your shipping is booked with GarmentGate.",
+      "pay": "Pay shipping",
+      "change": "Change"
+    },
+    "hsCode": {
+      "title": "HS code",
+      "description": "Used on shipping documents and for the buyer’s duty estimates.",
+      "save": "Save",
+      "saved": "HS code saved",
+      "failed": "Couldn’t save the HS code"
+    },
+    "factory": {
+      "title": "Shipping with GarmentGate",
+      "description": "GarmentGate ships this order. Tell us how it’s packed, book the pickup to our hub and put our carton markings on every carton.",
+      "packing": "Packing",
+      "packed": "{cartons} cartons, {kg} kg gross, {cbm} CBM",
+      "editPacking": "Change packing",
+      "packLater": "Packing details open once production starts.",
+      "pickup": "Pickup to a GarmentGate hub",
+      "pickupOn": "Collection on {date} to:",
+      "received": "{cartons} cartons checked in at the hub on {date}.",
+      "markings": "Carton markings (PDF)",
+      "markingsHint": "Print one per carton. They show GarmentGate, the hub and the carton number only.",
+      "pickupLater": "Book the pickup once the order is ready to ship and packing details are in.",
+      "packingSaved": "Packing saved",
+      "fields": {
+        "cartons": "Cartons",
+        "piecesPerCarton": "Pieces per carton",
+        "grossKg": "Gross weight (kg)",
+        "netKg": "Net weight (kg)",
+        "length": "Length (cm)",
+        "width": "Width (cm)",
+        "height": "Height (cm)"
+      },
+      "cartonSize": "Carton size",
+      "cartonSizeHint": "Outer dimensions of one carton; all cartons the same.",
+      "savePacking": "Save packing",
+      "pickupBooked": "Pickup requested",
+      "noHubs": "GarmentGate has no hub in your country yet: we’ll contact you about collection.",
+      "hub": "Hub",
+      "date": "Collection date",
+      "note": "Note for GarmentGate",
+      "noteHint": "Loading bay, opening hours. Contact details are removed.",
+      "book": "Request pickup",
+      "waitingForBuyer": "Waiting for the buyer to choose how it ships. You can add packing details meanwhile."
+    },
+    "together": {
+      "title": "Ship together with your other orders",
+      "description": "Orders from the same country can share one shipment: one price for the combined cargo, shared by weight.",
+      "failed": "Couldn’t price these orders together",
+      "chosen": "Shipping chosen for all the orders",
+      "pieces": "{count, number} pcs",
+      "pricing": "Pricing…",
+      "price": "Price {count} orders together",
+      "none": "No shared price for these orders: ship them separately.",
+      "transit": "{min}–{max} days",
+      "saving": "Save {amount} against shipping separately",
+      "validUntil": "Price valid until {date}",
+      "choose": "Ship these together"
+    },
+    "board": {
+      "description": "Every order GarmentGate ships: pickups, hub receiving and shipments. Tick orders at a hub to put them on one shipment.",
+      "select": "Select {code}",
+      "columns": {
+        "order": "Order",
+        "shipping": "Shipping",
+        "cargo": "Cargo",
+        "pickup": "Pickup",
+        "hub": "Hub",
+        "shipment": "Shipment"
+      },
+      "paid": "Paid",
+      "unpaid": "Unpaid",
+      "packed": "{cartons} ctn · {kg} kg · {cbm} CBM",
+      "estimated": "est. {kg} kg · {cbm} CBM",
+      "notPacked": "Not packed yet",
+      "schedule": "Schedule",
+      "collected": "Collected",
+      "failed": "That didn’t work",
+      "cartons": "{count, plural, one {# carton} other {# cartons}}",
+      "conditions": {
+        "GOOD": "Good",
+        "DAMAGED": "Damaged",
+        "SHORT": "Short",
+        "OVER": "Over"
+      },
+      "receive": "Receive",
+      "created": "Shipment {code} created",
+      "createShipment": "{count, plural, =0 {Create shipment} other {Create shipment (#)}}",
+      "empty": "No orders shipped by GarmentGate yet",
+      "emptyBody": "Orders appear here once a buyer chooses a GarmentGate shipping option.",
+      "scheduled": "Pickup scheduled",
+      "scheduleTitle": "Schedule pickup for {code}",
+      "scheduleBody": "The factory is told the date; the trucker stays with GarmentGate.",
+      "pickupDate": "Collection date",
+      "trucker": "Trucker",
+      "ownTruck": "GarmentGate’s own truck",
+      "uploadFailed": "Photo upload failed",
+      "receivedToast": "Received at the hub",
+      "receiveTitle": "Receive {code}",
+      "receiveBody": "{cartons} cartons expected. Count, check and photograph them.",
+      "hub": "Hub",
+      "cartonsReceived": "Cartons received",
+      "weighed": "Weighed (kg)",
+      "condition": "Condition",
+      "repacked": "Repacked",
+      "relabelled": "Relabelled with GarmentGate markings",
+      "notes": "Notes",
+      "photos": "Photos",
+      "addPhotos": "Add photos",
+      "forwarder": "Forwarder: {name}"
+    },
+    "shipments": {
+      "columns": {
+        "shipment": "Shipment",
+        "status": "Status",
+        "route": "Route",
+        "margin": "Price / cost / margin",
+        "eta": "ETA"
+      },
+      "orders": "{count, plural, one {# order} other {# orders}}",
+      "cost": "cost {amount}",
+      "empty": "No shipments yet",
+      "emptyBody": "Create one from the Orders tab once goods are at a hub.",
+      "historical": "Historical"
+    },
+    "shipment": {
+      "saved": "Saved",
+      "failed": "That didn’t work",
+      "back": "Shipments",
+      "shipper": {
+        "GARMENT_GATE_EXPORTER": "GarmentGate exports",
+        "SWITCH_BL": "Switch B/L",
+        "HUB_CONSOLIDATION": "Through a hub"
+      },
+      "markBooked": "Mark as booked",
+      "cancel": "Cancel shipment",
+      "legs": "Legs",
+      "legKinds": {
+        "FACTORY_TO_HUB": "Factory to hub",
+        "HUB_TO_PORT": "Hub to port",
+        "PORT_TO_PORT": "Main carriage",
+        "PORT_TO_BUYER": "Final delivery",
+        "HUB_HANDOVER": "Hand-over at the hub"
+      },
+      "notBooked": "Not booked yet",
+      "editLeg": "Edit leg",
+      "ordersTitle": "Orders",
+      "cargo": "{cartons} ctn · {kg} kg · {cbm} CBM",
+      "money": "Shipment",
+      "buyerPrice": "Buyers paid (freight)",
+      "partnerCost": "Partner cost",
+      "margin": "Freight margin",
+      "insurance": "Insurance",
+      "cartons": "Cartons",
+      "weight": "Gross weight",
+      "volume": "Volume",
+      "hub": "Origin hub",
+      "consolidation": "Consolidation",
+      "documentsTitle": "Documents",
+      "documentsHint": "Each opens as a PDF and records its number. Partner papers consign to GarmentGate; only the buyer’s commercial papers name the buyer.",
+      "badCost": "Enter a cost like 1500.00",
+      "none": "None",
+      "legFields": {
+        "status": "Status",
+        "partner": "Partner",
+        "carrier": "Carrier / vessel / flight",
+        "trackingNumber": "Tracking number",
+        "containerNumber": "Container",
+        "transportDocNo": "B/L or AWB number",
+        "cost": "Cost ({currency})",
+        "etd": "ETD",
+        "eta": "ETA"
+      },
+      "saveLeg": "Save leg",
+      "accepted": "Accepted",
+      "awaitingPartner": "Awaiting partner",
+      "partnerPaid": "Partner paid",
+      "payPartner": "Pay {amount}",
+      "paidToast": "Payout recorded",
+      "uploadsTitle": "Partner uploads",
+      "uploadKinds": {
+        "BILL_OF_LADING": "Bill of lading",
+        "AIRWAY_BILL": "Air waybill",
+        "PROOF_OF_DELIVERY": "Proof of delivery",
+        "PHOTO": "Photo",
+        "OTHER": "Other"
+      },
+      "uploadsHint": "Partners’ originals are staff only. Publish a cleaned copy (metadata removed, neutral name) once you’ve checked it names neither side.",
+      "tracking": "Tracking",
+      "eventStatus": "Status",
+      "noChange": "No change",
+      "location": "Where",
+      "note": "Note",
+      "departureHint": "The first “In transit” is the departure: every order must be paid and every leg priced; the orders move to shipped and the shipping money leaves escrow.",
+      "postUpdate": "Post update",
+      "noEvents": "No updates yet.",
+      "sources": {
+        "STAFF": "Staff",
+        "PARTNER": "Partner",
+        "FACTORY": "Factory",
+        "SYSTEM": "System"
+      },
+      "buyerSees": "Buyer sees: {note}",
+      "openClaim": "Open claim",
+      "forwarder": "Buyer’s forwarder: {name}",
+      "cleaning": "Cleaning…",
+      "published": "Published to the buyer",
+      "hidden": "Hidden from the buyer",
+      "publishToBuyer": "Publish to buyer",
+      "hideFromBuyer": "Hide",
+      "historical": "Historical"
+    },
+    "documents": {
+      "COMMERCIAL_INVOICE": "Commercial invoice",
+      "PACKING_LIST": "Packing list",
+      "BILL_OF_LADING": "Bill of lading",
+      "ORIGINAL_BILL_OF_LADING": "Original B/L (factory shipper, staff only)",
+      "CERTIFICATE_OF_ORIGIN": "Certificate of origin",
+      "INSURANCE_CERTIFICATE": "Insurance certificate",
+      "SHIPPING_LABEL": "Shipping label",
+      "CARTON_MARKING": "Carton markings (relabel)"
+    },
+    "partnerPortal": {
+      "title": "Bookings from GarmentGate",
+      "description": "Legs GarmentGate booked with you. GarmentGate is your customer for all of them.",
+      "empty": "No bookings yet",
+      "emptyBody": "GarmentGate’s bookings with you appear here, with cargo, pickup and destination.",
+      "toAccept": "To accept",
+      "cargo": "{cartons} ctn · {kg} kg · {cbm} CBM",
+      "back": "Bookings",
+      "acceptBody": "Accept this booking to confirm you’ll carry it at the agreed rate.",
+      "accepted": "Booking accepted",
+      "failed": "That didn’t work",
+      "accept": "Accept booking",
+      "timeline": "Updates",
+      "noEvents": "No updates yet.",
+      "cargoTitle": "Cargo",
+      "rate": "Agreed rate {amount}",
+      "paid": "Paid",
+      "customer": "Customer: GarmentGate. Invoice GarmentGate for this leg; questions go to GarmentGate operations.",
+      "documents": "Documents",
+      "update": "Post an update",
+      "updateHint": "GarmentGate passes updates on to its customer. Keep notes about the cargo and where it is.",
+      "status": "Shipment status",
+      "noChange": "No change",
+      "legStatus": "Your leg",
+      "legStarted": "Started",
+      "legDone": "Completed",
+      "location": "Where",
+      "note": "Note",
+      "post": "Post update",
+      "updated": "Update posted",
+      "references": "References",
+      "refs": {
+        "carrier": "Carrier / vessel / flight",
+        "trackingNumber": "Tracking number",
+        "containerNumber": "Container",
+        "transportDocNo": "B/L or AWB number",
+        "etd": "ETD",
+        "eta": "ETA"
+      },
+      "saveRefs": "Save references",
+      "saved": "Saved",
+      "upload": "Upload papers or photos",
+      "uploadHint": "Seen by GarmentGate staff only.",
+      "kinds": {
+        "BILL_OF_LADING": "Bill of lading",
+        "AIRWAY_BILL": "Air waybill",
+        "PROOF_OF_DELIVERY": "Proof of delivery",
+        "PHOTO": "Photo",
+        "OTHER": "Other"
+      },
+      "choose": "Choose a file",
+      "uploaded": "Uploaded",
+      "chargeback": "Charged back {amount} (deducted from what GarmentGate pays you)",
+      "claimOnLeg": "GarmentGate opened a claim on this leg."
+    },
+    "tracking": {
+      "title": "GarmentGate tracking",
+      "route": "{mode} from {from} to {to}",
+      "etd": "Departure",
+      "eta": "Arrival",
+      "container": "Container",
+      "bl": "Bill of lading",
+      "legs": "Legs",
+      "hub": "GarmentGate hub",
+      "destination": "Your door",
+      "updates": "Updates",
+      "noUpdates": "GarmentGate posts updates here as your goods move.",
+      "documents": "Shipping documents",
+      "documentsLater": "Shipping documents are issued once your goods leave the hub.",
+      "claims": "Claims",
+      "compensation": "GarmentGate paid you {amount}; it appears under payments.",
+      "claimHandling": "GarmentGate is handling this with its insurer and partners.",
+      "claimClosed": "Closed.",
+      "papers": "Papers from GarmentGate"
+    },
+    "claims": {
+      "description": "Loss, damage, shortage or delay while goods were in GarmentGate’s care. Open a claim from the shipment (or the buyer’s dispute), submit it to the insurer, then settle: compensation to the buyer, recovery from the insurer, chargeback to the partner.",
+      "types": {
+        "LOSS": "Loss",
+        "DAMAGE": "Damage",
+        "SHORTAGE": "Shortage",
+        "DELAY": "Delay"
+      },
+      "columns": {
+        "claim": "Claim",
+        "type": "Type",
+        "status": "Status",
+        "claimed": "Claimed",
+        "net": "Net cost"
+      },
+      "insured": "Insured to {amount}",
+      "uninsured": "Not insured",
+      "submit": "Submit to insurer",
+      "settle": "Settle",
+      "open": "Open claim",
+      "empty": "No claims",
+      "emptyBody": "Open one from a shipment that has left, or from a buyer’s dispute.",
+      "submitted": "Claim submitted",
+      "settled": "Claim closed",
+      "opened": "Claim {code} opened",
+      "submitTitle": "Submit {code}",
+      "submitBody": "Record the insurer’s reference once you’ve filed the claim with them.",
+      "settleTitle": "Settle {code}",
+      "settleBody": "Everything here is recorded in the ledger at once: compensation is paid to the buyer by GarmentGate, the insurer’s payment comes in, and the chargeback reduces what we owe the partner.",
+      "outcomes": {
+        "SETTLED": "Settled",
+        "REJECTED": "Rejected (no money moves)"
+      },
+      "upTo": "Up to {amount}",
+      "chargebackTo": "From {partner}, up to the leg’s cost of {amount}",
+      "noLeg": "No leg was named when the claim was opened.",
+      "openTitle": "Claim for {order}",
+      "openBody": "Snapshots the insured value (110% of CIF) if the buyer took insurance.",
+      "openFromDispute": "Linked to the buyer’s dispute. Settle the claim here, then resolve the dispute without a refund.",
+      "unknownLeg": "Not known yet",
+      "legHint": "The leg where it happened; its partner can be charged back.",
+      "publicNoteHint": "Shown to the buyer, filtered and stripped of partner and factory names.",
+      "fields": {
+        "type": "Type",
+        "claimed": "Claimed ({currency})",
+        "leg": "Leg",
+        "description": "What happened (staff only)",
+        "publicNote": "Note for the buyer",
+        "insurerReference": "Insurer’s claim reference",
+        "outcome": "Outcome",
+        "compensation": "Paid to the buyer ({currency})",
+        "recovery": "Recovered from the insurer ({currency})",
+        "chargeback": "Charged back to the partner ({currency})",
+        "resolution": "Resolution"
+      }
+    },
+    "reports": {
+      "description": "Shipments that left in the period, with claims settled in it. Each currency is reported on its own.",
+      "from": "From",
+      "to": "To",
+      "revenue": "Shipping revenue ({currency})",
+      "shipments": "{count, plural, one {# shipment} other {# shipments}}",
+      "partnerCost": "Partner costs",
+      "insurance": "Insurance premiums {amount}",
+      "claimsNet": "Claims (net)",
+      "margin": "Margin",
+      "claimsCount": "Claims: {open} open, {settled} settled and {rejected} rejected in this period.",
+      "byMonth": "By month",
+      "byMode": "By mode",
+      "byPartner": "Partners",
+      "columns": {
+        "month": "Month",
+        "mode": "Mode",
+        "shipments": "Shipments",
+        "revenue": "Revenue",
+        "cost": "Partner cost",
+        "margin": "Margin",
+        "partner": "Partner",
+        "partnerCost": "Cost",
+        "paid": "Paid",
+        "chargeback": "Charged back",
+        "outstanding": "Outstanding"
+      },
+      "costBreakdown": "+ insurance {insurance}, claims {claims}",
+      "legs": "{count, plural, one {# leg} other {# legs}}",
+      "owesUs": "Owes GarmentGate",
+      "empty": "Nothing in this period",
+      "emptyPartners": "No partner legs in this period",
+      "emptyBody": "Pick a wider date range."
+    },
+    "handover": {
+      "way": "How should this order ship?",
+      "ways": {
+        "GARMENTGATE": {
+          "title": "GarmentGate ships it",
+          "body": "Sea, air or door to door, priced and insured by GarmentGate."
+        },
+        "OWN": {
+          "title": "My own forwarder",
+          "body": "Your forwarder collects from GarmentGate’s hub (FCA). No freight charge."
+        }
+      },
+      "explain": "The factory delivers to a GarmentGate hub as usual. GarmentGate arranges the collection with your forwarder and hands the goods over there with GarmentGate’s papers. Your forwarder never deals with the factory.",
+      "name": "Forwarder",
+      "contact": "Forwarder contact",
+      "contactHint": "Email or phone GarmentGate uses to arrange the collection. Never shared with the factory.",
+      "reference": "Booking reference (optional)",
+      "destination": "Final destination",
+      "destinationHint": "For the commercial invoice and certificate of origin.",
+      "submit": "Use my forwarder",
+      "saved": "Your forwarder will collect at GarmentGate’s hub",
+      "chosen": "{forwarder} collects at GarmentGate’s hub (FCA)",
+      "how": "GarmentGate tells your forwarder when the goods are ready at the hub. Your order ships when they collect.",
+      "change": "Change",
+      "choose": "Choose a country"
     }
   }
 }

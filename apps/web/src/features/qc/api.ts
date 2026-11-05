@@ -1,13 +1,10 @@
 'use client';
 
 import {
-  type AddShipmentDocumentDto,
   type AssignInspectionDto,
   type BookInspectionDto,
-  type BookShipmentDto,
   BuyerPaymentsSchema,
   type CreateInspectorDto,
-  type GeneratedDocumentType,
   type InspectionReportDto,
   InspectorJobDetailSchema,
   InspectorJobSchema,
@@ -92,32 +89,6 @@ export const useFileReport = (id: string) =>
 
 export const uploadInspectionFile = (id: string, file: File, onProgress: (p: number) => void) =>
   uploadFile(`/inspector/inspections/${id}/uploads`, 'INSPECTION', file, onProgress);
-
-// ── Shipment ────────────────────────────────────────────────────────────────
-
-export const useBookShipment = (code: string) =>
-  useOrderMutation((dto: BookShipmentDto) =>
-    apiSend(`/orders/${code}/shipment`, { method: 'PUT', body: dto }),
-  );
-
-export const useAddShipmentDocument = (code: string) =>
-  useOrderMutation((dto: AddShipmentDocumentDto) =>
-    apiSend(`/orders/${code}/shipment/documents`, { method: 'POST', body: dto }),
-  );
-
-export const usePublishShipmentDocument = (code: string) =>
-  useOrderMutation(({ id, buyerVisible }: { id: string; buyerVisible: boolean }) =>
-    apiSend(`/orders/${code}/shipment/documents/${id}`, {
-      method: 'PATCH',
-      body: { buyerVisible },
-    }),
-  );
-
-export const uploadShipmentDocument = (code: string, file: File, onProgress: (p: number) => void) =>
-  uploadFile(`/orders/${code}/shipment/uploads`, 'SHIPMENT_DOCUMENT', file, onProgress);
-
-export const generatedDocumentUrl = (code: string, type: GeneratedDocumentType) =>
-  `/api/orders/${code}/shipment/documents/generated/${type}`;
 
 // ── Balance (buyer) ─────────────────────────────────────────────────────────
 

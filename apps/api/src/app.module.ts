@@ -15,13 +15,13 @@ import { ChatModule } from './modules/chat/chat.module.js';
 import { OrdersModule } from './modules/orders/orders.module.js';
 import { PaymentsModule } from './modules/payments/payments.module.js';
 import { QcModule } from './modules/qc/qc.module.js';
-import { ShippingModule } from './modules/shipping/shipping.module.js';
 import { TrustModule } from './modules/trust/trust.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
 import { KycModule } from './modules/kyc/kyc.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
 import { ManufacturerModule } from './modules/manufacturer/manufacturer.module.js';
 import { CapacityBookingModule } from './modules/capacity-booking/capacity-booking.module.js';
+import { LogisticsModule } from './modules/logistics/logistics.module.js';
 import { MediaModule } from './modules/media/media.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
@@ -59,6 +59,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     NotificationsModule,
     ManufacturerModule,
     CapacityBookingModule,
+    LogisticsModule,
     CatalogModule,
     BuyerModule,
     RfqModule,
@@ -66,7 +67,6 @@ import { PrismaModule } from './prisma/prisma.module.js';
     OrdersModule,
     PaymentsModule,
     QcModule,
-    ShippingModule,
     TrustModule,
     AdminModule,
   ],

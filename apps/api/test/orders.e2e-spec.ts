@@ -16,6 +16,7 @@ import {
   createTestApp,
   PASSWORD,
   type TestContext,
+  shipThroughGarmentGate,
   uniqueEmail,
 } from './helpers.js';
 
@@ -416,7 +417,7 @@ describe('order lifecycle (e2e)', () => {
   it('ships, delivers once, and completes', async () => {
     await move(factory.agent, 'READY_TO_SHIP', {}, 403);
     await move(admin, 'READY_TO_SHIP'); // inspection passed
-    await move(factory.agent, 'SHIPPED', {}, 409); // the buyer's balance isn't in yet
+    await move(factory.agent, 'SHIPPED', {}, 403); // never the factory's move
     // Payments are tested in payments.e2e-spec.ts; here the balance simply arrives, posted to
     // the ledger like a real one so the books still reconcile.
     const order = await ctx.prisma.order.findUniqueOrThrow({ where: { code } });
@@ -455,14 +456,10 @@ describe('order lifecycle (e2e)', () => {
         },
       },
     });
-    await move(factory.agent, 'SHIPPED', {}, 400); // tracking is still required
-    await move(factory.agent, 'SHIPPED', {
-      shipment: { mode: 'SEA', carrier: 'Maersk', trackingNumber: 'MAEU123456' },
-    });
-    expect((await asBuyer()).shipment).toMatchObject({
-      carrier: 'Maersk',
-      trackingNumber: 'MAEU123456',
-    });
+    // Nobody ships by hand: orders ship when their GarmentGate shipment leaves the hub.
+    await move(factory.agent, 'SHIPPED', {}, 403); // not the factory's move any more
+    await move(admin, 'SHIPPED', {}, 409); // nor staff's: the departure does it
+    await shipThroughGarmentGate(ctx, code);
 
     // Two "delivered" clicks at once: exactly one wins.
     const results = await Promise.all([

@@ -42,7 +42,8 @@ export const ORDER_TRANSITIONS: Readonly<
   IN_PRODUCTION: { QC: [M, A], DISPUTED: [B, A], CANCELLED: [A] },
   // The buyer may send it back for rework after a failed final inspection (checked by QC).
   QC: { READY_TO_SHIP: [A], IN_PRODUCTION: [B, A], DISPUTED: [B, A] },
-  READY_TO_SHIP: { SHIPPED: [M, A], DISPUTED: [B, A] },
+  // Shipping happens when GarmentGate's shipment leaves the hub (run as staff, never offered).
+  READY_TO_SHIP: { SHIPPED: [A], DISPUTED: [B, A] },
   SHIPPED: { DELIVERED: [B, A], DISPUTED: [B, A] },
   DELIVERED: { COMPLETED: [B, A], DISPUTED: [B, A] },
   COMPLETED: {},
@@ -62,10 +63,13 @@ export function canTransition(from: OrderStatus, to: OrderStatus, actor: OrderAc
   return ORDER_TRANSITIONS[from][to]?.includes(actor) ?? false;
 }
 
-/** The statuses this actor can move the order to from here. */
+/** Moves that only happen on their own: an order ships when its GarmentGate shipment departs. */
+const BY_DEPARTURE: Partial<Record<OrderStatus, OrderStatus>> = { READY_TO_SHIP: 'SHIPPED' };
+
+/** The statuses this actor can move the order to from here (what the UI offers). */
 export function allowedTransitions(from: OrderStatus, actor: OrderActor): OrderStatus[] {
   return (Object.entries(ORDER_TRANSITIONS[from]) as [OrderStatus, readonly OrderActor[]][])
-    .filter(([, actors]) => actors.includes(actor))
+    .filter(([to, actors]) => actors.includes(actor) && BY_DEPARTURE[from] !== to)
     .map(([to]) => to);
 }
 
@@ -89,6 +93,7 @@ export type NextStep =
   | 'PRODUCTION'
   | 'INSPECTION'
   | 'QC_FAILED'
+  | 'CHOOSE_SHIPPING'
   | 'PAY_BALANCE'
   | 'SHIP'
   | 'IN_TRANSIT'
@@ -109,6 +114,8 @@ export interface NextStepContext {
   /** Result of the latest final (pre-shipment) inspection. */
   finalInspection?: 'PENDING' | 'PASS' | 'FAIL' | 'ON_HOLD' | null;
   balancePaid?: boolean;
+  /** The buyer chose how it ships (GarmentGate freight or its own forwarder). */
+  shippingChosen?: boolean;
 }
 
 export function nextStep(status: OrderStatus, context: NextStepContext = {}): NextStepInfo {
@@ -132,6 +139,8 @@ export function nextStep(status: OrderStatus, context: NextStepContext = {}): Ne
         ? { step: 'QC_FAILED', owner: 'BUYER' }
         : { step: 'INSPECTION', owner: 'ADMIN' };
     case 'READY_TO_SHIP':
+      // The factory can't book the pickup to GarmentGate's hub until the buyer has chosen.
+      if (context.shippingChosen === false) return { step: 'CHOOSE_SHIPPING', owner: 'BUYER' };
       return context.balancePaid === false
         ? { step: 'PAY_BALANCE', owner: 'BUYER' }
         : { step: 'SHIP', owner: 'MANUFACTURER' };

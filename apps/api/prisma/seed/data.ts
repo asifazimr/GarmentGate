@@ -634,3 +634,10 @@ export const INSPECTOR = {
   lastName: 'Ahmed',
   email: 'inspector@garmentgate.example',
 };
+
+/** Someone at Bayline Cargo, the demo forwarder, signing in to the partner portal. */
+export const LOGISTICS_PARTNER = {
+  firstName: 'Maya',
+  lastName: 'Sato',
+  email: 'ops@baylinecargo.example',
+};

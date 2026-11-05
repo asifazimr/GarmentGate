@@ -49,7 +49,10 @@ describe('order state machine', () => {
   it('gives each party only its own moves', () => {
     expect(allowedTransitions('IN_PRODUCTION', 'MANUFACTURER')).toEqual(['QC']);
     expect(allowedTransitions('IN_PRODUCTION', 'BUYER')).toEqual(['DISPUTED']);
-    expect(allowedTransitions('READY_TO_SHIP', 'MANUFACTURER')).toEqual(['SHIPPED']);
+    // Nobody ships by hand: the order ships when GarmentGate's shipment departs.
+    expect(allowedTransitions('READY_TO_SHIP', 'MANUFACTURER')).toEqual([]);
+    expect(allowedTransitions('READY_TO_SHIP', 'ADMIN')).toEqual(['DISPUTED']);
+    expect(canTransition('READY_TO_SHIP', 'SHIPPED', 'ADMIN')).toBe(true);
     expect(allowedTransitions('SHIPPED', 'BUYER')).toEqual(['DELIVERED', 'DISPUTED']);
     expect(allowedTransitions('SHIPPED', 'MANUFACTURER')).toEqual([]);
   });
@@ -99,5 +102,10 @@ describe('order state machine', () => {
       owner: 'BUYER',
     });
     expect(nextStep('READY_TO_SHIP', { balancePaid: true }).step).toBe('SHIP');
+    // The factory can't book the pickup until the buyer has chosen how it ships.
+    expect(nextStep('READY_TO_SHIP', { balancePaid: false, shippingChosen: false })).toEqual({
+      step: 'CHOOSE_SHIPPING',
+      owner: 'BUYER',
+    });
   });
 });

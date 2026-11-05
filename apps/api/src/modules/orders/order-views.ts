@@ -4,9 +4,7 @@ import {
   type AdminOrder,
   type BuyerOrder,
   flowProgress,
-  GENERATED_DOCUMENT_TYPES,
   type OrderInspection,
-  type OrderShipment,
   paymentPlan,
   type ManufacturerOrder,
   type MilestoneStage,
@@ -59,16 +57,6 @@ export const orderInclude = {
       reportFile: { select: { id: true, processingStatus: true, sanitizedKey: true } },
       inspector: { select: { firstName: true, lastName: true } },
       bookedBy: { select: { role: true } },
-    },
-  },
-  shipments: {
-    orderBy: { createdAt: 'desc' },
-    take: 1,
-    include: {
-      documents: {
-        orderBy: { createdAt: 'asc' },
-        include: { file: { select: { processingStatus: true, sanitizedKey: true } } },
-      },
     },
   },
   payments: {
@@ -247,7 +235,6 @@ function core(order: OrderRow, audience: Audience, links: MediaLinks) {
 
   const actorLabel = (a: OrderRow['events'][number]['actor']) =>
     a ? `${a.firstName} ${a.lastName}${a.role === 'ADMIN' ? ' (GarmentGate)' : ''}` : 'System';
-  const latestShipment = order.shipments[0];
 
   return {
     code: order.code,
@@ -309,60 +296,8 @@ function core(order: OrderRow, audience: Audience, links: MediaLinks) {
       note: audience === 'ADMIN' ? e.note : null,
     })),
     inspections,
-    shipment: latestShipment
-      ? shipmentView(latestShipment, order.code, audience, links, fromFactory)
-      : null,
     balancePaid: balancePaid(order),
     allowedTransitions: allowedTransitions(order.status, audience satisfies OrderActor),
-  };
-}
-
-function shipmentView(
-  shipment: OrderRow['shipments'][number],
-  orderCode: string,
-  audience: Audience,
-  links: MediaLinks,
-  fromFactory: (text: string | null, filtered: string | null) => string | null,
-): OrderShipment {
-  const iso = (d: Date | null) => d?.toISOString() ?? null;
-  const seen = new Map<string, number>();
-  return {
-    status: shipment.status,
-    mode: shipment.mode,
-    incoterm: shipment.incoterm,
-    forwarder: fromFactory(shipment.forwarder, shipment.forwarder),
-    carrier: fromFactory(shipment.carrier, shipment.carrier),
-    trackingNumber: shipment.trackingNumber,
-    containerNumber: shipment.containerNumber,
-    transportDocNo: shipment.transportDocNo,
-    originPort: shipment.originPort,
-    destinationPort: shipment.destinationPort,
-    cartons: shipment.cartons,
-    grossWeightKg: shipment.grossWeightKg,
-    etd: iso(shipment.etd),
-    eta: iso(shipment.eta),
-    shippedAt: iso(shipment.shippedAt),
-    deliveredAt: iso(shipment.deliveredAt),
-    // Uploaded papers usually name the factory: buyers see only those staff have published.
-    documents: shipment.documents
-      .filter(
-        (d) => audience !== 'BUYER' || (d.buyerVisible && d.file.processingStatus === 'READY'),
-      )
-      .map((d) => {
-        const index = seen.get(d.type) ?? 0;
-        seen.set(d.type, index + 1);
-        return {
-          id: d.id,
-          type: d.type,
-          name: documentName(orderCode, d.type, index),
-          url:
-            d.file.processingStatus === 'READY' ? (links.get(d.fileId)?.documentUrl ?? null) : null,
-          processing: d.file.processingStatus ?? 'PENDING',
-          buyerVisible: d.buyerVisible,
-        };
-      }),
-    // GarmentGate's own papers carry the buyer's prices and name: never for the factory.
-    generatedDocuments: audience === 'MANUFACTURER' ? [] : [...GENERATED_DOCUMENT_TYPES],
   };
 }
 
@@ -400,6 +335,7 @@ export function adminOrderView(order: OrderRow, links: MediaLinks): AdminOrder {
     manufacturerUnitPriceMinor: order.manufacturerUnitPriceMinor,
     buyerTotalMinor: order.buyerUnitPriceMinor * order.quantity,
     manufacturerTotalMinor: order.manufacturerUnitPriceMinor * order.quantity,
+    hsCode: order.hsCode,
     commissionBps: order.commissionBps,
     commissionMinor: Number(order.commissionMinor),
     repeatOrder: order.repeatOrder,

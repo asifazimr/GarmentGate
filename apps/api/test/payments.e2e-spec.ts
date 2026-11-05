@@ -16,6 +16,7 @@ import {
   createTestApp,
   PASSWORD,
   type TestContext,
+  shipThroughGarmentGate,
   uniqueEmail,
 } from './helpers.js';
 
@@ -401,9 +402,7 @@ describe('payments and escrow ledger (e2e)', () => {
     const release = (await finance()).releases[1];
     expect(release?.status).toBe('DUE');
     await admin.post(`/admin/finance/releases/${release?.id ?? ''}/approve`).expect(204);
-    await move(factory.agent, 'SHIPPED', code, {
-      shipment: { mode: 'SEA', carrier: 'Maersk', trackingNumber: 'MAEU1' },
-    }).expect(204);
+    await shipThroughGarmentGate(ctx, code);
     expect(await finance()).toMatchObject({
       escrowMinor: 91_000,
       releasedMinor: 304_000,
@@ -423,12 +422,12 @@ describe('payments and escrow ledger (e2e)', () => {
     });
   });
 
-  it('won’t ship before the balance is in', async () => {
+  it('won’t let anyone ship by hand (the balance is checked when the shipment leaves)', async () => {
     const other = await order(ctx, buyer, factory);
     await ctx.prisma.order.update({ where: { code: other }, data: { status: 'READY_TO_SHIP' } });
-    await move(factory.agent, 'SHIPPED', other, {
-      shipment: { mode: 'SEA', carrier: 'Maersk', trackingNumber: 'MAEU2' },
-    }).expect(409);
+    await move(factory.agent, 'SHIPPED', other).expect(403);
+    const res = await move(admin, 'SHIPPED', other).expect(409);
+    expect(res.text).toContain('GarmentGate shipment');
   });
 
   it('refunds only what is still in escrow, by card when the money came by card', async () => {

@@ -38,4 +38,6 @@ export const USERS = {
   buyerWithOffers: 'lena@gruenfeld-basics.example',
   buyer: 'jordan@northboundsupply.example',
   factory: 'rafiq.hossain@meghnaknit.example',
+  admin: 'admin@garmentgate.example',
+  partner: 'ops@baylinecargo.example',
 };

@@ -31,7 +31,8 @@ import {
 import { NextAction } from './next-action';
 import { ShipSampleDialog, TransitionDialog } from './order-dialogs';
 import { InspectionsPanel } from '@/features/qc/components/inspections-panel';
-import { ShipmentPanel } from '@/features/qc/components/shipment-panel';
+import { FactoryShippingCard } from '@/features/logistics/components/factory-shipping-card';
+import { useFactoryLogistics } from '@/features/logistics/order-api';
 import { FactoryDisputePanel } from '@/features/trust/components/dispute-panel';
 import { OrderReviewsCard } from '@/features/trust/components/reviews';
 import {
@@ -50,6 +51,8 @@ export function FactoryOrderPage({ code }: { code: string }) {
   const showMoney = useMoney();
   const format = useFormatter();
   const order = useFactoryOrder(code);
+  const logistics = useFactoryLogistics(code);
+  const managed = logistics.data?.managed === true;
   const payouts = useFactoryPayouts(code);
   const [shipping, setShipping] = useState(false);
   const [moving, setMoving] = useState<OrderStatus | null>(null);
@@ -94,6 +97,7 @@ export function FactoryOrderPage({ code }: { code: string }) {
         latestSample={latest}
         inspections={o.inspections}
         balancePaid={o.balancePaid}
+        shippingChosen={logistics.data ? managed : undefined}
         values={{
           stage: stage ? t(`timeline.phases.${stage.stage}`) : t('timeline.phases.PACKING'),
         }}
@@ -106,10 +110,9 @@ export function FactoryOrderPage({ code }: { code: string }) {
             {t('actions.toInspection')}
           </Button>
         ) : null}
-        {o.allowedTransitions.includes('SHIPPED') && o.shipment && o.balancePaid ? (
-          <Button onClick={() => setMoving('SHIPPED')}>{t('actions.ship')}</Button>
-        ) : null}
       </NextAction>
+
+      {logistics.data ? <FactoryShippingCard code={o.code} logistics={logistics.data} /> : null}
 
       <FactoryDisputePanel code={o.code} />
 
@@ -129,16 +132,6 @@ export function FactoryOrderPage({ code }: { code: string }) {
                     code={o.code}
                     status={o.status}
                     inspections={o.inspections}
-                  />
-                );
-              if (key === 'shipping')
-                return (
-                  <ShipmentPanel
-                    role="MANUFACTURER"
-                    code={o.code}
-                    status={o.status}
-                    shipment={o.shipment}
-                    defaultIncoterm={o.incoterm}
                   />
                 );
               const parsed = ProductionStageSchema.safeParse(key);

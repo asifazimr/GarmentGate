@@ -42,17 +42,6 @@ export const PaymentStatusSchema = z.enum([
 ]);
 export type PaymentStatus = z.infer<typeof PaymentStatusSchema>;
 
-export const ShipmentStatusSchema = z.enum([
-  'PENDING',
-  'BOOKED',
-  'IN_TRANSIT',
-  'AT_PORT',
-  'CUSTOMS',
-  'DELIVERED',
-  'EXCEPTION',
-]);
-export type ShipmentStatus = z.infer<typeof ShipmentStatusSchema>;
-
 export const SampleStatusSchema = z.enum([
   'REQUESTED',
   'IN_PROGRESS',
@@ -103,6 +92,36 @@ export const CapacityPartnershipStatusSchema = z.enum([
   'ENDED',
 ]);
 export type CapacityPartnershipStatus = z.infer<typeof CapacityPartnershipStatusSchema>;
+export const LogisticsShipmentStatusSchema = z.enum([
+  'PLANNED',
+  'BOOKED',
+  'IN_TRANSIT',
+  'AT_DESTINATION',
+  'CUSTOMS',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+  'EXCEPTION',
+  'CANCELLED',
+]);
+export type LogisticsShipmentStatus = z.infer<typeof LogisticsShipmentStatusSchema>;
+export const PickupStatusSchema = z.enum([
+  'REQUESTED',
+  'SCHEDULED',
+  'COLLECTED',
+  'RECEIVED',
+  'CANCELLED',
+]);
+export type PickupStatus = z.infer<typeof PickupStatusSchema>;
+export const ShipmentLegStatusSchema = z.enum([
+  'PENDING',
+  'BOOKED',
+  'IN_TRANSIT',
+  'COMPLETED',
+  'CANCELLED',
+]);
+export type ShipmentLegStatus = z.infer<typeof ShipmentLegStatusSchema>;
+export const LogisticsClaimStatusSchema = z.enum(['OPEN', 'SUBMITTED', 'SETTLED', 'REJECTED']);
+export type LogisticsClaimStatus = z.infer<typeof LogisticsClaimStatusSchema>;
 
 /** Every status-bearing domain, keyed by name, for StatusBadge and filters. */
 export const STATUS_DOMAINS = {
@@ -111,7 +130,6 @@ export const STATUS_DOMAINS = {
   quote: QuoteStatusSchema,
   kyc: KycStatusSchema,
   payment: PaymentStatusSchema,
-  shipment: ShipmentStatusSchema,
   sample: SampleStatusSchema,
   inspection: InspectionResultSchema,
   dispute: DisputeStatusSchema,
@@ -120,6 +138,10 @@ export const STATUS_DOMAINS = {
   media: MediaReviewDomainSchema,
   booking: CapacityBookingStatusSchema,
   partnership: CapacityPartnershipStatusSchema,
+  freight: LogisticsShipmentStatusSchema,
+  pickup: PickupStatusSchema,
+  leg: ShipmentLegStatusSchema,
+  claim: LogisticsClaimStatusSchema,
 } as const;
 export type StatusDomain = keyof typeof STATUS_DOMAINS;
 export type StatusOf<D extends StatusDomain> = z.infer<(typeof STATUS_DOMAINS)[D]>;
@@ -170,15 +192,6 @@ export const STATUS_TONES: { [D in StatusDomain]: Record<StatusOf<D>, StatusTone
     SUCCEEDED: 'success',
     FAILED: 'danger',
     CANCELLED: 'neutral',
-  },
-  shipment: {
-    PENDING: 'neutral',
-    BOOKED: 'info',
-    IN_TRANSIT: 'progress',
-    AT_PORT: 'progress',
-    CUSTOMS: 'warning',
-    DELIVERED: 'success',
-    EXCEPTION: 'danger',
   },
   sample: {
     REQUESTED: 'neutral',
@@ -233,6 +246,37 @@ export const STATUS_TONES: { [D in StatusDomain]: Record<StatusOf<D>, StatusTone
     DECLINED: 'danger',
     CANCELLED: 'neutral',
     ENDED: 'neutral',
+  },
+  freight: {
+    PLANNED: 'neutral',
+    BOOKED: 'info',
+    IN_TRANSIT: 'progress',
+    AT_DESTINATION: 'progress',
+    CUSTOMS: 'warning',
+    OUT_FOR_DELIVERY: 'progress',
+    DELIVERED: 'success',
+    EXCEPTION: 'danger',
+    CANCELLED: 'neutral',
+  },
+  pickup: {
+    REQUESTED: 'warning',
+    SCHEDULED: 'info',
+    COLLECTED: 'progress',
+    RECEIVED: 'success',
+    CANCELLED: 'neutral',
+  },
+  leg: {
+    PENDING: 'neutral',
+    BOOKED: 'info',
+    IN_TRANSIT: 'progress',
+    COMPLETED: 'success',
+    CANCELLED: 'neutral',
+  },
+  claim: {
+    OPEN: 'warning',
+    SUBMITTED: 'info',
+    SETTLED: 'success',
+    REJECTED: 'neutral',
   },
 };
 

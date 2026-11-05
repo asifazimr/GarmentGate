@@ -3,11 +3,6 @@ import { CurrencySchema } from '../catalog/product.schema.js';
 import { MilestoneStageSchema } from '../discovery/discovery.schema.js';
 import { IMAGE_CONTENT_TYPES, OrderMediaSchema } from '../media/media.schema.js';
 import { OrderInspectionSchema } from '../qc/qc.schema.js';
-import {
-  OrderShipmentSchema,
-  ShipmentModeSchema,
-  ShipmentReferenceSchema,
-} from '../qc/shipping.schema.js';
 import { IncotermSchema } from '../rfq/rfq.schema.js';
 import {
   MilestoneStatusSchema,
@@ -59,14 +54,6 @@ const note = z
 export const OrderTransitionSchema = z.object({
   to: OrderStatusSchema,
   note,
-  /** When shipping: how it travels. */
-  shipment: z
-    .object({
-      mode: ShipmentModeSchema,
-      carrier: z.string().trim().min(2).max(80),
-      trackingNumber: ShipmentReferenceSchema,
-    })
-    .optional(),
 });
 export type OrderTransitionDto = z.output<typeof OrderTransitionSchema>;
 
@@ -184,7 +171,6 @@ const core = {
   milestones: z.array(OrderMilestoneSchema),
   events: z.array(OrderEventSchema),
   inspections: z.array(OrderInspectionSchema),
-  shipment: OrderShipmentSchema.nullable(),
   /** Whether the buyer's balance is in (the factory ships only after it). */
   balancePaid: z.boolean(),
   /** What the viewer may move the order to right now. */
@@ -212,6 +198,8 @@ export type ManufacturerOrder = z.infer<typeof ManufacturerOrderSchema>;
 
 export const AdminOrderSchema = z.object({
   ...core,
+  /** HS code for documents and duty estimates (staff set it). */
+  hsCode: z.string().nullable(),
   buyer: z.object({ code: z.string(), name: z.string() }),
   manufacturer: z.object({ code: z.string(), name: z.string() }),
   buyerUnitPriceMinor: z.number().int(),

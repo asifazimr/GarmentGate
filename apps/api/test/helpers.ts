@@ -1,4 +1,5 @@
 import { type INestApplication } from '@nestjs/common';
+import { LedgerService } from '../src/modules/payments/ledger.service.js';
 import { Test, type TestingModuleBuilder } from '@nestjs/testing';
 import { hash } from '@node-rs/argon2';
 import type { EmailTemplateName, EmailTemplates } from '@garmentgate/emails';
@@ -8,6 +9,7 @@ import type { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
 import { configureApp } from '../src/bootstrap.js';
 import { MailService } from '../src/modules/mail/mail.service.js';
+import { OrdersService } from '../src/modules/orders/orders.service.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 
 export interface SentEmail {
@@ -171,4 +173,69 @@ export async function uploadDocument(agent: ReturnType<typeof client>, type: str
 
   await agent.post('/kyc/documents').send({ fileId, type }).expect(204);
   return fileId;
+}
+
+/**
+ * A succeeded buyer payment with its escrow posting, as if staff had confirmed a transfer. Keeps
+ * the ledger's "cash matches payments" check true for suites that need a paid order quickly.
+ */
+export async function recordPaidPayment(
+  ctx: TestContext,
+  input: {
+    orderId: string;
+    buyerCompanyId: string;
+    purpose: 'DEPOSIT' | 'BALANCE';
+    amountMinor: bigint;
+  },
+): Promise<void> {
+  const ledger = ctx.app.get(LedgerService);
+  await ctx.prisma.$transaction(async (tx) => {
+    const payment = await tx.payment.create({
+      data: {
+        orderId: input.orderId,
+        direction: 'INBOUND',
+        purpose: input.purpose,
+        amountMinor: input.amountMinor,
+        currency: 'USD',
+        method: 'BANK_TRANSFER',
+        provider: 'manual',
+        status: 'SUCCEEDED',
+        paidAt: new Date(),
+      },
+    });
+    await ledger.post(tx, {
+      kind: 'DEPOSIT',
+      key: `test-payment:${payment.id}`,
+      orderId: input.orderId,
+      paymentId: payment.id,
+      currency: 'USD',
+      rates: { USD: '1' },
+      description: `Test ${input.purpose.toLowerCase()}`,
+      lines: [
+        {
+          account: 'PLATFORM_CASH',
+          companyId: null,
+          direction: 'DEBIT',
+          amountMinor: input.amountMinor,
+        },
+        {
+          account: 'BUYER_ESCROW',
+          companyId: input.buyerCompanyId,
+          direction: 'CREDIT',
+          amountMinor: input.amountMinor,
+        },
+      ],
+    });
+  });
+}
+
+/**
+ * Ships an order the way a GarmentGate departure does (TrackingService → OrdersService.advance),
+ * for tests about what happens after shipping. Manual SHIPPED transitions are refused.
+ */
+export async function shipThroughGarmentGate(ctx: TestContext, code: string): Promise<void> {
+  const order = await ctx.prisma.order.findUniqueOrThrow({ where: { code } });
+  await ctx.app.get(OrdersService).advance(order.id, 'SHIPPED', 'Left the hub (test)');
+  const after = await ctx.prisma.order.findUniqueOrThrow({ where: { code } });
+  expect(after.status).toBe('SHIPPED');
 }

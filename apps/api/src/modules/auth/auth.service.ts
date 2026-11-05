@@ -89,7 +89,14 @@ export class AuthService {
    */
   async createStaffUser(
     adminId: string,
-    input: { email: string; firstName: string; lastName: string; role: 'INSPECTOR' },
+    input: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      role: 'INSPECTOR' | 'PARTNER';
+      /** PARTNER: the logistics partner the user works for. */
+      logisticsPartnerId?: string;
+    },
   ): Promise<{ id: string }> {
     const existing = await this.prisma.user.findUnique({ where: { email: input.email } });
     if (existing) throw new ConflictException('An account with this email already exists');

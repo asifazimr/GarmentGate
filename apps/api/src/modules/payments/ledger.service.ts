@@ -13,6 +13,8 @@ export interface LedgerLine {
   account: LedgerAccountType;
   /** Buyer company for BUYER_ESCROW, factory company for MANUFACTURER_PAYABLE; null for platform accounts. */
   companyId: string | null;
+  /** PARTNER_PAYABLE: the logistics partner owed. */
+  logisticsPartnerId?: string | null;
   direction: 'DEBIT' | 'CREDIT';
   amountMinor: bigint;
 }
@@ -34,6 +36,7 @@ export interface Posting {
 /** Assets are debit-normal; escrow, payable and revenue are credit-normal. */
 const CREDIT_NORMAL: ReadonlySet<LedgerAccountType> = new Set([
   'BUYER_ESCROW',
+  'PARTNER_PAYABLE',
   'MANUFACTURER_PAYABLE',
   'PLATFORM_REVENUE',
 ]);
@@ -73,21 +76,17 @@ export class LedgerService {
     type: LedgerAccountType,
     companyId: string | null,
     currency: Currency,
+    logisticsPartnerId: string | null = null,
   ): Promise<string> {
-    const existing = await tx.ledgerAccount.findFirst({
-      where: { type, companyId, currency },
-      select: { id: true },
-    });
+    const where = { type, companyId, logisticsPartnerId, currency };
+    const existing = await tx.ledgerAccount.findFirst({ where, select: { id: true } });
     if (existing) return existing.id;
     // Concurrent creators: the unique indexes let only one through; take whichever exists.
     await tx.$executeRaw`
-      INSERT INTO "ledger_accounts" ("id", "type", "companyId", "currency", "createdAt")
-      VALUES (gen_random_uuid(), ${type}::"LedgerAccountType", ${companyId}::uuid, ${currency}::"Currency", now())
+      INSERT INTO "ledger_accounts" ("id", "type", "companyId", "logisticsPartnerId", "currency", "createdAt")
+      VALUES (gen_random_uuid(), ${type}::"LedgerAccountType", ${companyId}::uuid, ${logisticsPartnerId}::uuid, ${currency}::"Currency", now())
       ON CONFLICT DO NOTHING`;
-    const created = await tx.ledgerAccount.findFirstOrThrow({
-      where: { type, companyId, currency },
-      select: { id: true },
-    });
+    const created = await tx.ledgerAccount.findFirstOrThrow({ where, select: { id: true } });
     return created.id;
   }
 
@@ -106,7 +105,13 @@ export class LedgerService {
     const entries = [];
     for (const line of lines) {
       entries.push({
-        accountId: await this.accountId(tx, line.account, line.companyId, posting.currency),
+        accountId: await this.accountId(
+          tx,
+          line.account,
+          line.companyId,
+          posting.currency,
+          line.logisticsPartnerId ?? null,
+        ),
         direction: line.direction,
         amountMinor: line.amountMinor,
       });
@@ -189,11 +194,12 @@ export class LedgerService {
         type: LedgerAccountType;
         currency: Currency;
         companyId: string | null;
+        logisticsPartnerId: string | null;
         debit: bigint;
         credit: bigint;
       }[]
     >`
-      SELECT a."id", a."type", a."currency", a."companyId",
+      SELECT a."id", a."type", a."currency", a."companyId", a."logisticsPartnerId",
              COALESCE(SUM(e."amountMinor") FILTER (WHERE e."direction" = 'DEBIT'), 0)::bigint AS "debit",
              COALESCE(SUM(e."amountMinor") FILTER (WHERE e."direction" = 'CREDIT'), 0)::bigint AS "credit"
         FROM "ledger_accounts" a

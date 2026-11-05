@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { IMAGE_CONTENT_TYPES, MediaReviewStatusSchema } from '../media/media.schema.js';
-import { DisputeStatusSchema, OrderStatusSchema } from '../status/statuses.js';
+import {
+  DisputeStatusSchema,
+  LogisticsClaimStatusSchema,
+  OrderStatusSchema,
+} from '../status/statuses.js';
 
 export const DISPUTE_REASONS = [
   'QUALITY',
@@ -117,6 +121,13 @@ export const AdminDisputeSchema = z.object({
   disputedFrom: OrderStatusSchema.nullable(),
   /** Unreleased escrow: the most that can be refunded. */
   refundableMinor: z.number().int(),
+  /** Shipped with GarmentGate logistics: losses in transit go through a logistics claim. */
+  logistics: z
+    .object({
+      shipmentCode: z.string(),
+      claim: z.object({ code: z.string(), status: LogisticsClaimStatusSchema }).nullable(),
+    })
+    .nullable(),
 });
 export type AdminDispute = z.infer<typeof AdminDisputeSchema>;
 

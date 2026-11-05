@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 import { E2E_API_ENV } from './e2e/env';
 
 /**
- * The four main journeys in a real browser against the built web app and API.
+ * The five main journeys in a real browser against the built web app and API.
  * Build first (`pnpm build`), stop `pnpm dev` (same ports), then `pnpm --filter web test:journeys`.
  * Locally, PW_CHANNEL=chrome uses the installed Chrome instead of Playwright's Chromium.
  */
