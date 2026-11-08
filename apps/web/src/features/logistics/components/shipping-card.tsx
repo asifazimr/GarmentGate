@@ -6,17 +6,16 @@ import {
   GG_INCOTERMS,
   type GgIncoterm,
   insuranceRequired,
-  type PaymentStart,
 } from '@garmentgate/shared';
 import { Clock, Info, Plane, Ship, Truck, Warehouse } from 'lucide-react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormAlert } from '@/features/auth/components/form-alert';
@@ -26,11 +25,11 @@ import { countryName } from '@/lib/countries';
 import { useMoney } from '@/lib/use-money';
 import {
   useAcceptShipping,
-  useMarkShippingSent,
   useOrderLogistics,
   useShippingQuotes,
   useStartShippingPayment,
 } from '../order-api';
+import { PaymentChooser } from '@/features/payments/components/payment-chooser';
 import { ConsolidationOffer } from './consolidation-offer';
 import { OptionSelect } from './form-bits';
 import { HandoverChosen, HandoverForm } from './handover';
@@ -385,6 +384,7 @@ function Chosen({
   const locale = useLocale();
   const showMoney = useMoney();
   const [paying, setPaying] = useState(false);
+  const start = useStartShippingPayment(code);
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
       <OptionCard option={option} hsCode={l.hsCode} />
@@ -412,84 +412,15 @@ function Chosen({
             </Button>
           ) : null}
         </div>
-        {paying ? <PayPanel code={code} onDone={() => setPaying(false)} /> : null}
+        {paying ? (
+          <PaymentChooser
+            code={code}
+            start={start.mutateAsync}
+            idPrefix="sh"
+            onDone={() => setPaying(false)}
+          />
+        ) : null}
       </div>
-    </div>
-  );
-}
-
-/** Bank transfer to GarmentGate quoting the reference; staff confirm it from the statement. */
-function PayPanel({ code, onDone }: { code: string; onDone: () => void }) {
-  const t = useTranslations('qc.pay');
-  const tc = useTranslations('common');
-  const showMoney = useMoney();
-  const start = useStartShippingPayment(code);
-  const sent = useMarkShippingSent(code);
-  const [payment, setPayment] = useState<PaymentStart | null>(null);
-  const [reference, setReference] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const startPayment = start.mutateAsync;
-  useEffect(() => {
-    let cancelled = false;
-    startPayment('BANK_TRANSFER')
-      .then((p) => {
-        if (!cancelled) setPayment(p);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : tc('networkError'));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [startPayment, tc]);
-  const markSent = async () => {
-    if (!payment) return;
-    try {
-      await sent.mutateAsync({ id: payment.paymentId, payerReference: reference });
-      toast.success(t('sent'));
-      onDone();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : tc('networkError'));
-    }
-  };
-  return (
-    <div className="space-y-3 rounded-lg border p-3">
-      <FormAlert message={error} />
-      {payment ? (
-        <>
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-muted-foreground">{t('amount')}</span>
-            <span className="tabular font-semibold">
-              {showMoney(payment.amountMinor, payment.currency)}
-            </span>
-          </div>
-          <Badge variant="code" className="text-sm">
-            {payment.reference}
-          </Badge>
-          {payment.instructions ? (
-            <ul className="space-y-1">
-              {payment.instructions.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          ) : null}
-          <Field>
-            <FieldLabel htmlFor="sh-ref">{t('yourReference')}</FieldLabel>
-            <Input
-              id="sh-ref"
-              value={reference}
-              maxLength={80}
-              onChange={(e) => setReference(e.target.value)}
-            />
-            <FieldDescription>{t('yourReferenceHint')}</FieldDescription>
-          </Field>
-          <Button disabled={sent.isPending} onClick={() => void markSent()}>
-            {t('markSent')}
-          </Button>
-        </>
-      ) : error ? null : (
-        <Skeleton className="h-28 rounded-lg" aria-label={t('loading')} />
-      )}
     </div>
   );
 }

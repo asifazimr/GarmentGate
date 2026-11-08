@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { CurrencySchema } from '../catalog/product.schema.js';
 import { PaymentStatusSchema } from '../status/statuses.js';
+import { BankDetailsSchema } from './bank-accounts.js';
 
 export const PaymentMethodSchema = z.enum(['BANK_TRANSFER', 'LETTER_OF_CREDIT', 'CARD']);
 export type PaymentMethod = z.infer<typeof PaymentMethodSchema>;
@@ -13,6 +14,8 @@ export const RELEASE_TRIGGERS = [
   'QC_PASSED',
   'SHIPPED',
   'DELIVERED',
+  /** The holdback: due once the claim window after delivery closes with no open dispute. */
+  'CLAIM_WINDOW',
   'COMPLETED',
 ] as const;
 export const ReleaseTriggerSchema = z.enum(RELEASE_TRIGGERS);
@@ -38,12 +41,48 @@ export const ReleaseScheduleSchema = z
   );
 export type ReleaseSchedule = z.output<typeof ReleaseScheduleSchema>;
 
-/** 30% when production starts, 50% when the final inspection passes, 20% on delivery. */
+/**
+ * Business model, money flow: a 25% material advance once the deposit is in, 70% when the goods
+ * ship, and a 5% holdback until the claim window after delivery closes.
+ */
 export const DEFAULT_RELEASE_SCHEDULE: ReleaseSchedule = [
-  { trigger: 'PRODUCTION_START', bps: 3000 },
-  { trigger: 'QC_PASSED', bps: 5000 },
-  { trigger: 'DELIVERED', bps: 2000 },
+  { trigger: 'PRODUCTION_START', bps: 2500 },
+  { trigger: 'SHIPPED', bps: 7000 },
+  { trigger: 'CLAIM_WINDOW', bps: 500 },
 ];
+
+// ── Service fees (business model: revenue streams 4 and 5) ──────────────────
+
+export const FeePurposeSchema = z.enum(['SAMPLE_FEE', 'INSPECTION_FEE']);
+export type FeePurpose = z.infer<typeof FeePurposeSchema>;
+
+export const ServiceFeesSchema = z.object({
+  /** Per inspection day, charged to the buyer (USD minor units, converted to the order's). */
+  inspectionFeeUsdMinor: z.number().int().min(0).max(10_000_000),
+  /** Each buyer's first inspection is on GarmentGate. */
+  firstInspectionFree: z.boolean(),
+  /** Per sample requested. */
+  sampleFeeUsdMinor: z.number().int().min(0).max(10_000_000),
+  /** Sample fees paid are credited against the balance once the bulk deposit is in. */
+  creditSampleFees: z.boolean(),
+  /** Days after delivery during which the buyer can open a dispute; the holdback waits. */
+  claimWindowDays: z.number().int().min(1).max(180),
+});
+export type ServiceFees = z.infer<typeof ServiceFeesSchema>;
+
+export const DEFAULT_SERVICE_FEES: ServiceFees = {
+  inspectionFeeUsdMinor: 20_000,
+  firstInspectionFree: true,
+  sampleFeeUsdMinor: 7_500,
+  creditSampleFees: true,
+  claimWindowDays: 14,
+};
+
+export const PayFeesSchema = z.object({
+  purpose: FeePurposeSchema,
+  method: z.enum(['BANK_TRANSFER', 'LETTER_OF_CREDIT', 'CARD']),
+});
+export type PayFeesDto = z.infer<typeof PayFeesSchema>;
 
 /** Exchange rates: units of each currency per 1 USD, as decimal strings. */
 export const FxRatesSchema = z.partialRecord(
@@ -86,7 +125,7 @@ export type PaymentStart = z.infer<typeof PaymentStartSchema>;
 export const BuyerPaymentSchema = z.strictObject({
   id: z.uuid(),
   reference: z.string(),
-  purpose: z.enum(['DEPOSIT', 'BALANCE', 'REFUND']),
+  purpose: z.enum(['DEPOSIT', 'BALANCE', 'REFUND', 'SAMPLE_FEE', 'INSPECTION_FEE']),
   method: PaymentMethodSchema,
   amountMinor: z.number().int(),
   status: PaymentStatusSchema,
@@ -112,6 +151,27 @@ export const BuyerPaymentsSchema = z.strictObject({
   payments: z.array(BuyerPaymentSchema),
   methods: z.array(PaymentMethodSchema),
   instructions: z.array(z.string()).nullable(),
+  /** Sample fees credited against the balance (already taken off the balance above). */
+  sampleCreditMinor: z.number().int(),
+  /** Service fees: samples and inspection days, at GarmentGate's prices. */
+  fees: z.array(
+    z.strictObject({
+      purpose: FeePurposeSchema,
+      /** What was charged (waived ones count 0) and what's been paid. */
+      chargedMinor: z.number().int(),
+      paidMinor: z.number().int(),
+      dueMinor: z.number().int(),
+      /** A transfer marked as sent, waiting for staff. */
+      pending: z.boolean(),
+      items: z.array(
+        z.strictObject({
+          amountMinor: z.number().int(),
+          waived: z.boolean(),
+          createdAt: z.iso.datetime(),
+        }),
+      ),
+    }),
+  ),
 });
 export type BuyerPayments = z.infer<typeof BuyerPaymentsSchema>;
 
@@ -299,6 +359,8 @@ export const FinanceInboxSchema = z.object({
       currency: CurrencySchema,
       manufacturer: Party,
       releasedAt: z.iso.datetime().nullable(),
+      /** Where to send it: the factory's verified bank account (null: none yet). */
+      bank: BankDetailsSchema.nullable(),
     }),
   ),
 });

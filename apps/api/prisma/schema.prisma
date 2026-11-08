@@ -274,6 +274,8 @@ enum PaymentPurpose {
   LOGISTICS
   /// Money an insurer paid GarmentGate on a logistics claim.
   INSURANCE_RECOVERY
+  /// The buyer's inspection-day fees (QC).
+  INSPECTION_FEE
 }
 
 enum PaymentMethod {
@@ -297,6 +299,8 @@ enum LedgerAccountType {
   PLATFORM_REVENUE
   /// What GarmentGate owes a logistics partner (per partner).
   PARTNER_PAYABLE
+  /// What GarmentGate owes its gig QC inspectors (per inspector: see inspections).
+  INSPECTOR_PAYABLE
 }
 
 enum LedgerTransactionKind {
@@ -308,6 +312,8 @@ enum LedgerTransactionKind {
   PAYOUT
   /// Logistics claims: compensation, insurer recovery, partner chargeback.
   CLAIM
+  /// Factory plan subscriptions (cash → revenue).
+  SUBSCRIPTION
 }
 
 enum EntryDirection {
@@ -455,6 +461,15 @@ model User {
   logisticsPartnerId String?      @db.Uuid
   status             UserStatus   @default(ACTIVE)
   locale             String       @default("en")
+  /// Verified mobile number for texts (E.164). Never shown to the other side.
+  phoneE164          String?
+  phoneVerifiedAt    DateTime?
+  /// A number waiting for its code (moves to phoneE164 once confirmed).
+  pendingPhone       String?
+  phoneCodeHash      String?
+  phoneCodeExpiresAt DateTime?
+  phoneCodeAttempts  Int          @default(0)
+  textChannel        TextChannel  @default(SMS)
   /// Show amounts converted to this currency too (null: only the transaction's own currency).
   displayCurrency    Currency?
   firstName          String
@@ -501,6 +516,7 @@ model User {
 
   @@index([companyId])
   @@index([role, status])
+  outboundMessages OutboundMessage[]
   @@map("users")
 }
 
@@ -570,6 +586,8 @@ model Company {
   registrationNumber String?
   taxId              String?
   website            String?
+  /// Buyers: the GarmentGate staff member who looks after this account (single point of contact).
+  merchandiserId     String?        @db.Uuid
   phone              String?
   yearEstablished    Int?
   onboardingStep     OnboardingStep @default(PROFILE)
@@ -605,6 +623,7 @@ model Company {
   @@index([type, kycStatus])
   @@index([kycStatus, kycSubmittedAt])
   @@index([country])
+  planSubscriptions PlanSubscription[]
   @@map("companies")
 }
 
@@ -634,6 +653,8 @@ model BuyerProfile {
   companyId               String             @unique @db.Uuid
   /// e.g. BYR-US-0012 — what manufacturers and admins-in-relay see.
   publicCode              String             @unique
+  /// GarmentGate Plus in force (kept in step with its subscriptions by BuyerPlusService).
+  plusActive              Boolean            @default(false)
   businessType            BuyerBusinessType?
   annualVolumePcs         Int?
   typicalOrderQuantityPcs Int?
@@ -656,6 +677,13 @@ model ManufacturerProfile {
   companyId                 String   @unique @db.Uuid
   /// e.g. MFR-BD-0421
   publicCode                String   @unique
+  /// Where the factory is (staff-entered): inspectors' task distance and GPS check-in.
+  latitude                  Decimal? @db.Decimal(9, 6)
+  longitude                 Decimal? @db.Decimal(9, 6)
+  /// The plan in force (kept in step with its subscriptions by PlansService).
+  planTier                  PlanTier @default(FREE)
+  /// Denormalised from the plan for the search index.
+  searchBoost               Int      @default(0)
   headline                  String?
   about                     String?
   aboutFiltered             String?
@@ -703,6 +731,8 @@ model ManufacturerProfile {
   supplierClaims       SupplierClaim[]
 
   @@index([isListed, performanceScore])
+  subscriptions PlanSubscription[]
+
   @@map("manufacturer_profiles")
 }
 
@@ -891,6 +921,8 @@ model Rfq {
   capacityBookingId    String?   @unique @db.Uuid
   status               RfqStatus @default(DRAFT)
   publishedAt          DateTime?
+  /// Until then only factories with a plan head start see it (null: no head-start factory matched).
+  headStartEndsAt      DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -921,6 +953,9 @@ model RfqInvitation {
   manufacturerProfileId String              @db.Uuid
   status                RfqInvitationStatus @default(INVITED)
   invitedAt             DateTime            @default(now())
+  /// Open RFQs reach factories without a plan head start later (and are announced then).
+  visibleAt             DateTime            @default(now())
+  notifiedAt            DateTime?
   respondedAt           DateTime?
   declineReason         String?
 
@@ -929,6 +964,7 @@ model RfqInvitation {
 
   @@unique([rfqId, manufacturerProfileId])
   @@index([manufacturerProfileId, status])
+  @@index([notifiedAt, visibleAt])
   @@map("rfq_invitations")
 }
 
@@ -1170,12 +1206,21 @@ model Order {
   inspections        Inspection[]
   reviews            Review[]
   disputes           Dispute[]
+  charges            OrderCharge[]
+  /// Sample fees credited against the balance when the bulk deposit arrived (GarmentGate-funded).
+  sampleCreditMinor  BigInt               @default(0)
+  /// A call-off placed under a supply contract.
+  contractId         String?              @db.Uuid
+  contract           SupplyContract?      @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  /// Last time staff, factory and buyer were alerted that the order runs late (one alert a week).
+  delayAlertedAt     DateTime?
+  factoryChanges     OrderFactoryChange[]
   logisticsClaims    LogisticsClaim[]
   conversations      Conversation[]
   releases           OrderRelease[]
   events             OrderEvent[]
-  reorderOf          Order?              @relation("Reorders", fields: [reorderOfId], references: [id], onDelete: SetNull)
-  reorders           Order[]             @relation("Reorders")
+  reorderOf          Order?               @relation("Reorders", fields: [reorderOfId], references: [id], onDelete: SetNull)
+  reorders           Order[]              @relation("Reorders")
 
   @@index([buyerCompanyId, status])
   @@index([manufacturerProfileId, status])
@@ -1298,6 +1343,8 @@ model Payment {
   settlementCurrency    Currency?
   settlementAmountMinor BigInt?
   releaseId             String?          @unique @db.Uuid
+  /// Payouts: the verified factory bank account the transfer went to.
+  factoryBankAccountId  String?          @db.Uuid
   direction             PaymentDirection
   purpose               PaymentPurpose
   amountMinor           BigInt
@@ -1390,31 +1437,46 @@ model EscrowLedgerEntry {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Inspection {
-  id              String           @id @default(uuid(7)) @db.Uuid
-  orderId         String           @db.Uuid
-  type            InspectionType
-  agency          String?
-  scheduledAt     DateTime?
-  inspectedAt     DateTime?
+  id               String           @id @default(uuid(7)) @db.Uuid
+  orderId          String           @db.Uuid
+  type             InspectionType
+  agency           String?
+  scheduledAt      DateTime?
+  inspectedAt      DateTime?
   /// Who booked it (a buyer member or staff); null when the platform opened it on entering QC.
-  bookedById      String?          @db.Uuid
-  inspectorId     String?          @db.Uuid
+  bookedById       String?          @db.Uuid
+  inspectorId      String?          @db.Uuid
+  /// When an inspector was first assigned (the KPI "inspector assignment time").
+  assignedAt       DateTime?
+  /// The inspector was at the factory (GPS within the check-in radius).
+  checkedInAt      DateTime?
+  checkInDistanceM Int?
+  /// Gig pay for this inspection (USD minor units, snapshot when assigned).
+  payUsdMinor      Int?
+  /// Owed to the inspector once the report is filed; paid in a weekly payout.
+  earnedAt         DateTime?
+  paidAt           DateTime?
+  payoutReference  String?
+  /// Staff rating of the inspector's work, 1–5.
+  rating           Int?
+  /// Picked for a random re-inspection by an in-house lead.
+  auditRequested   Boolean          @default(false)
   /// Pieces in the lot; the AQL sample size follows from it.
-  lotSize         Int?
+  lotSize          Int?
   /// General inspection level, e.g. "II"
-  aqlLevel        String?
+  aqlLevel         String?
   /// Acceptable quality limits, e.g. "2.5"
-  aqlMajor        String?
-  aqlMinor        String?
-  sampleSize      Int?
-  criticalDefects Int?
-  majorDefects    Int?
-  minorDefects    Int?
-  result          InspectionResult @default(PENDING)
-  summary         String?
-  reportFileId    String?          @unique @db.Uuid
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  aqlMajor         String?
+  aqlMinor         String?
+  sampleSize       Int?
+  criticalDefects  Int?
+  majorDefects     Int?
+  minorDefects     Int?
+  result           InspectionResult @default(PENDING)
+  summary          String?
+  reportFileId     String?          @unique @db.Uuid
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   order      Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
   reportFile FileAsset?        @relation(fields: [reportFileId], references: [id], onDelete: SetNull)
@@ -1559,6 +1621,8 @@ model NotificationPreference {
   category NotificationCategory
   inApp    Boolean
   email    Boolean
+  /// SMS or WhatsApp (the user's channel), once their mobile number is verified.
+  text     Boolean              @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1760,6 +1824,8 @@ enum ReleaseTrigger {
   SHIPPED
   DELIVERED
   COMPLETED
+  /// The holdback: due once the claim window after delivery closes with no open dispute.
+  CLAIM_WINDOW
 }
 
 enum ReleaseStatus {
@@ -1776,26 +1842,31 @@ enum ReleaseStatus {
 
 /// One tranche of an order's escrow, snapshotted from the release schedule when the order is confirmed.
 model OrderRelease {
-  id                String         @id @default(uuid(7)) @db.Uuid
-  orderId           String         @db.Uuid
-  trigger           ReleaseTrigger
-  bps               Int
-  currency          Currency
-  buyerMinor        BigInt
-  manufacturerMinor BigInt
-  commissionMinor   BigInt
-  status            ReleaseStatus  @default(SCHEDULED)
-  dueAt             DateTime?
-  releasedAt        DateTime?
-  approvedById      String?        @db.Uuid
-  paidAt            DateTime?
-  createdAt         DateTime       @default(now())
+  id                    String         @id @default(uuid(7)) @db.Uuid
+  orderId               String         @db.Uuid
+  trigger               ReleaseTrigger
+  bps                   Int
+  currency              Currency
+  buyerMinor            BigInt
+  manufacturerMinor     BigInt
+  commissionMinor       BigInt
+  status                ReleaseStatus  @default(SCHEDULED)
+  dueAt                 DateTime?
+  releasedAt            DateTime?
+  approvedById          String?        @db.Uuid
+  paidAt                DateTime?
+  /// The order moved to another factory: this release belongs to the old one.
+  supersededAt          DateTime?
+  /// The factory this tranche is owed to (stays the old one after a replacement).
+  manufacturerProfileId String?        @db.Uuid
+  createdAt             DateTime       @default(now())
 
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
   approvedBy User?    @relation("ReleaseApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
   payout     Payment?
 
-  @@unique([orderId, trigger])
+  /// One live release per moment (partial unique index in SQL: "supersededAt" IS NULL).
+  @@index([orderId, trigger])
   @@index([status])
   @@map("order_releases")
 }
@@ -2728,4 +2799,324 @@ model LogisticsClaim {
   @@index([shipmentId])
   @@index([status, createdAt])
   @@map("logistics_claims")
+}
+
+enum OrderChargeKind {
+  SAMPLE_FEE
+  INSPECTION_FEE
+}
+
+/**
+ * A service fee the buyer owes on an order, at the price in force when it arose: one per
+ * sample requested, one per inspection day (the buyer's first inspection is free: waived).
+ * Paid as SAMPLE_FEE / INSPECTION_FEE payments, which become GarmentGate revenue.
+ */
+model OrderCharge {
+  id           String          @id @default(uuid(7)) @db.Uuid
+  orderId      String          @db.Uuid
+  kind         OrderChargeKind
+  amountMinor  BigInt
+  currency     Currency
+  waived       Boolean         @default(false)
+  sampleId     String?         @unique @db.Uuid
+  inspectionId String?         @unique @db.Uuid
+  createdAt    DateTime        @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, kind])
+  @@map("order_charges")
+}
+
+/**
+ * Staff moved an order to another factory (business model: exception flow, "factory
+ * replacement"). The old factory keeps what was already released to it; GarmentGate funds that
+ * amount back into escrow so the new factory's releases add up.
+ */
+model OrderFactoryChange {
+  id                 String   @id @default(uuid(7)) @db.Uuid
+  orderId            String   @db.Uuid
+  fromProfileId      String   @db.Uuid
+  toProfileId        String   @db.Uuid
+  fromUnitPriceMinor Int
+  toUnitPriceMinor   Int
+  /// Released to the old factory before the change (buyer-side tranches), funded by GarmentGate.
+  fundedMinor        BigInt
+  reason             String
+  createdById        String   @db.Uuid
+  createdAt          DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_factory_changes")
+}
+
+enum BankAccountStatus {
+  PENDING_REVIEW
+  VERIFIED
+  REJECTED
+  /// The factory submitted newer details.
+  REPLACED
+}
+
+/**
+ * Where GarmentGate pays a factory (bank transfer, SWIFT). Staff only beside the factory itself
+ * (which sees it masked); a new submission replaces the previous one and must be verified by
+ * staff again before any payout (bank-detail changes are a classic fraud route).
+ */
+model FactoryBankAccount {
+  id            String            @id @default(uuid(7)) @db.Uuid
+  companyId     String            @db.Uuid
+  holderName    String
+  bankName      String
+  bankCountry   String            @db.Char(2)
+  /// Account number or IBAN, as given.
+  accountNumber String
+  swiftBic      String?
+  /// Local routing: routing number, sort code, IFSC, branch code.
+  routingCode   String?
+  branch        String?
+  currency      Currency
+  status        BankAccountStatus @default(PENDING_REVIEW)
+  reviewNote    String?
+  submittedById String            @db.Uuid
+  reviewedById  String?           @db.Uuid
+  reviewedAt    DateTime?
+  createdAt     DateTime          @default(now())
+
+  @@index([companyId, status])
+  @@index([status, createdAt])
+  @@map("factory_bank_accounts")
+}
+
+enum SupplyContractStatus {
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+/**
+ * A frame agreement (business model: corporate and institutional buyers, yearly uniform
+ * contracts): one product from one factory at fixed prices for a period and a volume. The buyer
+ * places call-offs against it; each becomes an order at the contract's prices, deposit due.
+ */
+model SupplyContract {
+  id                         String               @id @default(uuid(7)) @db.Uuid
+  /// e.g. CTR-2026-00004
+  code                       String               @unique
+  buyerCompanyId             String               @db.Uuid
+  manufacturerProfileId      String               @db.Uuid
+  title                      String
+  specification              String
+  currency                   Currency
+  buyerUnitPriceMinor        Int
+  manufacturerUnitPriceMinor Int
+  contractedQuantity         Int
+  calledOffQuantity          Int                  @default(0)
+  minCallOffQuantity         Int                  @default(1)
+  depositBps                 Int                  @default(3000)
+  incoterm                   Incoterm
+  destinationCountry         String               @db.Char(2)
+  /// Days from a call-off to the requested ship date.
+  leadTimeDays               Int
+  startsOn                   DateTime             @db.Date
+  endsOn                     DateTime             @db.Date
+  status                     SupplyContractStatus @default(ACTIVE)
+  createdById                String               @db.Uuid
+  createdAt                  DateTime             @default(now())
+  updatedAt                  DateTime             @updatedAt
+
+  orders Order[]
+
+  @@index([buyerCompanyId, status])
+  @@index([manufacturerProfileId, status])
+  @@map("supply_contracts")
+}
+
+enum InspectorApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/**
+ * Someone applying to inspect for GarmentGate (business model: gig QC inspectors).
+ */
+model InspectorApplication {
+  id              String                     @id @default(uuid(7)) @db.Uuid
+  firstName       String
+  lastName        String
+  email           String
+  phone           String
+  country         String                     @db.Char(2)
+  city            String
+  experienceYears Int
+  inspectionTypes InspectionType[]
+  about           String
+  status          InspectorApplicationStatus @default(PENDING)
+  reviewNote      String?
+  reviewedById    String?                    @db.Uuid
+  reviewedAt      DateTime?
+  userId          String?                    @unique @db.Uuid
+  createdAt       DateTime                   @default(now())
+
+  @@index([status, createdAt])
+  @@map("inspector_applications")
+}
+
+enum InspectorStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+/**
+ * A gig inspector: where they work, what they inspect, how they're rated and paid.
+ */
+model InspectorProfile {
+  userId           String           @id @db.Uuid
+  status           InspectorStatus  @default(ACTIVE)
+  country          String           @db.Char(2)
+  city             String
+  latitude         Decimal?         @db.Decimal(9, 6)
+  longitude        Decimal?         @db.Decimal(9, 6)
+  serviceRadiusKm  Int              @default(50)
+  inspectionTypes  InspectionType[]
+  /// Overrides the platform day rate (USD minor units).
+  dayRateUsdMinor  Int?
+  /// Passed GarmentGate's certification (recorded by staff).
+  certifiedAt      DateTime?
+  ratingSum        Int              @default(0)
+  ratingCount      Int              @default(0)
+  /// Where GarmentGate pays them: BANK, BKASH or NAGAD, verified by staff.
+  payoutMethod     String?
+  payoutName       String?
+  payoutAccount    String?
+  payoutVerifiedAt DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([status, country])
+  @@map("inspector_profiles")
+}
+
+// ── Factory plans ──────────────────────────────────────────────────────────
+
+enum PlanTier {
+  FREE
+  PRO
+  PREMIUM
+}
+
+enum PlanInterval {
+  MONTH
+  YEAR
+}
+
+enum SubscriptionSource {
+  STRIPE
+  MANUAL
+}
+
+enum SubscriptionStatus {
+  INCOMPLETE
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum SubscriptionPlan {
+  PRO
+  PREMIUM
+  /// GarmentGate Plus, for buyers.
+  PLUS
+}
+
+/// A paid plan: a factory's Pro/Premium or a buyer's Plus, as a Stripe subscription or a staff
+/// grant. Exactly one owner; one live (ACTIVE/PAST_DUE) per owner (partial unique indexes).
+model PlanSubscription {
+  id                      String             @id @default(uuid(7)) @db.Uuid
+  manufacturerProfileId   String?            @db.Uuid
+  buyerCompanyId          String?            @db.Uuid
+  tier                    SubscriptionPlan
+  interval                PlanInterval?
+  source                  SubscriptionSource
+  status                  SubscriptionStatus @default(INCOMPLETE)
+  /// The price at checkout (USD minor units per interval); 0 for a free grant.
+  amountUsdMinor          Int                @default(0)
+  stripeCustomerId        String?
+  stripeSubscriptionId    String?            @unique
+  stripeCheckoutSessionId String?            @unique
+  /// End of the paid period (a staff grant: its last moment, or null for open-ended).
+  currentPeriodEnd        DateTime?
+  cancelAtPeriodEnd       Boolean            @default(false)
+  note                    String?
+  bankReference           String?
+  createdById             String?            @db.Uuid
+  canceledAt              DateTime?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+
+  manufacturerProfile ManufacturerProfile? @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+  buyerCompany        Company?             @relation(fields: [buyerCompanyId], references: [id], onDelete: Cascade)
+  invoices            PlanInvoice[]
+
+  @@index([manufacturerProfileId, status])
+  @@index([buyerCompanyId, status])
+  @@map("plan_subscriptions")
+}
+
+/// What was paid for a plan (Stripe invoices, or a staff grant paid by transfer).
+model PlanInvoice {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  subscriptionId  String   @db.Uuid
+  stripeInvoiceId String?  @unique
+  amountMinor     Int
+  currency        Currency
+  paidAt          DateTime
+  periodEnd       DateTime?
+  createdAt       DateTime @default(now())
+
+  subscription PlanSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@map("plan_invoices")
+}
+
+// ── Texts (SMS / WhatsApp) ─────────────────────────────────────────────────
+
+enum TextChannel {
+  SMS
+  WHATSAPP
+}
+
+enum OutboundMessageStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  /// Not sent (daily cap, channel off, no template, number no longer verified).
+  SKIPPED
+}
+
+/// Every text GarmentGate sends (or skips), for support, cost and the delivery status.
+model OutboundMessage {
+  id          String                @id @default(uuid(7)) @db.Uuid
+  userId      String?               @db.Uuid
+  channel     TextChannel
+  to          String
+  /// NotificationType, or VERIFY / TEST.
+  type        String
+  body        String
+  status      OutboundMessageStatus @default(QUEUED)
+  error       String?
+  providerRef String?               @unique
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("outbound_messages")
 }

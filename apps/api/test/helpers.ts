@@ -184,7 +184,7 @@ export async function recordPaidPayment(
   input: {
     orderId: string;
     buyerCompanyId: string;
-    purpose: 'DEPOSIT' | 'BALANCE';
+    purpose: 'DEPOSIT' | 'BALANCE' | 'LOGISTICS';
     amountMinor: bigint;
   },
 ): Promise<void> {

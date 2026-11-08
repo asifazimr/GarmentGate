@@ -36,6 +36,14 @@ describe('pickCatalogRule', () => {
 });
 
 describe('applyMarkup', () => {
+  it('takes a plan discount off the markup, never below zero or the floor', () => {
+    expect(applyMarkup(1000, rule('r', { markupBps: 1200 }), 200)).toBe(1100);
+    expect(applyMarkup(1000, rule('r', { markupBps: 100 }), 200)).toBe(1000);
+    expect(applyMarkup(1000, rule('r', { markupBps: 1200, minMarginPerUnitMinor: 150 }), 200)).toBe(
+      1150,
+    );
+  });
+
   it('adds the markup in basis points with integer rounding', () => {
     expect(applyMarkup(290, rule('r', { markupBps: 1200 }))).toBe(325); // 324.8 → 325
     expect(applyMarkup(1000, rule('r', { markupBps: 1500 }))).toBe(1150);

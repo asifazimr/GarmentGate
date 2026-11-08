@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { PlansModule } from '../plans/plans.module.js';
 import { BuyerContextService } from '../buyer/buyer-context.service.js';
 import { ManufacturerContextService } from '../manufacturer/manufacturer-context.service.js';
 import { PublicCodeService } from '../onboarding/public-code.service.js';
@@ -13,6 +14,7 @@ import { RfqNotifier } from './rfq-notifier.service.js';
 
 /** RFQs → quotes → accepted quote (draft order), with GarmentGate's margin in between. */
 @Module({
+  imports: [PlansModule],
   controllers: [BuyerRfqsController, ManufacturerRfqsController, AdminMarginsController],
   providers: [
     BuyerContextService,

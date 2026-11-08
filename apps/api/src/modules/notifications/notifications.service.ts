@@ -75,6 +75,7 @@ export class NotificationsService {
           category,
           inApp: LOCKED_IN_APP.includes(category) || p.inApp,
           email: p.email,
+          text: p.text,
         };
       }),
     };
@@ -86,7 +87,11 @@ export class NotificationsService {
   ): Promise<NotificationPreferences> {
     await this.prisma.$transaction(
       dto.preferences.map((p) => {
-        const data = { inApp: LOCKED_IN_APP.includes(p.category) || p.inApp, email: p.email };
+        const data = {
+          inApp: LOCKED_IN_APP.includes(p.category) || p.inApp,
+          email: p.email,
+          text: p.text,
+        };
         return this.prisma.notificationPreference.upsert({
           where: { userId_category: { userId, category: p.category } },
           create: { userId, category: p.category, ...data },

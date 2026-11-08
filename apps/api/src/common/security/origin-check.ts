@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
-/** Called by Stripe's servers and authenticated by its signature, not by cookies. */
-const EXEMPT_PATHS = ['/payments/stripe/webhook'];
+/** Called by Stripe's and Twilio's servers and authenticated by their signatures, not cookies. */
+const EXEMPT_PATHS = ['/payments/stripe/webhook', '/messaging/twilio/status'];
 
 export type OriginVerdict = 'allow' | 'deny';
 

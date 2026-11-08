@@ -16,6 +16,8 @@ import { BuyerDisputePanel } from '@/features/trust/components/dispute-panel';
 import { ShippingCard } from '@/features/logistics/components/shipping-card';
 import { TrackingCard } from '@/features/logistics/components/tracking-card';
 import { useOrderLogistics } from '@/features/logistics/order-api';
+import { MerchandiserNote } from '@/features/contracts/components/contracts-pages';
+import { FeesCard } from '@/features/payments/components/fees-card';
 import { OrderReviewsCard } from '@/features/trust/components/reviews';
 import { purchaseOrderUrl, useBuyerOrder } from '../api';
 import { NextAction } from './next-action';
@@ -154,6 +156,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
 
       <TrackingCard code={o.code} />
       <ShippingCard code={o.code} />
+      <FeesCard code={o.code} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section aria-labelledby="timeline-heading">
@@ -177,6 +180,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
           />
         </section>
         <aside className="space-y-4">
+          <MerchandiserNote />
           <SummaryCard
             rows={[
               [t('fields.quantity'), `${format.number(o.quantity)} pcs`],

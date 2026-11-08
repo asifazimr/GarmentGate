@@ -11,6 +11,7 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { fileWithRenditions, MediaService } from '../media/media.service.js';
 import { applyMarkup, pickCatalogRule } from '../pricing/margin.js';
+import { PlansService } from '../plans/plans.service.js';
 import { SearchService } from '../search/search.service.js';
 import { FilesService } from '../storage/files.service.js';
 import { type ManufacturerContext } from './manufacturer-context.service.js';
@@ -36,6 +37,7 @@ export class ManufacturerProductsService {
     private readonly media: MediaService,
     private readonly files: FilesService,
     private readonly search: SearchService,
+    private readonly plans: PlansService,
   ) {}
 
   async list(ctx: ManufacturerContext): Promise<ManufacturerProduct[]> {
@@ -55,7 +57,8 @@ export class ManufacturerProductsService {
   }
 
   async create(ctx: ManufacturerContext, dto: ProductDto): Promise<ManufacturerProduct> {
-    const tiers = await this.priceTiers(dto);
+    if (dto.status !== 'DRAFT') await this.plans.assertCanList(ctx.profileId);
+    const tiers = await this.priceTiers(ctx, dto);
     const product = await this.prisma.product.create({
       data: {
         manufacturerProfileId: ctx.profileId,
@@ -72,8 +75,11 @@ export class ManufacturerProductsService {
     id: string,
     dto: ProductDto,
   ): Promise<ManufacturerProduct> {
-    await this.find(ctx, id);
-    const tiers = await this.priceTiers(dto);
+    const current = await this.find(ctx, id);
+    const listed = (s: string) => s === 'PUBLISHED' || s === 'PENDING_REVIEW';
+    if (listed(dto.status) && !listed(current.status))
+      await this.plans.assertCanList(ctx.profileId, id);
+    const tiers = await this.priceTiers(ctx, dto);
     await this.prisma.$transaction([
       this.prisma.productPriceTier.deleteMany({ where: { productId: id } }),
       this.prisma.product.update({
@@ -171,7 +177,7 @@ export class ManufacturerProductsService {
   }
 
   /** Buyer prices are derived here from the margin rules; the manufacturer never sets or sees them. */
-  private async priceTiers(dto: ProductDto) {
+  private async priceTiers(ctx: ManufacturerContext, dto: ProductDto) {
     const category = await this.prisma.category.findUnique({
       where: { id: dto.categoryId },
       select: { id: true, parentId: true },
@@ -181,10 +187,12 @@ export class ManufacturerProductsService {
       where: { active: true, companyId: null },
     });
     const rule = pickCatalogRule(rules, category);
+    // A paid plan takes part of the markup off, so the factory's prices land cheaper.
+    const { terms } = await this.plans.termsFor(ctx.profileId);
     return dto.priceTiers.map((t) => ({
       minQty: t.minQty,
       manufacturerUnitPriceMinor: t.unitPriceMinor,
-      buyerUnitPriceMinor: applyMarkup(t.unitPriceMinor, rule),
+      buyerUnitPriceMinor: applyMarkup(t.unitPriceMinor, rule, terms.markupDiscountBps),
     }));
   }
 

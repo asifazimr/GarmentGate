@@ -172,6 +172,17 @@ describe('QC and shipping (e2e)', () => {
   beforeAll(async () => {
     ctx = await createTestApp();
     admin = await login(ctx, await createAdmin(ctx.prisma));
+
+    // These tests exercise releases on the classic 30/50/20 schedule (the default is
+    // 25/70/5 with a claim-window holdback, tested in fees.e2e-spec.ts).
+    await admin
+      .put('/admin/finance/schedule')
+      .send([
+        { trigger: 'PRODUCTION_START', bps: 3000 },
+        { trigger: 'QC_PASSED', bps: 5000 },
+        { trigger: 'DELIVERED', bps: 2000 },
+      ])
+      .expect(204);
     buyer = await party(ctx, 'BUYER', '1');
     factory = await party(ctx, 'MANUFACTURER', '2');
     ({ id: inspectorId, agent: inspector } = await newInspector('Ines'));
@@ -203,6 +214,7 @@ describe('QC and shipping (e2e)', () => {
   }, 60_000);
 
   afterAll(async () => {
+    await ctx.prisma.platformSetting.deleteMany({ where: { key: 'release_schedule' } });
     await ctx.app.close();
   });
 

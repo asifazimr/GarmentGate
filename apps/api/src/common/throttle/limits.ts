@@ -12,3 +12,5 @@ export const UploadThrottle = () => perMinute(20);
 export const MessageThrottle = () => perMinute(30);
 /** Opening (creating) threads. */
 export const ThreadThrottle = () => perMinute(20);
+/** Phone verification codes: each one is a paid SMS. */
+export const PhoneCodeThrottle = () => Throttle({ default: { limit: 3, ttl: 10 * 60_000 } });

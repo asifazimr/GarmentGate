@@ -100,6 +100,7 @@ function InboxRow({ rfq: r }: { rfq: ManufacturerRfqSummary }) {
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="code">{r.code}</Badge>
             <Badge variant="neutral">{r.buyerCode}</Badge>
+            {r.priority ? <Badge variant="warning">{t('priority')}</Badge> : null}
             {r.reasons.includes('INVITED') ? <Badge variant="brand">{t('invited')}</Badge> : null}
             {r.myQuote ? (
               <StatusBadge domain="quote" status={r.myQuote.status} />

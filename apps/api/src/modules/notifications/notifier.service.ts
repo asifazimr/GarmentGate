@@ -1,3 +1,4 @@
+import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -17,6 +18,8 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { MailService } from '../mail/mail.service.js';
 import { notificationSelect, notificationView } from './notification-views.js';
 import { RealtimeService } from './realtime.service.js';
+import { messagingSettings, type TextJob, TEXTS_QUEUE } from './texts.js';
+import type { Queue } from 'bullmq';
 
 /** Who hears about it: specific people, a company's active members, or GarmentGate staff. */
 export type Audience =
@@ -57,6 +60,7 @@ export class Notifier {
     private readonly realtime: RealtimeService,
     private readonly mail: MailService,
     private readonly config: ConfigService<Env, true>,
+    @InjectQueue(TEXTS_QUEUE) private readonly texts: Queue<TextJob>,
   ) {}
 
   async notify(input: NotifyInput): Promise<void> {
@@ -88,13 +92,22 @@ export class Notifier {
         email: true,
         firstName: true,
         role: true,
-        notificationPrefs: { where: { category }, select: { inApp: true, email: true } },
+        phoneVerifiedAt: true,
+        notificationPrefs: {
+          where: { category },
+          select: { inApp: true, email: true, text: true },
+        },
       },
     });
     if (users.length === 0) return;
     const prefs = users.map((u) => {
       const p = u.notificationPrefs[0] ?? DEFAULT_PREFERENCES[category];
-      return { user: u, inApp: LOCKED_IN_APP.includes(category) || p.inApp, email: p.email };
+      return {
+        user: u,
+        inApp: LOCKED_IN_APP.includes(category) || p.inApp,
+        email: p.email,
+        text: p.text && u.phoneVerifiedAt !== null,
+      };
     });
     const link = input.link ?? {};
 
@@ -143,6 +156,32 @@ export class Notifier {
         actionLabel: (firstKey && ACTION_LABEL[firstKey]) ?? 'Open GarmentGate',
         preferencesUrl: new URL(settingsPath(user.role), web).toString(),
       });
+    }
+
+    // Texts: only for the types staff allow, to people with a verified number who want them.
+    const wantsText = prefs.filter((p) => p.text).map((p) => p.user);
+    if (wantsText.length > 0) {
+      const settings = await messagingSettings(this.prisma);
+      if ((settings.smsEnabled || settings.whatsappEnabled) && settings.types.includes(input.type))
+        for (const user of wantsText)
+          await this.texts.add(
+            'text',
+            {
+              userId: user.id,
+              type: input.type,
+              title: input.title,
+              body: input.body,
+              url: new URL(
+                notificationHref(user.role, link) ?? ROLE_HOME[user.role],
+                web,
+              ).toString(),
+            },
+            {
+              attempts: 3,
+              backoff: { type: 'exponential', delay: 30_000 },
+              removeOnComplete: 1000,
+            },
+          );
     }
   }
 }

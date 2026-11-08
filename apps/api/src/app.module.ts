@@ -21,6 +21,11 @@ import { KycModule } from './modules/kyc/kyc.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
 import { ManufacturerModule } from './modules/manufacturer/manufacturer.module.js';
 import { CapacityBookingModule } from './modules/capacity-booking/capacity-booking.module.js';
+import { ContractsModule } from './modules/contracts/contracts.module.js';
+import { ExceptionsModule } from './modules/exceptions/exceptions.module.js';
+import { MessagingModule } from './modules/messaging/messaging.module.js';
+import { PlansModule } from './modules/plans/plans.module.js';
+import { KpisModule } from './modules/kpis/kpis.module.js';
 import { LogisticsModule } from './modules/logistics/logistics.module.js';
 import { MediaModule } from './modules/media/media.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
@@ -59,6 +64,11 @@ import { PrismaModule } from './prisma/prisma.module.js';
     NotificationsModule,
     ManufacturerModule,
     CapacityBookingModule,
+    ContractsModule,
+    ExceptionsModule,
+    PlansModule,
+    MessagingModule,
+    KpisModule,
     LogisticsModule,
     CatalogModule,
     BuyerModule,

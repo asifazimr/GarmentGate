@@ -23,7 +23,13 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FormAlert } from '@/features/auth/components/form-alert';
+import {
+  GigApplicationsTab,
+  GigInspectorsTab,
+  GigSettingsTab,
+} from '@/features/gig/components/admin-gig';
 import { applyServerErrors } from '@/lib/form-errors';
 import { useCreateInspector, useInspectors } from '../api';
 
@@ -41,39 +47,61 @@ export function AdminInspectors() {
   return (
     <div className="space-y-6">
       <PageHeader title={t('title')} description={t('description')} actions={add} />
-      {inspectors.isPending ? (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }, (_, i) => (
-            <Skeleton key={i} className="h-16 rounded-xl" />
-          ))}
-        </div>
-      ) : inspectors.isError ? (
-        <ErrorState onRetry={() => void inspectors.refetch()} retrying={inspectors.isFetching} />
-      ) : inspectors.data.length === 0 ? (
-        <EmptyState
-          icon={ClipboardCheck}
-          title={t('empty')}
-          description={t('emptyBody')}
-          action={add}
-        />
-      ) : (
-        <ul className="bg-card divide-y overflow-hidden rounded-xl border shadow-xs">
-          {inspectors.data.map((i) => (
-            <li key={i.id} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{i.name}</p>
-                <p className="text-muted-foreground truncate text-sm">{i.email}</p>
-              </div>
-              <Badge variant={i.active ? 'success' : 'neutral'}>
-                {i.active ? t('active') : t('inactive')}
-              </Badge>
-              <span className="text-muted-foreground tabular text-sm">
-                {t('open', { count: i.openInspections })}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <Tabs defaultValue="staff">
+        <TabsList>
+          <TabsTrigger value="staff">{t('tabs.staff')}</TabsTrigger>
+          <TabsTrigger value="applications">{t('tabs.applications')}</TabsTrigger>
+          <TabsTrigger value="gig">{t('tabs.gig')}</TabsTrigger>
+          <TabsTrigger value="settings">{t('tabs.settings')}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="applications" className="pt-4">
+          <GigApplicationsTab />
+        </TabsContent>
+        <TabsContent value="gig" className="pt-4">
+          <GigInspectorsTab />
+        </TabsContent>
+        <TabsContent value="settings" className="pt-4">
+          <GigSettingsTab />
+        </TabsContent>
+        <TabsContent value="staff" className="pt-4">
+          {inspectors.isPending ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }, (_, i) => (
+                <Skeleton key={i} className="h-16 rounded-xl" />
+              ))}
+            </div>
+          ) : inspectors.isError ? (
+            <ErrorState
+              onRetry={() => void inspectors.refetch()}
+              retrying={inspectors.isFetching}
+            />
+          ) : inspectors.data.length === 0 ? (
+            <EmptyState
+              icon={ClipboardCheck}
+              title={t('empty')}
+              description={t('emptyBody')}
+              action={add}
+            />
+          ) : (
+            <ul className="bg-card divide-y overflow-hidden rounded-xl border shadow-xs">
+              {inspectors.data.map((i) => (
+                <li key={i.id} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{i.name}</p>
+                    <p className="text-muted-foreground truncate text-sm">{i.email}</p>
+                  </div>
+                  <Badge variant={i.active ? 'success' : 'neutral'}>
+                    {i.active ? t('active') : t('inactive')}
+                  </Badge>
+                  <span className="text-muted-foreground tabular text-sm">
+                    {t('open', { count: i.openInspections })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </TabsContent>
+      </Tabs>
       <AddInspectorDialog open={adding} onClose={() => setAdding(false)} />
     </div>
   );

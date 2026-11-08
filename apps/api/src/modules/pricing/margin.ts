@@ -50,13 +50,18 @@ function mostSpecific<R extends MarginRuleLike>(
   );
 }
 
-/** Buyer price in minor units: markup in basis points, never below the per-unit floor. */
+/**
+ * Buyer price in minor units: markup in basis points, never below the per-unit floor. A factory
+ * plan can take `discountBps` off the markup (down to zero); the floor still applies.
+ */
 export function applyMarkup(
   manufacturerUnitPriceMinor: number,
   rule: MarginRuleLike | null,
+  discountBps = 0,
 ): number {
   if (!rule) return manufacturerUnitPriceMinor;
-  const marked = Math.round((manufacturerUnitPriceMinor * (10_000 + rule.markupBps)) / 10_000);
+  const markupBps = Math.max(0, rule.markupBps - discountBps);
+  const marked = Math.round((manufacturerUnitPriceMinor * (10_000 + markupBps)) / 10_000);
   const floor = manufacturerUnitPriceMinor + (rule.minMarginPerUnitMinor ?? 0);
   return Math.max(marked, floor);
 }

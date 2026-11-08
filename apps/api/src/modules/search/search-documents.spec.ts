@@ -47,6 +47,7 @@ describe('search documents', () => {
       categorySlugs: ['t-shirts', 'tops'],
       certifications: ['GOTS'],
       performanceScore: 92,
+      searchBoost: 2,
       createdAt: new Date('2026-10-01T00:00:00Z'),
     });
     expect(Object.keys(doc).sort()).toEqual([...PRODUCT_DOCUMENT_KEYS].sort());

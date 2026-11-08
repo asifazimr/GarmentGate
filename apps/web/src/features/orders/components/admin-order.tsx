@@ -27,6 +27,8 @@ import {
   SummaryCard,
 } from './order-parts';
 import { OrderTimeline } from './order-timeline';
+import { MerchandiserPicker } from '@/features/contracts/components/admin-contracts';
+import { ReplaceFactoryButton } from '@/features/exceptions/components/replace-factory-dialog';
 import { HsCodeCard } from '@/features/logistics/components/hs-code-card';
 
 export function AdminOrderPage({ code }: { code: string }) {
@@ -94,6 +96,8 @@ export function AdminOrderPage({ code }: { code: string }) {
             <PoButton href={purchaseOrderUrl(o.code, 'buyer')} label={t('poBuyer')} />
             <PoButton href={purchaseOrderUrl(o.code, 'manufacturer')} label={t('poFactory')} />
             <OverrideStatusButton code={o.code} status={o.status} />
+            <ReplaceFactoryButton code={o.code} status={o.status} currency={o.currency} />
+            <MerchandiserPicker buyerCode={o.buyer.code} />
           </>
         }
       />

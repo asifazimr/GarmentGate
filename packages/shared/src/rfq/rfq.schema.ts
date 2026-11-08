@@ -222,6 +222,8 @@ export type ManufacturerQuote = z.infer<typeof ManufacturerQuoteSchema>;
 /** An RFQ as a factory sees it: the buyer is a BYR- code, prices stay out. Strict: no extras. */
 export const ManufacturerRfqSummarySchema = z.strictObject({
   code: z.string(),
+  /** From a GarmentGate Plus buyer (listed first). Never says who. */
+  priority: z.boolean(),
   title: z.string(),
   categoryName: z.string(),
   buyerCode: z.string(),

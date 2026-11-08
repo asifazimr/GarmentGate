@@ -4,6 +4,7 @@ import {
   type ManufacturerQuote,
   type ManufacturerRfqDetail,
   type ManufacturerRfqSummary,
+  type PlanTerms,
   type QuoteDto,
 } from '@garmentgate/shared';
 import type { Prisma } from '../../generated/prisma/client.js';
@@ -12,6 +13,8 @@ import { AuditService } from '../audit/audit.service.js';
 import { identityForScrubbing } from '../catalog/catalog.queries.js';
 import { identityOf, identityPatterns, scrubText } from '../catalog/public.serializer.js';
 import type { ManufacturerContext } from '../manufacturer/manufacturer-context.service.js';
+import { BuyerPlusService } from '../plans/buyer-plus.service.js';
+import { PlansService } from '../plans/plans.service.js';
 import { applyMarkup, pickQuoteRule } from '../pricing/margin.js';
 import { matchRfq, type MatchableFactory } from './rfq-matching.js';
 import { attachmentInclude, RfqFilesService } from './rfq-files.service.js';
@@ -20,12 +23,18 @@ import { RfqNotifier } from './rfq-notifier.service.js';
 /** Quotes a factory may still change. */
 const EDITABLE = ['SUBMITTED', 'UNDER_REVIEW', 'OFFERED'] as const;
 
+/** The factory's matching data plus the plan terms in force. */
+type PlannedFactory = MatchableFactory & { terms: PlanTerms };
+
 const rfqInclude = (profileId: string) =>
   ({
     category: { select: { id: true, name: true, parentId: true } },
     // Identity is loaded only to scrub it out of the buyer's free text.
     buyerCompany: {
-      select: { ...identityForScrubbing.select, buyerProfile: { select: { publicCode: true } } },
+      select: {
+        ...identityForScrubbing.select,
+        buyerProfile: { select: { publicCode: true, plusActive: true } },
+      },
     },
     invitations: { where: { manufacturerProfileId: profileId } },
     // The factory's own quote only, and never the buyer price.
@@ -55,6 +64,8 @@ export class ManufacturerRfqsService {
     private readonly rfqFiles: RfqFilesService,
     private readonly audit: AuditService,
     private readonly notifier: RfqNotifier,
+    private readonly plans: PlansService,
+    private readonly buyerPlus: BuyerPlusService,
   ) {}
 
   async inbox(ctx: ManufacturerContext): Promise<ManufacturerRfqSummary[]> {
@@ -77,10 +88,14 @@ export class ManufacturerRfqsService {
       orderBy: { deadline: 'asc' },
       take: 200,
     });
-    return rfqs.flatMap((r) => {
-      const access = this.access(factory, r);
-      return access.visible ? [this.summary(r, access.reasons)] : [];
-    });
+    const { priorityRfqs } = await this.buyerPlus.settings();
+    // Priority (GarmentGate Plus) requests first, then by deadline.
+    return rfqs
+      .flatMap((r) => {
+        const access = this.access(factory, r);
+        return access.visible ? [this.summary(r, access.reasons, priorityRfqs)] : [];
+      })
+      .sort((a, b) => Number(b.priority) - Number(a.priority));
   }
 
   async detail(ctx: ManufacturerContext, code: string): Promise<ManufacturerRfqDetail> {
@@ -112,7 +127,7 @@ export class ManufacturerRfqsService {
       include: attachmentInclude,
     });
     return {
-      ...this.summary(rfq, access.reasons),
+      ...this.summary(rfq, access.reasons, (await this.buyerPlus.settings()).priorityRfqs),
       description: this.scrub(rfq, rfq.descriptionFiltered) ?? '',
       attachments: await this.rfqFiles.views(attachments, { kind: 'factory', rfqCode: rfq.code }),
       status: rfq.status,
@@ -136,7 +151,12 @@ export class ManufacturerRfqsService {
 
     const rules = await this.prisma.marginRule.findMany({ where: { active: true } });
     const rule = pickQuoteRule(rules, rfq.category, rfq.buyerCompanyId);
-    const buyerUnitPriceMinor = applyMarkup(dto.unitPriceMinor, rule);
+    // A paid plan takes part of GarmentGate's markup off (never below the rule's floor).
+    const buyerUnitPriceMinor = applyMarkup(
+      dto.unitPriceMinor,
+      rule,
+      factory.terms.markupDiscountBps,
+    );
     const notes = dto.notes === undefined ? null : filterContactDetails(dto.notes);
     const now = new Date();
     const data = {
@@ -220,15 +240,20 @@ export class ManufacturerRfqsService {
 
   // ── helpers ───────────────────────────────────────────────────────────────
 
-  private async factory(ctx: ManufacturerContext): Promise<MatchableFactory> {
-    return this.prisma.manufacturerProfile.findUniqueOrThrow({
-      where: { id: ctx.profileId },
-      select: {
-        moqPcs: true,
-        monthlyCapacityPcs: true,
-        categories: { select: { id: true, parentId: true } },
-      },
-    });
+  private async factory(ctx: ManufacturerContext): Promise<PlannedFactory> {
+    const [profile, settings] = await Promise.all([
+      this.prisma.manufacturerProfile.findUniqueOrThrow({
+        where: { id: ctx.profileId },
+        select: {
+          moqPcs: true,
+          monthlyCapacityPcs: true,
+          planTier: true,
+          categories: { select: { id: true, parentId: true } },
+        },
+      }),
+      this.plans.settings(),
+    ]);
+    return { ...profile, terms: settings.tiers[profile.planTier] };
   }
 
   private async find(ctx: ManufacturerContext, code: string): Promise<RfqRow> {
@@ -245,8 +270,11 @@ export class ManufacturerRfqsService {
    * Catalog requests (with a product) and capacity-booking conversions only ever go to that
    * one factory.
    */
-  private access(factory: MatchableFactory, rfq: RfqRow) {
-    const invited = rfq.invitations.length > 0;
+  private access(factory: PlannedFactory, rfq: RfqRow) {
+    const now = Date.now();
+    const invitation = rfq.invitations[0];
+    // A matched factory without a plan head start is invited with a later visibleAt.
+    const invited = invitation !== undefined && invitation.visibleAt.getTime() <= now;
     const inviteOnly = rfq.productId !== null || rfq.capacityBookingId !== null;
     const { matched, reasons } = matchRfq(factory, {
       category: rfq.category,
@@ -256,8 +284,13 @@ export class ManufacturerRfqsService {
       invited: inviteOnly && invited,
       inviteOnly,
     });
-    const open = rfq.status === 'OPEN' && rfq.deadline.getTime() > Date.now();
-    const visible = invited || rfq.quotes.length > 0 || (open && matched);
+    const open = rfq.status === 'OPEN' && rfq.deadline.getTime() > now;
+    // A factory with a head start matched: the others wait for it to end.
+    const waiting =
+      !factory.terms.rfqHeadStart &&
+      rfq.headStartEndsAt !== null &&
+      rfq.headStartEndsAt.getTime() > now;
+    const visible = invited || rfq.quotes.length > 0 || (open && matched && !waiting);
     return { visible, reasons };
   }
 
@@ -274,9 +307,15 @@ export class ManufacturerRfqsService {
     return scrubText(text, identityPatterns(identityOf(rfq.buyerCompany)));
   }
 
-  private summary(rfq: RfqRow, reasons: ManufacturerRfqSummary['reasons']): ManufacturerRfqSummary {
+  private summary(
+    rfq: RfqRow,
+    reasons: ManufacturerRfqSummary['reasons'],
+    priorityOn: boolean,
+  ): ManufacturerRfqSummary {
     const mine = rfq.quotes[0];
     return {
+      // A GarmentGate Plus buyer: flagged, never named.
+      priority: priorityOn && (rfq.buyerCompany.buyerProfile?.plusActive ?? false),
       code: rfq.code,
       title: this.scrub(rfq, rfq.titleFiltered ?? rfq.title) ?? rfq.code,
       categoryName: rfq.category.name,

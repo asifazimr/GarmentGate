@@ -210,6 +210,10 @@ export class TrackingService {
       const { paid } = await this.payments.orderChargeState(order.id, 'LOGISTICS');
       if (!quote || paid < quote.totalMinor)
         throw new ConflictException(`${order.code}: waiting for the buyer’s shipping payment`);
+      if ((await this.payments.feesDue(order.id)) > 0n)
+        throw new ConflictException(
+          `${order.code}: waiting for the buyer’s sample or inspection fees`,
+        );
     }
 
     const totalCost = carriage.reduce((a, l) => a + (l.costMinor ?? 0n), 0n);

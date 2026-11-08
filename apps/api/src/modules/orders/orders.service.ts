@@ -37,6 +37,7 @@ import {
 } from '@garmentgate/shared';
 import type { Env } from '../../config/env.schema.js';
 import type { NotificationType, Prisma } from '../../generated/prisma/client.js';
+import { chargeInspection, chargeSample } from '../payments/charges.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
@@ -294,9 +295,10 @@ export class OrdersService {
           }
           // The final random inspection, unless one is already booked (staff assign the inspector).
           if (!order.inspections.some((i) => i.type === 'PRE_SHIPMENT' && i.result === 'PENDING')) {
-            await tx.inspection.create({
+            const final = await tx.inspection.create({
               data: { orderId: order.id, type: 'PRE_SHIPMENT', aqlLevel: 'II' },
             });
+            await chargeInspection(tx, order, final.id);
           }
           return {};
         }
@@ -437,6 +439,37 @@ export class OrdersService {
     );
   }
 
+  /**
+   * Production starts over (another factory took the order): every production stage goes back
+   * to PENDING with a fresh plan from now to the requested ship date. Stage photos stay.
+   */
+  async replanProduction(
+    tx: Prisma.TransactionClient,
+    order: Pick<OrderRow, 'id' | 'requestedShipDate'>,
+    start = new Date(),
+  ): Promise<void> {
+    const end =
+      order.requestedShipDate && order.requestedShipDate > start
+        ? order.requestedShipDate
+        : new Date(start.getTime() + 60 * DAY);
+    const span = end.getTime() - start.getTime();
+    for (const stage of PRODUCTION_STAGES)
+      await tx.orderMilestone.upsert({
+        where: { orderId_stage: { orderId: order.id, stage } },
+        create: {
+          orderId: order.id,
+          stage,
+          status: 'PENDING',
+          plannedAt: new Date(start.getTime() + span * STAGE_PLAN[stage]),
+        },
+        update: {
+          status: 'PENDING',
+          completedAt: null,
+          plannedAt: new Date(start.getTime() + span * STAGE_PLAN[stage]),
+        },
+      });
+  }
+
   private async planMilestones(
     tx: Prisma.TransactionClient,
     order: OrderRow,
@@ -467,7 +500,7 @@ export class OrdersService {
     const order = await this.load(actor, code);
     const notes = dto.notes === undefined ? null : filterContactDetails(dto.notes);
     await this.move(actor, order, 'SAMPLING', dto.notes, async (tx) => {
-      await tx.sample.create({
+      const sample = await tx.sample.create({
         data: {
           orderId: order.id,
           type: 'PRE_PRODUCTION',
@@ -478,6 +511,7 @@ export class OrdersService {
           requestNotesFiltered: notes?.filtered ?? null,
         },
       });
+      await chargeSample(tx, order, sample.id);
       return {};
     });
   }

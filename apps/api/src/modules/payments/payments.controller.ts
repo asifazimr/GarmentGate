@@ -53,6 +53,18 @@ import {
   ReleaseScheduleSchema,
   type StartPaymentDto,
   StartPaymentSchema,
+  type AdminBankAccount,
+  AdminBankAccountSchema,
+  type FactoryBankAccountDto,
+  FactoryBankAccountInputSchema,
+  type FactoryBankAccountView,
+  FactoryBankAccountViewSchema,
+  type ReviewBankAccountDto,
+  ReviewBankAccountSchema,
+  type PayFeesDto,
+  PayFeesSchema,
+  type ServiceFees,
+  ServiceFeesSchema,
 } from '@garmentgate/shared';
 import type { Request } from 'express';
 import { z } from 'zod';
@@ -60,6 +72,8 @@ import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.j
 import { type AuthenticatedUser, CurrentUser, Public, Roles } from '../auth/auth.decorators.js';
 import { ChatActorService } from '../chat/chat-actor.service.js';
 import { FxService } from './fx.service.js';
+import { BankAccountsService } from './bank-accounts.service.js';
+import { StripeEvents } from './stripe-events.js';
 import { PaymentsService } from './payments.service.js';
 import { StripeProvider } from './providers/stripe.provider.js';
 import { UploadThrottle } from '../../common/throttle/limits.js';
@@ -75,6 +89,8 @@ export class PaymentsController {
     private readonly actors: ChatActorService,
     private readonly payments: PaymentsService,
     private readonly stripe: StripeProvider,
+    private readonly bankAccounts: BankAccountsService,
+    private readonly stripeEvents: StripeEvents,
   ) {}
 
   @Get('orders/:code/payments')
@@ -85,6 +101,18 @@ export class PaymentsController {
     @Param('code', new ZodValidationPipe(CodeSchema)) code: string,
   ): Promise<BuyerPayments> {
     return this.payments.buyerView(await this.actors.resolve(user.id), code);
+  }
+
+  @Post('orders/:code/fees/payments')
+  @Roles('BUYER')
+  @ApiOperation({ summary: 'Pay the sample or inspection fees due on an order' })
+  @ApiOkResponse({ standardSchema: PaymentStartSchema })
+  async payFees(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('code', new ZodValidationPipe(CodeSchema)) code: string,
+    @Body(new ZodValidationPipe(PayFeesSchema)) dto: PayFeesDto,
+  ): Promise<PaymentStart> {
+    return this.payments.payFees(await this.actors.resolve(user.id), code, dto);
   }
 
   @Post('orders/:code/payments')
@@ -128,6 +156,26 @@ export class PaymentsController {
     return this.payments.manufacturerOverview(await this.actors.resolve(user.id));
   }
 
+  @Get('manufacturer/bank-account')
+  @Roles('MANUFACTURER')
+  @ApiOkResponse({ standardSchema: FactoryBankAccountViewSchema.nullable() })
+  async bankAccount(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<FactoryBankAccountView | null> {
+    return this.bankAccounts.mine(await this.actors.resolve(user.id));
+  }
+
+  @Put('manufacturer/bank-account')
+  @Roles('MANUFACTURER')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Where GarmentGate pays the factory; staff verify before payouts' })
+  async setBankAccount(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(FactoryBankAccountInputSchema)) dto: FactoryBankAccountDto,
+  ): Promise<void> {
+    await this.bankAccounts.submit(await this.actors.resolve(user.id), dto);
+  }
+
   /** Stripe → us. Authenticated by Stripe's signature, not a session. */
   @Post('payments/stripe/webhook')
   @Public()
@@ -146,6 +194,7 @@ export class PaymentsController {
       throw new BadRequestException('Invalid signature');
     }
     await this.payments.stripeEvent(event);
+    await this.stripeEvents.emit(event);
     return { received: true };
   }
 }
@@ -159,7 +208,25 @@ export class AdminFinanceController {
   constructor(
     private readonly payments: PaymentsService,
     private readonly fx: FxService,
+    private readonly bankAccounts: BankAccountsService,
   ) {}
+
+  @Get('bank-accounts')
+  @ApiOkResponse({ standardSchema: AdminBankAccountSchema.array() })
+  bankAccountsList(): Promise<AdminBankAccount[]> {
+    return this.bankAccounts.list();
+  }
+
+  @Post('bank-accounts/:id/review')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Verify (or reject) a factory’s payout bank details' })
+  reviewBankAccount(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ZodValidationPipe(z.uuid())) id: string,
+    @Body(new ZodValidationPipe(ReviewBankAccountSchema)) dto: ReviewBankAccountDto,
+  ): Promise<void> {
+    return this.bankAccounts.review(user.id, id, dto);
+  }
 
   @Get('inbox')
   @ApiOkResponse({ standardSchema: FinanceInboxSchema })
@@ -250,6 +317,22 @@ export class AdminFinanceController {
     @Body(new ZodValidationPipe(ReleaseScheduleSchema)) dto: ReleaseSchedule,
   ): Promise<void> {
     return this.payments.setReleaseSchedule(user.id, dto);
+  }
+
+  @Get('fees')
+  @ApiOkResponse({ standardSchema: ServiceFeesSchema })
+  fees(): Promise<ServiceFees> {
+    return this.payments.serviceFees();
+  }
+
+  @Put('fees')
+  @ApiOperation({ summary: 'Sample and inspection fees, the first-inspection offer, claim window' })
+  @ApiOkResponse({ standardSchema: ServiceFeesSchema })
+  setFees(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(ServiceFeesSchema)) dto: ServiceFees,
+  ): Promise<ServiceFees> {
+    return this.payments.setServiceFees(user.id, dto);
   }
 
   @Get('rates')

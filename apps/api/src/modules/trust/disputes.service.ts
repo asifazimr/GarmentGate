@@ -31,6 +31,7 @@ import { Notifier } from '../notifications/notifier.service.js';
 import type { OrderRow } from '../orders/order-views.js';
 import { actorOf, OrdersService } from '../orders/orders.service.js';
 import { LedgerService } from '../payments/ledger.service.js';
+import { serviceFees } from '../payments/charges.js';
 import { PaymentsService } from '../payments/payments.service.js';
 import { FilesService } from '../storage/files.service.js';
 import { StorageService } from '../storage/storage.service.js';
@@ -84,6 +85,15 @@ export class DisputesService {
     if (actorOf(actor) !== 'BUYER') throw new ForbiddenException('The buyer opens disputes');
     if (!canTransition(order.status, 'DISPUTED', 'BUYER'))
       throw new ConflictException('This order can’t be disputed at this stage');
+    // After delivery, claims are accepted within the claim window only (business model: 14 days).
+    if (order.status === 'DELIVERED') {
+      const { claimWindowDays } = await serviceFees(this.prisma);
+      const delivered = order.events.find((e) => e.toStatus === 'DELIVERED')?.createdAt;
+      if (delivered && Date.now() - delivered.getTime() > claimWindowDays * 86_400_000)
+        throw new ConflictException(
+          `The ${String(claimWindowDays)}-day claim window after delivery has closed`,
+        );
+    }
     const files: { id: string }[] = [];
     for (const fileId of new Set(dto.evidence)) {
       files.push(

@@ -311,7 +311,15 @@ export async function LandingPage() {
             <Logo />
             <p className="text-muted-foreground max-w-sm text-sm">{t('footer.tagline')}</p>
           </div>
-          <p className="text-subtle-foreground text-sm">{t('footer.rights', { year })}</p>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <Link
+              href="/inspectors/apply"
+              className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+            >
+              {t('footer.inspectors')}
+            </Link>
+            <p className="text-subtle-foreground text-sm">{t('footer.rights', { year })}</p>
+          </div>
         </div>
       </footer>
     </div>

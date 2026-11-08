@@ -232,6 +232,7 @@ describe('trust: notifications, disputes and reviews (e2e)', () => {
       category: 'REVIEWS',
       inApp: true,
       email: false,
+      text: false,
     });
     const saved = NotificationPreferencesSchema.parse(
       (

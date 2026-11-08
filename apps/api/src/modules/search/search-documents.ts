@@ -27,6 +27,8 @@ export interface ProductDocument {
   country: string;
   certifications: string[];
   performanceScore: number;
+  /** The factory plan's boost: a tie-breaker after relevance and the buyer's sort. */
+  searchBoost: number;
   createdAt: number;
 }
 
@@ -43,6 +45,7 @@ export interface ManufacturerDocument {
   moqPcs: number | null;
   monthlyCapacityPcs: number | null;
   performanceScore: number;
+  searchBoost: number;
 }
 
 export const PRODUCT_DOCUMENT_KEYS: readonly (keyof ProductDocument)[] = [
@@ -63,6 +66,7 @@ export const PRODUCT_DOCUMENT_KEYS: readonly (keyof ProductDocument)[] = [
   'country',
   'certifications',
   'performanceScore',
+  'searchBoost',
   'createdAt',
 ];
 
@@ -79,6 +83,7 @@ export const MANUFACTURER_DOCUMENT_KEYS: readonly (keyof ManufacturerDocument)[]
   'moqPcs',
   'monthlyCapacityPcs',
   'performanceScore',
+  'searchBoost',
 ];
 
 export function productDocument(
@@ -88,6 +93,7 @@ export function productDocument(
     categorySlugs: string[];
     certifications: string[];
     performanceScore: number;
+    searchBoost: number;
     createdAt: Date;
   },
 ): ProductDocument {
@@ -110,6 +116,7 @@ export function productDocument(
     country: product.country,
     certifications: [...new Set(extra.certifications)],
     performanceScore: extra.performanceScore,
+    searchBoost: extra.searchBoost,
     createdAt: Math.floor(extra.createdAt.getTime() / 1000),
   };
 }
@@ -117,6 +124,7 @@ export function productDocument(
 export function manufacturerDocument(
   m: PublicManufacturer,
   parentSlugs: string[],
+  searchBoost = 0,
 ): ManufacturerDocument {
   return {
     id: m.publicCode,
@@ -131,10 +139,23 @@ export function manufacturerDocument(
     moqPcs: m.capabilities.moqPcs,
     monthlyCapacityPcs: m.capabilities.monthlyCapacityPcs,
     performanceScore: m.scores.performanceScore,
+    searchBoost,
   };
 }
 
+/** Relevance first, then the buyer's sort, then the factory plan's boost. */
+const RANKING_RULES = [
+  'words',
+  'typo',
+  'proximity',
+  'attribute',
+  'sort',
+  'searchBoost:desc',
+  'exactness',
+];
+
 export const PRODUCT_INDEX_SETTINGS = {
+  rankingRules: RANKING_RULES,
   searchableAttributes: [
     'title',
     'categoryName',
@@ -161,6 +182,7 @@ export const PRODUCT_INDEX_SETTINGS = {
 };
 
 export const MANUFACTURER_INDEX_SETTINGS = {
+  rankingRules: RANKING_RULES,
   searchableAttributes: ['publicCode', 'headline', 'categoryNames', 'machinery', 'about'],
   filterableAttributes: ['categories', 'country', 'certifications', 'moqPcs', 'monthlyCapacityPcs'],
   sortableAttributes: ['performanceScore', 'monthlyCapacityPcs', 'moqPcs'],

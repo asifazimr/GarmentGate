@@ -43,6 +43,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BankAccountsTab } from '@/features/payments/components/bank-accounts';
+import { FinanceSettings } from '@/features/payments/components/finance-settings';
 import { Textarea } from '@/components/ui/textarea';
 import { FormAlert } from '@/features/auth/components/form-alert';
 import { ApiError } from '@/lib/api';
@@ -105,6 +107,8 @@ export function AdminPayments() {
             </TabsTrigger>
           ))}
           <TabsTrigger value="ledger">{t('tabs.ledger')}</TabsTrigger>
+          <TabsTrigger value="banks">{t('tabs.banks')}</TabsTrigger>
+          <TabsTrigger value="settings">{t('tabs.settings')}</TabsTrigger>
         </TabsList>
         <TabsContent value="confirm" className="pt-4">
           <ConfirmTable inbox={inbox} />
@@ -117,6 +121,12 @@ export function AdminPayments() {
         </TabsContent>
         <TabsContent value="ledger" className="pt-4">
           <Ledger />
+        </TabsContent>
+        <TabsContent value="banks" className="pt-4">
+          <BankAccountsTab />
+        </TabsContent>
+        <TabsContent value="settings" className="pt-4">
+          <FinanceSettings />
         </TabsContent>
       </Tabs>
     </div>
@@ -415,6 +425,27 @@ function PayTable({ inbox }: { inbox: InboxQuery }) {
         hideOnMobile: true,
       },
       {
+        id: 'bank',
+        header: t('columns.bank'),
+        value: (r) =>
+          r.bank
+            ? `${r.bank.holderName} | ${r.bank.bankName} (${r.bank.bankCountry}) | ${r.bank.accountNumber} | SWIFT ${r.bank.swiftBic ?? '-'} | ${r.bank.routingCode ?? ''} | ${r.bank.currency}`
+            : '',
+        cell: (r) =>
+          r.bank ? (
+            <span className="text-xs">
+              <span className="block font-medium">{r.bank.bankName}</span>
+              <span className="text-muted-foreground block font-mono">
+                {r.bank.accountNumber}
+                {r.bank.swiftBic ? ` · ${r.bank.swiftBic}` : ''}
+              </span>
+            </span>
+          ) : (
+            <Badge variant="warning">{t('noBank')}</Badge>
+          ),
+        searchable: false,
+      },
+      {
         id: 'releasedAt',
         header: t('columns.releasedAt'),
         value: (r) => r.releasedAt,
@@ -428,7 +459,7 @@ function PayTable({ inbox }: { inbox: InboxQuery }) {
         header: '',
         value: () => null,
         cell: (r) => (
-          <Button size="xs" onClick={() => setPaying(r)}>
+          <Button size="xs" disabled={!r.bank} onClick={() => setPaying(r)}>
             {t('payOut')}
           </Button>
         ),

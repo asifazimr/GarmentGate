@@ -9,6 +9,7 @@ import {
   RFQ_FILE_MAX_BYTES,
   type RfqCreated,
   type RfqDto,
+  headStartEnds,
 } from '@garmentgate/shared';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -18,6 +19,7 @@ import { identityForScrubbing, listedManufacturer } from '../catalog/catalog.que
 import { identityOf, identityPatterns, scrubText } from '../catalog/public.serializer.js';
 import { MediaService } from '../media/media.service.js';
 import { PublicCodeService } from '../onboarding/public-code.service.js';
+import { PlansService } from '../plans/plans.service.js';
 import { FilesService } from '../storage/files.service.js';
 import { matchRfq } from './rfq-matching.js';
 import { attachmentInclude, RfqFilesService } from './rfq-files.service.js';
@@ -52,6 +54,7 @@ export class BuyerRfqsService {
     private readonly codes: PublicCodeService,
     private readonly audit: AuditService,
     private readonly notifier: RfqNotifier,
+    private readonly plans: PlansService,
   ) {}
 
   async create(ctx: BuyerContext, dto: RfqDto): Promise<RfqCreated> {
@@ -140,6 +143,7 @@ export class BuyerRfqsService {
         id: true,
         moqPcs: true,
         monthlyCapacityPcs: true,
+        planTier: true,
         categories: { select: { id: true, parentId: true } },
         company: { select: { users: { where: { status: 'ACTIVE' }, select: { id: true } } } },
       },
@@ -148,12 +152,32 @@ export class BuyerRfqsService {
       (f) => matchRfq(f, { ...rfq, invited: false, inviteOnly: false }).matched,
     );
     if (matched.length === 0) return 0;
+    // When a factory with a plan head start matches, it sees the RFQ now and the others once
+    // the head start ends (the plans sweep announces it then). Nobody waits for nothing.
+    const now = new Date();
+    const settings = await this.plans.settings();
+    const ahead = (f: (typeof matched)[number]) => settings.tiers[f.planTier].rfqHeadStart;
+    const ends = matched.some(ahead)
+      ? headStartEnds(now, rfq.deadline, settings.rfqHeadStartHours)
+      : null;
+    const waitUntil = ends && ends.getTime() > now.getTime() ? ends : null;
+    if (waitUntil)
+      await this.prisma.rfq.update({ where: { id: rfqId }, data: { headStartEndsAt: waitUntil } });
+    const invitations = matched.map((f) => ({ f, now: waitUntil === null || ahead(f) }));
     await this.prisma.rfqInvitation.createMany({
-      data: matched.map((f) => ({ rfqId, manufacturerProfileId: f.id })),
+      data: invitations.map(({ f, now: immediate }) => ({
+        rfqId,
+        manufacturerProfileId: f.id,
+        invitedAt: now,
+        visibleAt: immediate || !waitUntil ? now : waitUntil,
+        notifiedAt: immediate ? now : null,
+      })),
       skipDuplicates: true,
     });
+    const immediate = invitations.filter((i) => i.now).map((i) => i.f);
+    if (immediate.length === 0) return matched.length;
     await this.notifier.send(
-      matched.flatMap((f) => f.company.users.map((u) => u.id)),
+      immediate.flatMap((f) => f.company.users.map((u) => u.id)),
       'RFQ_INVITATION',
       `New RFQ ${code}`,
       `${rfq.quantity.toLocaleString('en')} pcs · quotes due ${rfq.deadline.toISOString().slice(0, 10)}`,

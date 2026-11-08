@@ -31,6 +31,7 @@ const productIndexInclude = {
     select: {
       publicCode: true,
       performanceScore: true,
+      searchBoost: true,
       company: publicProductInclude.manufacturerProfile.select.company,
       certifications: { where: { status: 'VERIFIED' }, select: { type: true } },
     },
@@ -147,6 +148,7 @@ export class SearchIndexer {
       categorySlugs: [p.category.slug, ...(p.category.parent ? [p.category.parent.slug] : [])],
       certifications: p.manufacturerProfile.certifications.map((c) => c.type),
       performanceScore: p.manufacturerProfile.performanceScore,
+      searchBoost: p.manufacturerProfile.searchBoost,
       createdAt: p.createdAt,
     });
   }
@@ -155,6 +157,6 @@ export class SearchIndexer {
     m: Prisma.ManufacturerProfileGetPayload<{ include: typeof manufacturerIndexInclude }>,
   ): ManufacturerDocument {
     const parents = m.categories.flatMap((c) => (c.parent ? [c.parent.slug] : []));
-    return manufacturerDocument(toPublicManufacturer(m, new Map()), parents);
+    return manufacturerDocument(toPublicManufacturer(m, new Map()), parents, m.searchBoost);
   }
 }

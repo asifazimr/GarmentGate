@@ -25,6 +25,7 @@ const PUBLIC = new Set([
   'POST /auth/logout',
   'POST /auth/verify-email',
   'POST /auth/password/forgot',
+  'POST /inspectors/apply', // freelance QC inspectors apply before they have an account
   'POST /auth/password/reset',
   'GET /health',
   'GET /health/ready',
@@ -277,6 +278,31 @@ describe('security (e2e)', () => {
       expect((await inspector[method](url)).status, url).toBe(403);
   });
 
+  it('keeps gig inspector routes to inspectors and their own jobs', async () => {
+    const someone = '0198a000-0000-7000-8000-00000000ffff';
+    for (const agent of [buyerB.agent, factory2.agent]) {
+      expect((await agent.get('/inspector/tasks')).status).toBe(403);
+      expect((await agent.get('/admin/gig/applications')).status).toBe(403);
+      expect(
+        (
+          await agent
+            .post(`/inspector/inspections/${someone}/check-in`)
+            .send({ latitude: 0, longitude: 0 })
+        ).status,
+      ).toBe(403);
+    }
+    expect(
+      (
+        await inspector
+          .post(`/inspector/inspections/${someone}/check-in`)
+          .send({ latitude: 23.8, longitude: 90.4 })
+      ).status,
+    ).toBe(404);
+    expect(
+      (await inspector.post(`/inspector/tasks/${someone}/claim`)).status,
+    ).toBeGreaterThanOrEqual(400);
+  });
+
   it('never lets another buyer or factory reach this order, RFQ, thread or file', async () => {
     const outsiders = [buyerB.agent, factory2.agent];
     // Valid bodies where it matters, so the ownership check (not validation) is what refuses:
@@ -314,6 +340,11 @@ describe('security (e2e)', () => {
         { destinationCountry: 'CA', incoterm: 'DAP' },
       ],
       ['post', `/orders/${orderCode}/logistics/payments`, { method: 'BANK_TRANSFER' }],
+      [
+        'post',
+        `/orders/${orderCode}/fees/payments`,
+        { purpose: 'SAMPLE_FEE', method: 'BANK_TRANSFER' },
+      ],
       [
         'put',
         `/orders/${orderCode}/logistics/handover`,

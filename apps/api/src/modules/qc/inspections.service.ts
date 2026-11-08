@@ -22,6 +22,8 @@ import {
   type PresignUploadResponse,
 } from '@garmentgate/shared';
 import { Prisma } from '../../generated/prisma/client.js';
+import { chargeInspection } from '../payments/charges.js';
+import { GigService } from './gig.service.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { Notifier } from '../notifications/notifier.service.js';
 import { AuditService } from '../audit/audit.service.js';
@@ -48,6 +50,7 @@ const jobInclude = {
       manufacturerProfile: {
         select: {
           publicCode: true,
+          latitude: true,
           company: {
             select: {
               legalName: true,
@@ -84,6 +87,7 @@ export class InspectionsService {
     private readonly auth: AuthService,
     private readonly audit: AuditService,
     private readonly performance: PerformanceService,
+    private readonly gig: GigService,
   ) {}
 
   // ── Booking (buyer or staff) ──────────────────────────────────────────────
@@ -119,15 +123,19 @@ export class InspectionsService {
       id = open.id;
     } else {
       try {
-        ({ id } = await this.prisma.inspection.create({
-          data: {
-            orderId: order.id,
-            type: dto.type,
-            scheduledAt,
-            aqlLevel: 'II',
-            bookedById: actor.userId,
-          },
-        }));
+        id = await this.prisma.$transaction(async (tx) => {
+          const created = await tx.inspection.create({
+            data: {
+              orderId: order.id,
+              type: dto.type,
+              scheduledAt,
+              aqlLevel: 'II',
+              bookedById: actor.userId,
+            },
+          });
+          await chargeInspection(tx, order, created.id);
+          return created.id;
+        });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')
           throw new ConflictException('This inspection is already booked');
@@ -203,6 +211,8 @@ export class InspectionsService {
       where: { id, result: 'PENDING' },
       data: {
         inspectorId: dto.inspectorId,
+        ...(dto.inspectorId && !inspection.assignedAt && { assignedAt: new Date() }),
+        ...(dto.inspectorId && { payUsdMinor: await this.gig.payFor(dto.inspectorId) }),
         ...(dto.scheduledAt && { scheduledAt: dto.scheduledAt }),
       },
     });
@@ -255,6 +265,11 @@ export class InspectionsService {
         factoryNames: identityPatterns(identityOf(order.manufacturerProfile.company)),
       }),
       canReport: row.result === 'PENDING' && this.reportable(row.type, order.status),
+      checkIn: {
+        required: row.order.manufacturerProfile.latitude !== null,
+        at: row.checkedInAt?.toISOString() ?? null,
+        distanceM: row.checkInDistanceM,
+      },
     };
   }
 
@@ -302,6 +317,8 @@ export class InspectionsService {
   async report(user: AuthenticatedUser, id: string, dto: InspectionReportDto): Promise<void> {
     const { row, order } = await this.loadJob(user, id);
     if (row.result !== 'PENDING') throw new ConflictException('The report is already filed');
+    // Gig inspectors file only after checking in at the factory by GPS.
+    if (user.role === 'INSPECTOR') await this.gig.assertCheckedIn(user.id, id);
     if (!this.reportable(row.type, order.status)) {
       throw new ConflictException(
         row.type === 'PRE_SHIPMENT'
@@ -364,6 +381,7 @@ export class InspectionsService {
         minor: dto.minor,
       },
     });
+    await this.gig.onReportFiled(id);
     await this.announce(order, row.type, dto.result);
     // A pass recalculates through the order hook (READY_TO_SHIP); a fail counts too.
     if (row.type === 'PRE_SHIPMENT' && dto.result === 'FAIL')

@@ -15,14 +15,24 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CATEGORY_ICONS } from '@/features/activity/notification-icons';
 import { useNotificationPreferences, useSaveNotificationPreferences } from './api';
 import { PreferencesCard } from './preferences';
+import { PhoneCard } from './phone-card';
+import { useMyMessaging } from './messaging-api';
 
 /** Which categories reach the person in the app (bell, live) and by email. Saves on toggle. */
 export function NotificationSettings({ categories }: { categories: NotificationCategory[] }) {
   const t = useTranslations('settings');
   const prefs = useNotificationPreferences();
   const save = useSaveNotificationPreferences();
+  const messaging = useMyMessaging();
+  // Texts need a verified number and a channel staff have switched on.
+  const canText =
+    !!messaging.data?.verified && (messaging.data.smsAvailable || messaging.data.whatsappAvailable);
 
-  const toggle = (p: NotificationPreference, channel: 'inApp' | 'email', value: boolean) => {
+  const toggle = (
+    p: NotificationPreference,
+    channel: 'inApp' | 'email' | 'text',
+    value: boolean,
+  ) => {
     save.mutate(
       { preferences: [{ ...p, [channel]: value }] },
       {
@@ -36,6 +46,7 @@ export function NotificationSettings({ categories }: { categories: NotificationC
     <div className="space-y-6">
       <PageHeader title={t('title')} description={t('description')} />
       <PreferencesCard />
+      <PhoneCard />
       <Card>
         <CardHeader>
           <CardTitle>{t('notifications.title')}</CardTitle>
@@ -62,6 +73,9 @@ export function NotificationSettings({ categories }: { categories: NotificationC
                   </th>
                   <th scope="col" className="w-20 py-2 text-center font-medium">
                     {t('notifications.email')}
+                  </th>
+                  <th scope="col" className="w-20 py-2 text-center font-medium">
+                    {t('notifications.text')}
                   </th>
                 </tr>
               </thead>
@@ -105,6 +119,16 @@ export function NotificationSettings({ categories }: { categories: NotificationC
                               disabled={save.isPending}
                               aria-label={t('notifications.emailFor', { category: label })}
                               onCheckedChange={(v) => toggle(p, 'email', v)}
+                            />
+                          </span>
+                        </td>
+                        <td className="py-3 text-center">
+                          <span className="inline-flex size-11 items-center justify-center md:size-8">
+                            <Checkbox
+                              checked={canText && p.text}
+                              disabled={!canText || save.isPending}
+                              aria-label={t('notifications.textFor', { category: label })}
+                              onCheckedChange={(v) => toggle(p, 'text', v)}
                             />
                           </span>
                         </td>

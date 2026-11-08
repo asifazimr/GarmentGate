@@ -8,7 +8,7 @@ import {
   type OrderStatus,
 } from '@garmentgate/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CalendarPlus, FileText } from 'lucide-react';
+import { CalendarPlus, FileText, Star } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -33,7 +33,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useMe } from '@/features/auth/api';
 import { FormAlert } from '@/features/auth/components/form-alert';
+import { useRateInspection } from '@/features/gig/api';
 import type { OrderRole } from '@/features/orders/api';
 import { applyServerErrors } from '@/lib/form-errors';
 import { cn } from '@/lib/utils';
@@ -121,6 +123,7 @@ function InspectionCard({ inspection: i, role }: { inspection: OrderInspection; 
         </span>
       </div>
       {role === 'ADMIN' ? <AssignInspector inspection={i} /> : null}
+      {role === 'ADMIN' && reported ? <RateInspector inspection={i} /> : null}
       {!reported && role !== 'ADMIN' ? (
         <p className="text-muted-foreground text-xs">
           {t(`bookedBy.${i.bookedBy}`)} · {t('byGarmentGate')}
@@ -331,5 +334,44 @@ function BookInspectionDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Staff rate the inspector's work once; repeated low scores suspend a gig inspector. */
+function RateInspector({ inspection: i }: { inspection: OrderInspection }) {
+  const t = useTranslations('qc');
+  const me = useMe();
+  const rate = useRateInspection();
+  if (me.data?.role !== 'ADMIN' || !i.inspector) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs">
+      <span className="text-muted-foreground">{t('rating.label')}</span>
+      <div role="group" aria-label={t('rating.label')} className="flex">
+        {[1, 2, 3, 4, 5].map((n) => {
+          const on = i.rating !== null && n <= i.rating;
+          return (
+            <button
+              key={n}
+              type="button"
+              disabled={i.rating !== null || rate.isPending}
+              aria-label={t('rating.star', { n })}
+              aria-pressed={on}
+              onClick={() =>
+                rate
+                  .mutateAsync({ id: i.id, rating: n })
+                  .then(() => toast.success(t('rating.saved')))
+                  .catch(() => toast.error(t('rating.failed')))
+              }
+              className="text-muted-foreground hover:text-warning-ink focus-visible:ring-ring/40 flex size-11 items-center justify-center rounded-md outline-none focus-visible:ring-3 disabled:cursor-default md:size-7"
+            >
+              <Star
+                className={cn('size-4', on && 'fill-current text-warning-ink')}
+                aria-hidden="true"
+              />
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

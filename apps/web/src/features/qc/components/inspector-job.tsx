@@ -48,6 +48,7 @@ import {
   useFileReport,
   useInspectorJob,
 } from '../api';
+import { CheckInCard } from '@/features/gig/components/check-in-card';
 import { InspectionsPanel } from './inspections-panel';
 
 const REASON = { CRITICAL: 'critical', MAJOR: 'major', MINOR: 'minor' } as const;
@@ -102,11 +103,14 @@ function JobView({ job }: { job: InspectorJobDetail }) {
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-6">
+          <CheckInCard job={job} />
           {job.canReport ? (
-            <>
-              <PhotosCard job={job} />
-              <ReportForm job={job} />
-            </>
+            job.checkIn.required && !job.checkIn.at ? null : (
+              <>
+                <PhotosCard job={job} />
+                <ReportForm job={job} />
+              </>
+            )
           ) : (
             <section className="space-y-3">
               <h2 className="text-lg font-semibold tracking-[-0.01em]">{t('report')}</h2>

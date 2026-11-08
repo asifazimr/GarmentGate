@@ -32,4 +32,7 @@ Object.assign(process.env, {
   STRIPE_SECRET_KEY: 'sk_test_offline',
   STRIPE_PUBLISHABLE_KEY: 'pk_test_offline',
   STRIPE_WEBHOOK_SECRET: 'whsec_test_offline',
+  // Twilio receipts are signed with the auth token (no account SID: texts use a test provider).
+  TWILIO_AUTH_TOKEN: 'test_twilio_token_1234567890',
+  TWILIO_STATUS_CALLBACK_URL: 'https://api.garmentgate.test/messaging/twilio/status',
 });

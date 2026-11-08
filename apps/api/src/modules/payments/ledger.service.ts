@@ -37,6 +37,7 @@ export interface Posting {
 const CREDIT_NORMAL: ReadonlySet<LedgerAccountType> = new Set([
   'BUYER_ESCROW',
   'PARTNER_PAYABLE',
+  'INSPECTOR_PAYABLE',
   'MANUFACTURER_PAYABLE',
   'PLATFORM_REVENUE',
 ]);

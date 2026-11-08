@@ -67,6 +67,19 @@ export const EnvSchema = z.object({
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
+  /**
+   * Texts through Twilio (optional): without an account SID they're written to the API log.
+   * SMS goes from the Messaging Service (preferred) or the SMS number; WhatsApp from the
+   * approved WhatsApp sender. The status callback URL is this API's public
+   * `/messaging/twilio/status` (delivery receipts; signed with the auth token).
+   */
+  TWILIO_ACCOUNT_SID: unsetIfEmpty(z.string().regex(/^AC[0-9a-f]{32}$/i)),
+  TWILIO_AUTH_TOKEN: unsetIfEmpty(z.string().min(16)),
+  TWILIO_MESSAGING_SERVICE_SID: unsetIfEmpty(z.string().regex(/^MG[0-9a-f]{32}$/i)),
+  TWILIO_SMS_FROM: unsetIfEmpty(z.string().regex(/^\+[1-9]\d{7,14}$/)),
+  TWILIO_WHATSAPP_FROM: unsetIfEmpty(z.string().regex(/^\+[1-9]\d{7,14}$/)),
+  TWILIO_STATUS_CALLBACK_URL: unsetIfEmpty(z.url()),
+
   DATABASE_URL: z.url(),
   REDIS_URL: z.url(),
 
@@ -121,6 +134,12 @@ export const ProductionEnvSchema = EnvSchema.superRefine((env, ctx) => {
     fail('CORS_ORIGINS', 'In production every CORS origin must be https://');
   if (!env.WEB_APP_URL.startsWith('https://'))
     fail('WEB_APP_URL', 'In production WEB_APP_URL must be https://');
+  if (env.TWILIO_ACCOUNT_SID && !env.TWILIO_AUTH_TOKEN)
+    fail('TWILIO_AUTH_TOKEN', 'Texts need TWILIO_AUTH_TOKEN with TWILIO_ACCOUNT_SID');
+  if (env.TWILIO_ACCOUNT_SID && !env.TWILIO_MESSAGING_SERVICE_SID && !env.TWILIO_SMS_FROM)
+    fail('TWILIO_SMS_FROM', 'Texts need TWILIO_MESSAGING_SERVICE_SID or TWILIO_SMS_FROM');
+  if (env.TWILIO_STATUS_CALLBACK_URL && !env.TWILIO_STATUS_CALLBACK_URL.startsWith('https://'))
+    fail('TWILIO_STATUS_CALLBACK_URL', 'In production the Twilio callback must be https://');
   if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET)
     fail('STRIPE_WEBHOOK_SECRET', 'Card payments need STRIPE_WEBHOOK_SECRET to verify webhooks');
 });

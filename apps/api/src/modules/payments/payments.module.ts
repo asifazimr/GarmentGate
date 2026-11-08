@@ -6,8 +6,10 @@ import { FxController } from './fx.controller.js';
 import { FxService } from './fx.service.js';
 import { LedgerService } from './ledger.service.js';
 import { AdminFinanceController, PaymentsController } from './payments.controller.js';
+import { BankAccountsService } from './bank-accounts.service.js';
 import { PaymentsService } from './payments.service.js';
 import { ManualProvider } from './providers/manual.provider.js';
+import { StripeEvents } from './stripe-events.js';
 import { STRIPE_CLIENT, StripeProvider, stripeClientFactory } from './providers/stripe.provider.js';
 
 /** Escrow payments: providers (manual, Stripe), the double-entry ledger, releases, payouts, refunds. */
@@ -21,7 +23,17 @@ import { STRIPE_CLIENT, StripeProvider, stripeClientFactory } from './providers/
     LedgerService,
     FxService,
     PaymentsService,
+    BankAccountsService,
+    StripeEvents,
   ],
-  exports: [PaymentsService, LedgerService, FxService],
+  exports: [
+    PaymentsService,
+    LedgerService,
+    FxService,
+    BankAccountsService,
+    StripeEvents,
+    StripeProvider,
+    STRIPE_CLIENT,
+  ],
 })
 export class PaymentsModule {}

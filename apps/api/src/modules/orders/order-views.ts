@@ -164,6 +164,7 @@ export function inspectionView(
       audience === 'ADMIN' && i.inspector
         ? `${i.inspector.firstName} ${i.inspector.lastName}`
         : null,
+    rating: audience === 'ADMIN' ? i.rating : null,
     aql:
       i.lotSize && i.sampleSize && majorAql.success && minorAql.success
         ? {

@@ -58,24 +58,28 @@ export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategor
 export const LOCKED_IN_APP: readonly NotificationCategory[] = ['ACCOUNT'];
 
 /** Defaults when someone hasn't chosen: everything in the app, email for what needs action. */
-export const DEFAULT_PREFERENCES: Record<NotificationCategory, { inApp: boolean; email: boolean }> =
-  {
-    QUOTES: { inApp: true, email: true },
-    MESSAGES: { inApp: true, email: true },
-    ORDERS: { inApp: true, email: true },
-    QC: { inApp: true, email: true },
-    PAYMENTS: { inApp: true, email: true },
-    DISPUTES: { inApp: true, email: true },
-    REVIEWS: { inApp: true, email: false },
-    ACCOUNT: { inApp: true, email: true },
-  };
+export const DEFAULT_PREFERENCES: Record<
+  NotificationCategory,
+  { inApp: boolean; email: boolean; text: boolean }
+> = {
+  QUOTES: { inApp: true, email: true, text: true },
+  MESSAGES: { inApp: true, email: true, text: false },
+  ORDERS: { inApp: true, email: true, text: true },
+  QC: { inApp: true, email: true, text: true },
+  PAYMENTS: { inApp: true, email: true, text: true },
+  DISPUTES: { inApp: true, email: true, text: true },
+  REVIEWS: { inApp: true, email: false, text: false },
+  ACCOUNT: { inApp: true, email: true, text: false },
+};
 
 export const NotificationPreferenceSchema = z.object({
   category: NotificationCategorySchema,
   inApp: z.boolean(),
   email: z.boolean(),
+  /** SMS or WhatsApp (the person's channel), once their mobile number is verified. */
+  text: z.boolean().default(false),
 });
-export type NotificationPreference = z.infer<typeof NotificationPreferenceSchema>;
+export type NotificationPreference = z.output<typeof NotificationPreferenceSchema>;
 
 export const NotificationPreferencesSchema = z.object({
   preferences: z.array(NotificationPreferenceSchema),

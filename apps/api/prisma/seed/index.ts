@@ -251,6 +251,59 @@ async function main(): Promise<void> {
   const noyyal = need(mfr.get('tiruppurOrganic'), 'tiruppurOrganic');
   const northbound = need(buyer.get('northbound'), 'northbound');
   const gruenfeld = need(buyer.get('gruenfeld'), 'gruenfeld');
+  // Meghna's payout account, already checked by staff (payouts need a verified account).
+  await prisma.factoryBankAccount.create({
+    data: {
+      companyId: meghna.companyId,
+      holderName: 'Meghna Knit Composite Ltd',
+      bankName: 'Dhaka Commerce Bank',
+      bankCountry: 'BD',
+      accountNumber: '1502003456789',
+      swiftBic: 'DCBLBDDH',
+      routingCode: '095260437',
+      branch: 'Gulshan',
+      currency: 'USD',
+      status: 'VERIFIED',
+      submittedById: meghna.userId,
+      reviewedById: admin.id,
+      reviewedAt: daysFromNow(-100),
+    },
+  });
+  // Meghna is on Pro (a staff grant paid by bank transfer): more listings, a search boost and
+  // a smaller markup. Other factories are on Free.
+  await prisma.planSubscription.create({
+    data: {
+      manufacturerProfileId: meghna.profileId,
+      tier: 'PRO',
+      source: 'MANUAL',
+      status: 'ACTIVE',
+      amountUsdMinor: 0,
+      currentPeriodEnd: daysFromNow(300),
+      note: 'Launch promotion',
+      createdById: admin.id,
+    },
+  });
+  await prisma.manufacturerProfile.update({
+    where: { id: meghna.profileId },
+    data: { planTier: 'PRO', searchBoost: 1 },
+  });
+  // Northbound is a GarmentGate Plus member (staff grant): free inspections, cheaper samples,
+  // priority RFQs.
+  await prisma.planSubscription.create({
+    data: {
+      buyerCompanyId: northbound.companyId,
+      tier: 'PLUS',
+      source: 'MANUAL',
+      status: 'ACTIVE',
+      currentPeriodEnd: daysFromNow(300),
+      note: 'Launch promotion',
+      createdById: admin.id,
+    },
+  });
+  await prisma.buyerProfile.update({
+    where: { companyId: northbound.companyId },
+    data: { plusActive: true },
+  });
 
   // ── Capacity booking: production lines, open windows, supplier claims ───
   {

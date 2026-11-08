@@ -411,7 +411,16 @@
     "bookCapacity": "Book capacity",
     "capacityBooking": "Capacity booking",
     "logistics": "Logistics",
-    "bookings": "Bookings"
+    "bookings": "Bookings",
+    "kpis": "KPIs",
+    "exceptions": "Exceptions",
+    "contracts": "Contracts",
+    "tasks": "Tasks",
+    "earnings": "Earnings",
+    "plan": "Plan",
+    "plans": "Factory plans",
+    "plus": "GarmentGate Plus",
+    "texts": "Texts"
   },
   "shell": {
     "search": "Search…",
@@ -738,7 +747,8 @@
     },
     "footer": {
       "tagline": "Managed garment sourcing between global buyers and verified factories.",
-      "rights": "© {year} GarmentGate. All rights reserved."
+      "rights": "© {year} GarmentGate. All rights reserved.",
+      "inspectors": "Become a QC inspector"
     }
   },
   "manufacturer": {
@@ -1237,7 +1247,8 @@
       "new": "New",
       "meta": "{category} · {quantity, number} pcs · to {country}",
       "due": "Quotes due {date}",
-      "yourPrice": "Your price {price} / pc"
+      "yourPrice": "Your price {price} / pc",
+      "priority": "Priority"
     },
     "factoryDetail": {
       "back": "RFQ inbox",
@@ -2019,7 +2030,13 @@
       "lastName": "Last name",
       "email": "Work email",
       "create": "Create and send invite",
-      "added": "Invite sent to {email}"
+      "added": "Invite sent to {email}",
+      "tabs": {
+        "staff": "Staff inspectors",
+        "applications": "Applications",
+        "gig": "Gig inspectors",
+        "settings": "Gig settings"
+      }
     },
     "pay": {
       "title": {
@@ -2037,6 +2054,12 @@
       "markSent": "I’ve sent it",
       "sent": "Thanks: we’ll confirm it when it arrives.",
       "loading": "Getting the bank details"
+    },
+    "rating": {
+      "label": "Rate the inspector",
+      "star": "{n, plural, one {# star} other {# stars}}",
+      "saved": "Rating saved",
+      "failed": "Couldn’t save the rating"
     }
   },
   "activity": {
@@ -2092,7 +2115,9 @@
           "title": "Account",
           "body": "Verification, security and important notices."
         }
-      }
+      },
+      "text": "Text",
+      "textFor": "Texts for {category}"
     },
     "preferences": {
       "title": "Language and currency",
@@ -2105,6 +2130,32 @@
       "currencyHint": "Prices and invoices stay in the order’s currency; this adds an approximate conversion at GarmentGate’s reference rate.",
       "saved": "Preference saved",
       "failed": "Couldn’t save that. Try again."
+    },
+    "phone": {
+      "title": "Mobile number for texts",
+      "description": "Get the most important updates by SMS or WhatsApp. Only you and GarmentGate staff ever see this number.",
+      "verified": "Verified",
+      "change": "Change",
+      "remove": "Remove",
+      "removed": "Number removed: no more texts",
+      "failed": "Something went wrong, please try again",
+      "saved": "Saved",
+      "channel": "Text me by",
+      "channels": {
+        "SMS": "SMS",
+        "WHATSAPP": "WhatsApp"
+      },
+      "whatsappHint": "WhatsApp needs the number to be on WhatsApp. If a message has no WhatsApp version, we send an SMS.",
+      "smsOnly": "Texts go by SMS.",
+      "off": "GarmentGate hasn’t switched texts on yet: your choices apply once it does.",
+      "number": "Mobile number",
+      "numberHint": "With the country code, e.g. +880 1711 555555. We’ll text you a code.",
+      "sendCode": "Text me a code",
+      "codeSent": "Code sent: check your phone",
+      "code": "6-digit code",
+      "confirm": "Confirm",
+      "confirmed": "Number verified",
+      "startOver": "Use another number"
     }
   },
   "trust": {
@@ -2361,7 +2412,9 @@
         "confirm": "To confirm",
         "release": "To release",
         "pay": "To pay out",
-        "ledger": "Ledger"
+        "ledger": "Ledger",
+        "settings": "Settings",
+        "banks": "Bank accounts"
       },
       "columns": {
         "reference": "Reference",
@@ -2380,7 +2433,8 @@
         "fromEscrow": "From escrow",
         "funded": "Funded",
         "due": "Due since",
-        "releasedAt": "Released"
+        "releasedAt": "Released",
+        "bank": "Pay to"
       },
       "purpose": {
         "DEPOSIT": "Deposit",
@@ -2388,7 +2442,9 @@
         "REFUND": "Refund",
         "PAYOUT": "Payout",
         "LOGISTICS": "Shipping",
-        "INSURANCE_RECOVERY": "Insurance recovery"
+        "INSURANCE_RECOVERY": "Insurance recovery",
+        "INSPECTION_FEE": "Inspection fee",
+        "SAMPLE_FEE": "Sample fee"
       },
       "method": {
         "BANK_TRANSFER": "Bank transfer",
@@ -2400,7 +2456,8 @@
         "QC_PASSED": "QC passed",
         "SHIPPED": "Shipped",
         "DELIVERED": "Delivered",
-        "COMPLETED": "Completed"
+        "COMPLETED": "Completed",
+        "CLAIM_WINDOW": "Claim window closed"
       },
       "yes": "Yes",
       "no": "No",
@@ -2459,7 +2516,8 @@
         "ok": "Reconciled",
         "mismatch": "Check needed",
         "explain": "Reconciled means debits equal credits, cash equals escrow + payables + revenue, and cash matches the payments recorded in and out. Totals above are in USD at the stored rates."
-      }
+      },
+      "noBank": "No verified bank account"
     },
     "users": {
       "title": "Users",
@@ -3776,6 +3834,705 @@
       "how": "GarmentGate tells your forwarder when the goods are ready at the hub. Your order ships when they collect.",
       "change": "Change",
       "choose": "Choose a country"
+    }
+  },
+  "kpis": {
+    "title": "KPIs",
+    "description": "Whether the business works and how far each roadmap gate is. Orders count in the period they were confirmed.",
+    "assumptions": "Assumptions",
+    "from": "From",
+    "to": "To",
+    "usdNote": "Totals in USD at GarmentGate’s reference rates; each order in its own currency.",
+    "money": "Does it make money?",
+    "operations": "Does it run well?",
+    "gmv": "GMV",
+    "orders": "{count, plural, one {# order} other {# orders}}",
+    "takeRate": "Take rate",
+    "takeRateHint": "{amount} GarmentGate revenue",
+    "contributionPerOrder": "Contribution per order",
+    "contributionTotal": "{amount} in total, before fixed costs",
+    "positiveOrders": "Orders with positive margin",
+    "positiveHint": "Gate 2 needs every order positive",
+    "onTime": "On time at the hub",
+    "onTimeHint": "{count, plural, one {# order} other {# orders}} at the hub by the requested ship date",
+    "firstPass": "First-pass inspection",
+    "inspections": "{count, plural, one {# final inspection} other {# final inspections}}",
+    "repeatBuyers": "Repeat buyers",
+    "repeatHint": "Ordered again within 6 months",
+    "quoteToOrder": "Quote to order",
+    "quotes": "{count, plural, one {# quote offered} other {# quotes offered}}",
+    "activeFactories": "Active verified factories",
+    "activeHint": "With an order in the last 90 days",
+    "utilisation": "Capacity booked",
+    "utilisationHint": "Booked minutes of windows starting in the period",
+    "claimRate": "Claim rate",
+    "delivered": "{count, plural, one {# order delivered} other {# orders delivered}}",
+    "assignTime": "Inspector assignment",
+    "hours": "{hours} h",
+    "assignHint": "From inspection opened to inspector assigned (target under 24 h)",
+    "economics": "Unit economics per order",
+    "economicsBody": "Margin, commission, shipping and fee margins, less payment fees, merchandising time and the claims reserve.",
+    "columns": {
+      "order": "Order",
+      "buyerPays": "Buyer pays",
+      "grossRevenue": "Gross revenue",
+      "paymentFees": "Payment fees",
+      "merchandising": "Merchandising",
+      "claimsReserve": "Claims reserve",
+      "contribution": "Contribution"
+    },
+    "empty": "No orders confirmed in this period",
+    "emptyBody": "Pick a wider date range.",
+    "gates": {
+      "title": "Roadmap gates",
+      "met": "Met",
+      "open": "Not yet",
+      "inPlace": "In place",
+      "notYet": "Not yet",
+      "gate1": "Gate 1",
+      "gate2": "Gate 2",
+      "gate3": "Gate 3",
+      "phase1": "MVP and pilot → export scale",
+      "phase2": "Export scale → B2C and ecosystem",
+      "phase3": "B2C and ecosystem → scale and AI",
+      "checks": {
+        "PAID_ORDERS": "Paid orders (all time)",
+        "ON_TIME": "On time",
+        "POSITIVE_CONTRIBUTION": "Every order with positive margin",
+        "REPEAT_BUYERS": "Repeat buyers",
+        "BREAK_EVEN": "Last 30 days’ contribution vs monthly fixed costs",
+        "WORKING_CAPITAL": "Working-capital line"
+      }
+    },
+    "settings": {
+      "title": "Unit economics assumptions",
+      "description": "Used for every order’s contribution and for gate 3. Change them as real costs come in.",
+      "fields": {
+        "paymentFee": "Payment and FX fees (%)",
+        "claimsReserve": "Claims reserve (%)",
+        "merchandising": "Merchandising per order (USD)",
+        "fixedCosts": "Monthly fixed costs (USD)",
+        "workingCapitalLine": "A working-capital (trade finance) line is in place"
+      },
+      "hints": {
+        "paymentFee": "Of what the buyer pays. Plan: about 2.5%.",
+        "claimsReserve": "Of what the buyer pays. Plan: 1%.",
+        "merchandising": "Staff time per order. Plan: USD 100.",
+        "fixedCosts": "People, tech, office. The break-even bar."
+      },
+      "save": "Save",
+      "saved": "Assumptions saved"
+    }
+  },
+  "fees": {
+    "title": "Service fees",
+    "description": "Samples and inspection days are paid to GarmentGate. Your goods leave the hub once these are paid.",
+    "kinds": {
+      "SAMPLE_FEE": "Sample fees",
+      "INSPECTION_FEE": "Inspection days"
+    },
+    "paid": "Paid",
+    "checking": "Transfer being checked",
+    "due": "{amount} due",
+    "free": "free (first inspection on us)",
+    "waived": "waived",
+    "pay": "Pay {amount}",
+    "credited": "{amount} of sample fees were credited against your balance."
+  },
+  "financeSettings": {
+    "save": "Save",
+    "saved": "Saved",
+    "failed": "That didn’t work",
+    "fees": {
+      "title": "Service fees",
+      "description": "Charged to buyers in their order’s currency at reference rates. Changes apply to new charges only.",
+      "inspectionFee": "Inspection fee per day (USD)",
+      "inspectionFeeHint": "Business plan: USD 150–300.",
+      "sampleFee": "Sample fee (USD)",
+      "sampleFeeHint": "Business plan: USD 30–150 per sample.",
+      "claimWindowDays": "Claim window (days after delivery)",
+      "claimWindowDaysHint": "Disputes are refused after it; the holdback waits for it.",
+      "firstInspectionFree": "Each buyer’s first inspection is free",
+      "creditSampleFees": "Credit sample fees against the balance of the bulk order"
+    },
+    "schedule": {
+      "title": "Release schedule",
+      "description": "When the factory’s money leaves escrow, for orders confirmed from now on. Leave a moment empty to skip it.",
+      "total": "Total {percent}% (must be 100%)"
+    }
+  },
+  "exceptions": {
+    "title": "Exceptions",
+    "description": "Orders that need a decision: a week or more late, a failed final inspection or a rejected sample. Rework and refunds are on the order; moving it to another factory is here.",
+    "columns": {
+      "order": "Order",
+      "status": "Status",
+      "problem": "Problem",
+      "alerted": "Delay alert sent"
+    },
+    "kinds": {
+      "DELAY": "Running late",
+      "INSPECTION_FAILED": "Final inspection failed",
+      "SAMPLE_REJECTED": "Sample rejected"
+    },
+    "late": "{days} days behind on {stage}",
+    "shipDate": "the ship date",
+    "empty": "Nothing needs a decision",
+    "emptyBody": "Late orders, failed finals and rejected samples appear here.",
+    "replace": {
+      "button": "Move to another factory",
+      "title": "Move {code} to another factory",
+      "description": "The buyer’s price doesn’t change. What the current factory was already paid stays with it and GarmentGate covers it; the new factory’s releases are worked out on its price and production starts over.",
+      "factory": "New factory code",
+      "price": "New factory price per piece ({currency})",
+      "priceHint": "Must not be above what the buyer pays.",
+      "reason": "Why (staff only)",
+      "confirm": "Move the order",
+      "done": "Order moved to {code}"
+    }
+  },
+  "payments": {
+    "choose": {
+      "how": "How do you want to pay?",
+      "methods": {
+        "CARD": {
+          "title": "Card",
+          "body": "Paid now through Stripe, straight into escrow."
+        },
+        "BANK_TRANSFER": {
+          "title": "Bank wire",
+          "body": "To GarmentGate’s account, quoting the reference. Best for large amounts."
+        }
+      },
+      "payCard": "Pay {amount}",
+      "paying": "Paying…",
+      "cardDone": "Payment received: it shows on the order once Stripe confirms it.",
+      "cardNote": "Your card is handled by Stripe; GarmentGate never sees the card number."
+    }
+  },
+  "bankAccounts": {
+    "title": "Payout bank account",
+    "description": "Where GarmentGate pays you, by international (SWIFT) or local bank transfer. Never shared with buyers.",
+    "status": {
+      "PENDING_REVIEW": "Being checked",
+      "VERIFIED": "Verified",
+      "REJECTED": "Not accepted",
+      "REPLACED": "Replaced"
+    },
+    "fields": {
+      "holderName": "Account holder",
+      "bankName": "Bank",
+      "bankCountry": "Bank country",
+      "accountNumber": "Account number or IBAN",
+      "swiftBic": "SWIFT / BIC",
+      "routingCode": "Routing code (optional)",
+      "branch": "Branch (optional)",
+      "currency": "Account currency"
+    },
+    "hints": {
+      "holderName": "Your company’s legal name, exactly as registered.",
+      "routingCode": "Routing number, sort code, IFSC or branch code where your bank uses one."
+    },
+    "choose": "Choose a country",
+    "save": "Submit for checking",
+    "saved": "Sent to GarmentGate for checking",
+    "change": "Change bank details",
+    "pending": "GarmentGate checks new details before paying to them. Payouts wait until then.",
+    "rejected": "Not accepted: {note}. Please submit corrected details.",
+    "reviewNote": "Changing your details always needs GarmentGate to check them again before the next payout.",
+    "staffHint": "Verify each account against the factory’s KYC documents and legal name before any payout goes to it. A change by the factory always comes back here.",
+    "columns": {
+      "factory": "Factory",
+      "account": "Account",
+      "status": "Status"
+    },
+    "mismatch": "Holder ≠ legal name",
+    "verify": "Verify",
+    "reject": "Reject",
+    "verified": "Verified",
+    "rejectedToast": "Rejected; the factory was told why",
+    "failed": "That didn’t work",
+    "rejectTitle": "Reject these bank details",
+    "rejectWhy": "The factory sees your reason and submits corrected details.",
+    "rejectNote": "Reason",
+    "empty": "No bank accounts yet",
+    "emptyBody": "Factories add theirs in Settings."
+  },
+  "contracts": {
+    "title": "Supply contracts",
+    "buyerDescription": "Your frame agreements: fixed prices for a period and a volume. Call off orders as you need them; each goes straight to its deposit.",
+    "factoryDescription": "GarmentGate’s frame agreements with you. Call-off orders arrive under them at the agreed price.",
+    "adminDescription": "Frame agreements with corporate and institutional buyers: one product, one factory, fixed prices for a period and a volume.",
+    "empty": "No supply contracts yet",
+    "emptyBuyer": "Talk to your GarmentGate merchandiser about a yearly contract for repeat items like uniforms.",
+    "emptyFactory": "GarmentGate sets these up with you for repeat programmes.",
+    "emptyAdmin": "Create one for a buyer with repeat volume.",
+    "status": {
+      "ACTIVE": "Active",
+      "ENDED": "Ended",
+      "CANCELLED": "Cancelled"
+    },
+    "period": "{from} – {to}",
+    "price": "Price per piece",
+    "volume": "Called off",
+    "used": "{used} of {total} pcs",
+    "pieces": "{count, plural, one {# pc} other {# pcs}}",
+    "callOff": "Place a call-off",
+    "create": "New contract",
+    "end": "End",
+    "ended": "Contract ended",
+    "failed": "That didn’t work",
+    "columns": {
+      "contract": "Contract",
+      "prices": "Buyer / factory price",
+      "volume": "Called off",
+      "status": "Status"
+    },
+    "callOffForm": {
+      "title": "Call off on {code}",
+      "description": "At least {min} pieces; {left} left on the contract. It ships about {days} days after the order is confirmed unless you pick a date.",
+      "quantity": "Pieces",
+      "total": "Total {amount} at the contract price",
+      "shipDate": "Requested ship date (optional)",
+      "shipDateHint": "Leave empty to use the contract lead time.",
+      "confirm": "Place call-off",
+      "done": "Order {code} placed: pay the deposit to start production"
+    },
+    "form": {
+      "title": "New supply contract",
+      "description": "The buyer and the factory each see only their own price and the other’s code.",
+      "save": "Create contract",
+      "created": "Contract {code} created",
+      "choose": "Choose a country",
+      "fields": {
+        "buyerCode": "Buyer code",
+        "manufacturerCode": "Factory code",
+        "title": "Product",
+        "specification": "Specification",
+        "currency": "Currency",
+        "buyerPrice": "Buyer price per piece",
+        "factoryPrice": "Factory price per piece",
+        "contractedQuantity": "Contracted volume (pcs)",
+        "minCallOffQuantity": "Minimum call-off (pcs)",
+        "deposit": "Deposit (%)",
+        "incoterm": "Incoterm",
+        "destinationCountry": "Destination",
+        "leadTimeDays": "Lead time (days)",
+        "startsOn": "Starts",
+        "endsOn": "Ends"
+      }
+    },
+    "merchandiser": {
+      "yours": "Your GarmentGate merchandiser: {name}. Message GarmentGate from any order and they’ll pick it up.",
+      "label": "Merchandiser",
+      "none": "Not assigned",
+      "saved": "Merchandiser updated",
+      "failed": "That didn’t work"
+    }
+  },
+  "gig": {
+    "apply": {
+      "title": "Inspect garments with GarmentGate",
+      "description": "Freelance QC inspectors take inline and final random inspections near them, check in at the factory and file AQL reports. Paid per inspection day, weekly.",
+      "fields": {
+        "firstName": "First name",
+        "lastName": "Last name",
+        "email": "Email",
+        "phone": "Phone (with country code)",
+        "country": "Country",
+        "city": "City",
+        "experienceYears": "Years of QC experience",
+        "inspectionTypes": "Inspections you can do",
+        "about": "Your QC experience"
+      },
+      "choose": "Choose…",
+      "process": "We review every application, then invite you to our certification test. Once you pass, you get an inspector login.",
+      "submit": "Send application",
+      "sentTitle": "Thanks, we have your application",
+      "sentBody": "We’ll email you about the certification test once we’ve reviewed it.",
+      "home": "Back to GarmentGate"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "description": "Open inspections near you, nearest first. Claim one and it becomes your job; the factory’s address comes with it.",
+      "empty": "No open tasks near you",
+      "emptyBody": "We’ll notify you when an inspection opens in your area.",
+      "claim": "Claim",
+      "claimed": "It’s yours: check in at the factory to file the report",
+      "claimFailed": "Couldn’t claim this task",
+      "distance": "{km} km away",
+      "pieces": "{count, plural, one {# piece} other {# pieces}}"
+    },
+    "checkIn": {
+      "title": "Check in at the factory",
+      "description": "Share your location when you arrive: the report opens once you’re on site.",
+      "action": "Check in here",
+      "locating": "Finding your location…",
+      "checkedIn": "Checked in",
+      "at": "Checked in {date}, {m} m from the factory.",
+      "done": "Checked in, {m} m from the factory",
+      "failed": "Couldn’t check you in",
+      "denied": "Allow location access to check in",
+      "unsupported": "This browser can’t share your location"
+    },
+    "earnings": {
+      "title": "Earnings",
+      "description": "What you’ve earned, been paid and how staff rate your reports.",
+      "suspended": "Your account is suspended: you can’t take new tasks. Contact GarmentGate QC.",
+      "due": "Due to you",
+      "paid": "Paid so far",
+      "rating": "Rating",
+      "ratings": "{count, plural, =0 {No ratings yet} one {# rating} other {# ratings}}",
+      "payoutTitle": "Where we pay you",
+      "payoutBody": "Earnings are paid weekly to a bank account or mobile wallet in your name.",
+      "verified": "Verified",
+      "pendingReview": "Being checked",
+      "change": "Change",
+      "methods": {
+        "BANK": "Bank transfer",
+        "BKASH": "bKash",
+        "NAGAD": "Nagad"
+      },
+      "method": "Method",
+      "name": "Account holder",
+      "account": "Account (bank, branch and number) or wallet number",
+      "reviewNote": "Changed details are checked again before the next payout.",
+      "save": "Save payout details",
+      "saved": "Saved: we’ll check them before the next payout",
+      "jobs": "Your inspections",
+      "open": "Open",
+      "noJobs": "No inspections yet",
+      "noJobsBody": "Claim a task near you to get started.",
+      "findTasks": "Find tasks",
+      "paidBadge": "Paid",
+      "dueBadge": "Due"
+    },
+    "admin": {
+      "cols": {
+        "name": "Name",
+        "where": "Where",
+        "experience": "Experience",
+        "types": "Inspections",
+        "applied": "Applied",
+        "status": "Status",
+        "rating": "Rating",
+        "inspections": "Inspections",
+        "due": "Due",
+        "payout": "Payout to"
+      },
+      "years": "{count, plural, one {# year} other {# years}}",
+      "appStatus": {
+        "PENDING": "To review",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected"
+      },
+      "inspectorStatus": {
+        "ACTIVE": "Active",
+        "SUSPENDED": "Suspended"
+      },
+      "review": "Review",
+      "noApplications": "No applications yet",
+      "noApplicationsBody": "Freelance inspectors apply at /inspectors/apply.",
+      "reviewTitle": "Review {name}",
+      "reviewBody": "Approve once they’ve passed the certification test: they get an inspector login by email.",
+      "certified": "Passed GarmentGate’s certification test",
+      "radius": "Service radius (km)",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "homeHint": "Their home base, for nearby tasks. Without it they see tasks in their country.",
+      "note": "Note (needed to reject)",
+      "approve": "Approve",
+      "reject": "Reject",
+      "approved": "Approved: they’ll get an email to set a password",
+      "rejected": "Application rejected",
+      "noInspectors": "No gig inspectors yet",
+      "noInspectorsBody": "Approve an application to add one.",
+      "methods": {
+        "BANK": "Bank transfer",
+        "BKASH": "bKash",
+        "NAGAD": "Nagad"
+      },
+      "verified": "Verified",
+      "unverified": "To verify",
+      "noPayout": "No payout details",
+      "verify": "Verify payout",
+      "payoutVerified": "Payout details verified",
+      "pay": "Pay",
+      "suspend": "Suspend",
+      "reactivate": "Reactivate",
+      "failed": "Something went wrong",
+      "payTitle": "Pay {name}",
+      "payBody": "Record the transfer of {amount} once it has left GarmentGate’s account.",
+      "reference": "Transfer reference",
+      "recordPayout": "Record payout",
+      "paid": "Payout recorded",
+      "locationTitle": "Factory locations",
+      "locationBody": "Set a factory’s coordinates so tasks show distance and inspectors must check in on site.",
+      "factoryCode": "Factory code",
+      "saveLocation": "Save location",
+      "located": "{code} located",
+      "rulesTitle": "Gig rules",
+      "rulesBody": "Pay, check-in, rotation, audits and suspension.",
+      "rules": {
+        "dayRateUsdMinor": "Pay per inspection day (US cents)",
+        "checkInRadiusM": "Check-in radius (m)",
+        "rotationLimit": "Same factory, per 90 days",
+        "auditSampleBps": "Re-inspected (basis points)",
+        "suspendBelowRating": "Suspend below rating",
+        "minRatingsForSuspension": "After this many ratings"
+      },
+      "rulesHint": {
+        "dayRateUsdMinor": "8000 = USD 80",
+        "checkInRadiusM": "How close to the factory a check-in must be",
+        "rotationLimit": "Inspections of one factory by one inspector",
+        "auditSampleBps": "1000 = 10% of reports",
+        "suspendBelowRating": "Average out of 5",
+        "minRatingsForSuspension": "Fewer ratings never suspend"
+      },
+      "saveRules": "Save rules",
+      "rulesSaved": "Gig rules saved"
+    }
+  },
+  "plans": {
+    "tiers": {
+      "FREE": "Free",
+      "PRO": "Pro",
+      "PREMIUM": "Premium"
+    },
+    "factory": {
+      "title": "Your plan",
+      "description": "Reach more buyers: list more products, rank higher in search, price more competitively and see new RFQs first.",
+      "current": "You’re on {tier}",
+      "freeBody": "Upgrade any time; cancel any time.",
+      "renewsOn": "Renews on {date}.",
+      "endsOn": "Ends on {date}.",
+      "byGarmentGate": "Set up by GarmentGate.",
+      "pastDue": "Payment due",
+      "ending": "Ending",
+      "listed": "{count} of {max} products listed",
+      "listedUnlimited": "{count, plural, one {# product} other {# products}} listed",
+      "cancel": "Cancel plan",
+      "cancelled": "Your plan ends at the end of the paid period",
+      "compare": "Compare plans",
+      "billing": "Billing",
+      "interval": {
+        "MONTH": "Monthly",
+        "YEAR": "Yearly"
+      },
+      "per": {
+        "MONTH": "/ month",
+        "YEAR": "/ year"
+      },
+      "free": "Free",
+      "yourPlan": "Your plan",
+      "perks": {
+        "products": "Up to {count} listed products",
+        "unlimited": "Unlimited listed products",
+        "boost": "Search boost (level {level})",
+        "markup": "{points} points off GarmentGate’s markup: your prices reach buyers cheaper",
+        "headStart": "New open RFQs {hours} hours before other factories",
+        "waits": "New open RFQs after a {hours}-hour head start for Premium"
+      },
+      "upgrade": "Upgrade to {tier}",
+      "checkoutFailed": "Something went wrong, please try again",
+      "byTransfer": "To pay by bank transfer, or to change a plan GarmentGate set up, contact your GarmentGate account manager.",
+      "stripeNote": "Card payments are processed securely by Stripe for GarmentGate. Prices in USD.",
+      "invoices": "Payments",
+      "thanks": "Thanks: your plan is active.",
+      "activating": "Payment received: your plan activates in a moment…",
+      "notCharged": "Checkout cancelled: you haven’t been charged."
+    },
+    "admin": {
+      "title": "Factory plans",
+      "description": "Who’s on Free, Pro and Premium, recurring revenue, grants and plan terms.",
+      "grant": "Set a plan",
+      "mrr": "Monthly recurring revenue",
+      "tabs": {
+        "subscriptions": "Subscriptions",
+        "settings": "Plan terms",
+        "plus": "Buyer Plus"
+      },
+      "cols": {
+        "tier": "Plan",
+        "source": "Billing",
+        "status": "Status",
+        "until": "Until",
+        "price": "Price",
+        "paid": "Paid",
+        "note": "Note",
+        "account": "Account"
+      },
+      "source": {
+        "STRIPE_MONTH": "Card, monthly",
+        "STRIPE_YEAR": "Card, yearly",
+        "MANUAL": "Set by staff"
+      },
+      "status": {
+        "ACTIVE": "Active",
+        "PAST_DUE": "Payment due",
+        "CANCELED": "Ended",
+        "INCOMPLETE": "Checkout started"
+      },
+      "ending": "Ending",
+      "empty": "No paid plans yet",
+      "emptyBody": "Factories upgrade from their Plan page, or staff set one here.",
+      "grantTitle": "Set a factory’s plan",
+      "grantBody": "For plans paid by bank transfer or promotions. Choose Free to end a plan staff set. Factories paying by card cancel their own subscription first.",
+      "factoryCode": "Factory code",
+      "endsOn": "Last day",
+      "endsOnHint": "Leave empty to keep it until staff end it.",
+      "paidUsd": "Amount received (USD)",
+      "reference": "Transfer reference",
+      "note": "Note",
+      "save": "Save",
+      "granted": "{code} is now on {tier}",
+      "termsTitle": "Plan terms",
+      "termsBody": "Prices, limits and perks per plan.",
+      "terms": {
+        "monthlyUsdMinor": "Monthly price (US cents)",
+        "yearlyUsdMinor": "Yearly price (US cents)",
+        "searchBoost": "Search boost (0–10)",
+        "markupDiscountBps": "Markup discount (basis points)",
+        "maxProducts": "Listed products",
+        "rfqHeadStart": "Sees new RFQs first",
+        "rfqHeadStartHours": "RFQ head start (hours)",
+        "hoursHint": "Never more than half of an RFQ’s quote window."
+      },
+      "unlimited": "Unlimited",
+      "termsNote": "New prices apply to new subscriptions only; perks apply to everyone at once.",
+      "saveTerms": "Save terms",
+      "termsSaved": "Plan terms saved"
+    },
+    "plus": {
+      "title": "GarmentGate Plus",
+      "description": "Membership for buyers who source regularly: lower fees, faster answers and a dedicated contact at GarmentGate.",
+      "name": "GarmentGate Plus",
+      "member": "Member",
+      "pastDue": "Payment due",
+      "ending": "Ending",
+      "pitch": "Join any time; cancel any time.",
+      "renewsOn": "Renews on {date}.",
+      "endsOn": "Ends on {date}.",
+      "byGarmentGate": "Set up by GarmentGate.",
+      "perks": {
+        "inspections": "Every QC inspection free",
+        "samples": "{percent}% off every sample fee",
+        "freeSamples": "Free samples",
+        "priority": "Your RFQs marked priority and shown first to factories",
+        "merchandiser": "A dedicated merchandiser at GarmentGate"
+      },
+      "billing": "Billing",
+      "interval": {
+        "MONTH": "Monthly",
+        "YEAR": "Yearly"
+      },
+      "per": {
+        "MONTH": "/ month",
+        "YEAR": "/ year"
+      },
+      "join": "Join GarmentGate Plus",
+      "cancel": "Cancel membership",
+      "cancelled": "Your membership ends at the end of the paid period",
+      "failed": "Something went wrong, please try again",
+      "byTransfer": "To join by bank transfer, contact your GarmentGate account manager.",
+      "merchandiserTitle": "Your merchandiser",
+      "merchandiserSoon": "We’re assigning your merchandiser: you’ll see their name here shortly.",
+      "merchandiserNone": "Plus members get a dedicated merchandiser.",
+      "payments": "Payments",
+      "thanks": "Thanks: welcome to GarmentGate Plus.",
+      "activating": "Payment received: your membership activates in a moment…",
+      "notCharged": "Checkout cancelled: you haven’t been charged."
+    },
+    "plusAdmin": {
+      "termsTitle": "GarmentGate Plus terms",
+      "termsBody": "Price and every member benefit. Changes apply to all members at once; new prices to new memberships only.",
+      "fields": {
+        "monthlyUsdMinor": "Monthly price (US cents)",
+        "yearlyUsdMinor": "Yearly price (US cents)",
+        "sampleDiscountBps": "Sample fee discount (basis points)",
+        "freeInspections": "Every inspection free",
+        "priorityRfqs": "Priority RFQs for factories",
+        "merchandiser": "Dedicated merchandiser (staff are asked to assign one)"
+      },
+      "hints": {
+        "monthlyUsdMinor": "4900 = USD 49",
+        "yearlyUsdMinor": "49000 = USD 490",
+        "sampleDiscountBps": "5000 = half price; 10000 = free"
+      },
+      "note": "Discounts apply to fees charged from now on, not to fees already charged.",
+      "save": "Save terms",
+      "saved": "Plus terms saved",
+      "grantTitle": "Set a membership by hand",
+      "grantBody": "For memberships paid by bank transfer or promotions. Buyers paying by card cancel their own subscription first.",
+      "buyerCode": "Buyer code",
+      "grant": "Give Plus",
+      "end": "End membership",
+      "granted": "{code} now has GarmentGate Plus",
+      "ended": "{code}’s membership ended"
+    }
+  },
+  "messaging": {
+    "types": {
+      "EMAIL_VERIFIED": "Email verified",
+      "KYC_SUBMITTED": "Verification submitted",
+      "KYC_APPROVED": "Verification approved",
+      "KYC_REJECTED": "Verification needs changes",
+      "RFQ_INVITATION": "New RFQ (factories)",
+      "QUOTE_RECEIVED": "Quote received",
+      "QUOTE_OFFERED": "Quote offered (buyers)",
+      "ORDER_UPDATE": "Order updates (shipped, delivered…)",
+      "MILESTONE_UPDATE": "Production milestones",
+      "QC_RESULT": "Inspection results",
+      "MESSAGE_RECEIVED": "New messages",
+      "PAYMENT_UPDATE": "Payments due and received",
+      "DISPUTE_UPDATE": "Disputes",
+      "REVIEW_RECEIVED": "Reviews",
+      "SYSTEM": "System notices"
+    },
+    "admin": {
+      "title": "Texts",
+      "description": "SMS and WhatsApp through Twilio: which events text, the daily cap, WhatsApp templates and every message sent.",
+      "notLive": "Twilio isn’t configured: texts are written to the API log instead of sent. Add the TWILIO_* settings to go live.",
+      "tabs": {
+        "log": "Message log",
+        "settings": "Settings"
+      },
+      "cols": {
+        "when": "When",
+        "to": "To",
+        "channel": "Channel",
+        "type": "Event",
+        "status": "Status",
+        "body": "Message"
+      },
+      "status": {
+        "QUEUED": "Queued",
+        "SENT": "Sent",
+        "DELIVERED": "Delivered",
+        "FAILED": "Failed",
+        "SKIPPED": "Skipped"
+      },
+      "empty": "No texts yet",
+      "emptyBody": "Texts appear here once people verify their numbers and events happen.",
+      "settingsTitle": "Settings",
+      "settingsBody": "People choose per category in their settings; these rules apply on top.",
+      "fields": {
+        "smsEnabled": "Send SMS",
+        "whatsappEnabled": "Send WhatsApp (to people who chose it, where a template is set)",
+        "dailyLimitPerUser": "Texts per person per day",
+        "types": "Events that may text"
+      },
+      "typesHint": "Tick the events that may be texted. Next to each, the approved WhatsApp template (Twilio Content SID).",
+      "templateFor": "WhatsApp template for {type}",
+      "templatePlaceholder": "HX… (optional)",
+      "templatesHint": "Templates use {{1}} for the title, {{2}} for the message and {{3}} for the link. Without one, that event goes by SMS.",
+      "save": "Save settings",
+      "saved": "Text settings saved",
+      "testTitle": "Send a test",
+      "testBody": "Check the Twilio setup with a test message.",
+      "testPhone": "Mobile number",
+      "send": "Send test",
+      "testSent": "Test sent"
     }
   }
 }

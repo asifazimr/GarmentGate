@@ -1,6 +1,8 @@
 import { hash } from '@node-rs/argon2';
 import {
+  AdminBankAccountSchema,
   BuyerPaymentsSchema,
+  FactoryBankAccountViewSchema,
   FinanceInboxSchema,
   LedgerBalancesSchema,
   ManufacturerPayoutsSchema,
@@ -8,6 +10,7 @@ import {
   PaymentStartSchema,
 } from '@garmentgate/shared';
 import Stripe from 'stripe';
+import { z } from 'zod';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { STRIPE_CLIENT } from '../src/modules/payments/providers/stripe.provider.js';
 import {
@@ -192,6 +195,17 @@ describe('payments and escrow ledger (e2e)', () => {
   beforeAll(async () => {
     ctx = await createTestApp((b) => b.overrideProvider(STRIPE_CLIENT).useValue(stripe));
     admin = await login(ctx, await createAdmin(ctx.prisma));
+
+    // These tests exercise releases on the classic 30/50/20 schedule (the default is
+    // 25/70/5 with a claim-window holdback, tested in fees.e2e-spec.ts).
+    await admin
+      .put('/admin/finance/schedule')
+      .send([
+        { trigger: 'PRODUCTION_START', bps: 3000 },
+        { trigger: 'QC_PASSED', bps: 5000 },
+        { trigger: 'DELIVERED', bps: 2000 },
+      ])
+      .expect(204);
     buyer = await party(ctx, 'BUYER', '1');
     factory = await party(ctx, 'MANUFACTURER', '2');
     await admin.put('/admin/finance/rates').send({ EUR: '0.92', BDT: '119.5' }).expect(204);
@@ -199,6 +213,7 @@ describe('payments and escrow ledger (e2e)', () => {
   }, 60_000);
 
   afterAll(async () => {
+    await ctx.prisma.platformSetting.deleteMany({ where: { key: 'release_schedule' } });
     await ctx.app.close();
   });
 
@@ -323,6 +338,62 @@ describe('payments and escrow ledger (e2e)', () => {
       payableMinor: 114_000,
     });
     expect((await factoryView()).releasedMinor).toBe(114_000);
+  });
+
+  it('pays only to bank details staff verified, and never shows them to the buyer', async () => {
+    const release = (await finance()).releases[0];
+    const pay = () =>
+      admin
+        .post(`/admin/finance/releases/${release?.id ?? ''}/payout`)
+        .send({ bankReference: `OUT-${run}-0` });
+    expect((await pay()).status).toBe(409); // no verified account yet
+
+    const details = {
+      holderName: 'Payments Factory Ltd',
+      bankName: 'Dhaka Commerce Bank',
+      bankCountry: 'BD',
+      accountNumber: '1234 5678 9012 3456',
+      swiftBic: 'dcbldbdh',
+      currency: 'USD',
+    };
+    await buyer.agent.put('/manufacturer/bank-account').send(details).expect(403);
+    await factory.agent
+      .put('/manufacturer/bank-account')
+      .send({ ...details, swiftBic: 'not a bic' })
+      .expect(400);
+    await factory.agent.put('/manufacturer/bank-account').send(details).expect(204);
+    const mine = FactoryBankAccountViewSchema.parse(
+      (await factory.agent.get('/manufacturer/bank-account').expect(200)).body,
+    );
+    expect(mine).toMatchObject({ accountMasked: '•••• 3456', status: 'PENDING_REVIEW' });
+    expect(JSON.stringify(mine)).not.toContain('123456789012');
+    expect((await pay()).status).toBe(409); // still pending review
+
+    const listed = z
+      .array(AdminBankAccountSchema)
+      .parse((await admin.get('/admin/finance/bank-accounts').expect(200)).body)
+      .find((a) => a.accountNumber === '1234567890123456');
+    expect(listed).toMatchObject({ swiftBic: 'DCBLDBDH', status: 'PENDING_REVIEW' });
+    await factory.agent.get('/admin/finance/bank-accounts').expect(403);
+    await admin
+      .post(`/admin/finance/bank-accounts/${listed?.id ?? ''}/review`)
+      .send({ decision: 'REJECT' })
+      .expect(400); // a rejection says why
+    await admin
+      .post(`/admin/finance/bank-accounts/${listed?.id ?? ''}/review`)
+      .send({ decision: 'VERIFY' })
+      .expect(204);
+    const inbox = FinanceInboxSchema.parse(
+      (await admin.get('/admin/finance/inbox').expect(200)).body,
+    );
+    expect(inbox.toPay.find((r) => r.releaseId === release?.id)?.bank?.accountNumber).toBe(
+      '1234567890123456',
+    );
+    // The buyer's views never carry the factory's bank details.
+    const buyerSide = JSON.stringify(
+      (await buyer.agent.get(`/orders/${code}/payments`).expect(200)).body,
+    );
+    expect(buyerSide).not.toContain('Dhaka Commerce');
   });
 
   it('pays the factory out once, in its own currency at the stored rate', async () => {

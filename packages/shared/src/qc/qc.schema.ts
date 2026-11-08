@@ -111,6 +111,8 @@ export const OrderInspectionSchema = z.object({
   bookedBy: z.enum(['BUYER', 'STAFF', 'PLATFORM']),
   /** Staff only: the inspector's name. Parties see "GarmentGate QC". */
   inspector: z.string().nullable(),
+  /** Staff only: how staff rated the inspector's work (1-5). */
+  rating: z.number().int().nullable(),
   aql: InspectionAqlSchema.nullable(),
   defects: z.object({ critical: z.number(), major: z.number(), minor: z.number() }).nullable(),
   summary: z.string().nullable(),
@@ -155,5 +157,11 @@ export const InspectorJobDetailSchema = InspectorJobSchema.extend({
   inspection: OrderInspectionSchema,
   /** Whether the report can still be submitted (pending, and the order is where it should be). */
   canReport: z.boolean(),
+  /** GPS check-in at the factory: needed before the report when the factory is located. */
+  checkIn: z.object({
+    required: z.boolean(),
+    at: z.iso.datetime().nullable(),
+    distanceM: z.number().int().nullable(),
+  }),
 });
 export type InspectorJobDetail = z.infer<typeof InspectorJobDetailSchema>;

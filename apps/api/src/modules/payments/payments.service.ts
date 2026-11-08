@@ -35,6 +35,9 @@ import {
   releaseTranches,
   type StartPaymentDto,
   type NotificationLink,
+  type FeePurpose,
+  type PayFeesDto,
+  type ServiceFees,
 } from '@garmentgate/shared';
 import type Stripe from 'stripe';
 import type { OrderRelease, Payment, Prisma } from '../../generated/prisma/client.js';
@@ -48,6 +51,8 @@ import type { OrderRow } from '../orders/order-views.js';
 import { actorOf, OrdersService } from '../orders/orders.service.js';
 import { FilesService } from '../storage/files.service.js';
 import { StorageService } from '../storage/storage.service.js';
+import { BankAccountsService, bankDetails } from './bank-accounts.service.js';
+import { SERVICE_FEES_KEY, serviceFees } from './charges.js';
 import { FxService } from './fx.service.js';
 import { LedgerService } from './ledger.service.js';
 import { ManualProvider } from './providers/manual.provider.js';
@@ -81,7 +86,10 @@ const PURPOSE_LABEL: Record<Payment['purpose'], string> = {
   REFUND: 'Refund',
   LOGISTICS: 'Shipping',
   INSURANCE_RECOVERY: 'Insurance recovery',
+  INSPECTION_FEE: 'Inspection fee',
 };
+const CHARGE_LETTER = { LOGISTICS: 'L', SAMPLE_FEE: 'S', INSPECTION_FEE: 'I' } as const;
+const FEE_PURPOSES: readonly string[] = ['SAMPLE_FEE', 'INSPECTION_FEE'];
 const PROOF_MAX_BYTES = 10 * 1024 * 1024;
 
 const n = (v: bigint | number) => Number(v);
@@ -134,6 +142,7 @@ export class PaymentsService implements OnModuleInit {
     private readonly files: FilesService,
     private readonly storage: StorageService,
     private readonly audit: AuditService,
+    private readonly bankAccounts: BankAccountsService,
   ) {}
 
   onModuleInit(): void {
@@ -280,6 +289,7 @@ export class PaymentsService implements OnModuleInit {
           buyerMinor: tranches[i]?.buyerMinor ?? 0n,
           manufacturerMinor: tranches[i]?.manufacturerMinor ?? 0n,
           commissionMinor: tranches[i]?.commissionMinor ?? 0n,
+          manufacturerProfileId: order.manufacturerProfileId,
         })),
       });
     }
@@ -291,6 +301,7 @@ export class PaymentsService implements OnModuleInit {
         'QC_PASSED',
         'SHIPPED',
         'DELIVERED',
+        'CLAIM_WINDOW',
         'COMPLETED',
       ];
       await tx.orderRelease.updateMany({
@@ -334,7 +345,19 @@ export class PaymentsService implements OnModuleInit {
 
   /** Which parts of the plan are paid (succeeded inbound payments, by purpose). */
   private async paid(orderId: string, unit: number, quantity: number, depositBps: number) {
-    const plan = paymentPlan(BigInt(unit) * BigInt(quantity), depositBps);
+    const goods = paymentPlan(BigInt(unit) * BigInt(quantity), depositBps);
+    // Sample fees credited when the bulk deposit arrived come off the balance.
+    const credit =
+      (
+        await this.prisma.order.findUnique({
+          where: { id: orderId },
+          select: { sampleCreditMinor: true },
+        })
+      )?.sampleCreditMinor ?? 0n;
+    const plan = {
+      ...goods,
+      balance: goods.balance > credit ? goods.balance - credit : 0n,
+    };
     const rows = await this.prisma.payment.groupBy({
       by: ['purpose'],
       where: { orderId, direction: 'INBOUND', status: 'SUCCEEDED' },
@@ -355,9 +378,13 @@ export class PaymentsService implements OnModuleInit {
     const order = await this.orders.load(actor, code);
     if (actorOf(actor) !== 'BUYER') throw new ForbiddenException('This is the buyer’s view');
     const payments = await this.prisma.payment.findMany({
-      where: { orderId: order.id, purpose: { in: ['DEPOSIT', 'BALANCE', 'REFUND'] } },
+      where: {
+        orderId: order.id,
+        purpose: { in: ['DEPOSIT', 'BALANCE', 'REFUND', 'SAMPLE_FEE', 'INSPECTION_FEE'] },
+      },
       orderBy: { createdAt: 'asc' },
     });
+    const fees = await this.fees(order.id);
     const state = await this.paid(
       order.id,
       order.buyerUnitPriceMinor,
@@ -388,7 +415,11 @@ export class PaymentsService implements OnModuleInit {
       totalMinor: n(total),
       paidMinor: n(paidTotal),
       refundedMinor: n(refunded),
-      outstandingMinor: n(total - paidTotal > 0n ? total - paidTotal : 0n),
+      outstandingMinor: n(
+        total - order.sampleCreditMinor - paidTotal > 0n
+          ? total - order.sampleCreditMinor - paidTotal
+          : 0n,
+      ),
       plan: [
         part('DEPOSIT', state.plan.deposit, state.depositPaid),
         part('BALANCE', state.plan.balance, state.balancePaid),
@@ -397,7 +428,12 @@ export class PaymentsService implements OnModuleInit {
         id: p.id,
         reference: p.reference ?? p.id,
         purpose:
-          p.purpose === 'REFUND' ? 'REFUND' : p.purpose === 'BALANCE' ? 'BALANCE' : 'DEPOSIT',
+          p.purpose === 'REFUND' ||
+          p.purpose === 'BALANCE' ||
+          p.purpose === 'SAMPLE_FEE' ||
+          p.purpose === 'INSPECTION_FEE'
+            ? p.purpose
+            : 'DEPOSIT',
         method: p.method,
         amountMinor: n(p.amountMinor),
         status: p.status,
@@ -406,7 +442,116 @@ export class PaymentsService implements OnModuleInit {
       })),
       methods: this.methods(),
       instructions: this.manual.bankLines(),
+      sampleCreditMinor: n(order.sampleCreditMinor),
+      fees: fees.map((f) => ({
+        purpose: f.purpose,
+        chargedMinor: n(f.charged),
+        paidMinor: n(f.paid),
+        dueMinor: n(f.due),
+        pending: f.pending,
+        items: f.items.map((c) => ({
+          amountMinor: n(c.amountMinor),
+          waived: c.waived,
+          createdAt: c.createdAt.toISOString(),
+        })),
+      })),
     };
+  }
+
+  // ── Service fees (samples, inspection days) ───────────────────────────────
+
+  /** What the buyer owes in service fees on an order, by kind (waived charges count 0). */
+  async fees(orderId: string) {
+    const [charges, payments] = await Promise.all([
+      this.prisma.orderCharge.findMany({ where: { orderId }, orderBy: { createdAt: 'asc' } }),
+      this.prisma.payment.findMany({
+        where: {
+          orderId,
+          direction: 'INBOUND',
+          purpose: { in: ['SAMPLE_FEE', 'INSPECTION_FEE'] },
+          status: { in: ['SUCCEEDED', 'PROCESSING'] },
+        },
+        select: { purpose: true, status: true, amountMinor: true },
+      }),
+    ]);
+    return (['SAMPLE_FEE', 'INSPECTION_FEE'] as const)
+      .map((purpose) => {
+        const items = charges.filter((c) => c.kind === purpose);
+        const charged = items.reduce((a, c) => a + (c.waived ? 0n : c.amountMinor), 0n);
+        const paid = payments
+          .filter((p) => p.purpose === purpose && p.status === 'SUCCEEDED')
+          .reduce((a, p) => a + p.amountMinor, 0n);
+        return {
+          purpose,
+          items,
+          charged,
+          paid,
+          due: charged > paid ? charged - paid : 0n,
+          pending: payments.some((p) => p.purpose === purpose && p.status === 'PROCESSING'),
+        };
+      })
+      .filter((f) => f.items.length > 0);
+  }
+
+  /** Everything the buyer still owes in service fees (shipping waits for it). */
+  async feesDue(orderId: string): Promise<bigint> {
+    return (await this.fees(orderId)).reduce((a, f) => a + f.due, 0n);
+  }
+
+  async payFees(actor: ChatActor, code: string, dto: PayFeesDto): Promise<PaymentStart> {
+    const order = await this.orders.load(actor, code);
+    if (actorOf(actor) !== 'BUYER') throw new ForbiddenException('Only the buyer pays');
+    if (order.status === 'CANCELLED') throw new ConflictException('This order was cancelled');
+    const fee = (await this.fees(order.id)).find((f) => f.purpose === dto.purpose);
+    return this.startOrderCharge(order, dto.purpose, fee?.due ?? 0n, dto.method);
+  }
+
+  async serviceFees(): Promise<ServiceFees> {
+    return serviceFees(this.prisma);
+  }
+
+  async setServiceFees(adminId: string, fees: ServiceFees): Promise<ServiceFees> {
+    const value: Prisma.InputJsonValue = { ...fees };
+    await this.prisma.platformSetting.upsert({
+      where: { key: SERVICE_FEES_KEY },
+      create: { key: SERVICE_FEES_KEY, value },
+      update: { value },
+    });
+    await this.audit.log({
+      actorUserId: adminId,
+      action: 'payments.service_fees_updated',
+      entityType: 'PlatformSetting',
+      entityId: SERVICE_FEES_KEY,
+      metadata: value,
+    });
+    return fees;
+  }
+
+  /**
+   * The holdback: a CLAIM_WINDOW tranche becomes due once the claim window after delivery has
+   * passed with no open dispute. Run before staff look at what's due (and by the sweep).
+   */
+  async releaseClaimWindows(now = new Date()): Promise<number> {
+    const { claimWindowDays } = await serviceFees(this.prisma);
+    const closedBefore = new Date(now.getTime() - claimWindowDays * 86_400_000);
+    const ready = await this.prisma.orderRelease.findMany({
+      where: {
+        trigger: 'CLAIM_WINDOW',
+        status: 'SCHEDULED',
+        order: {
+          status: { in: ['DELIVERED', 'COMPLETED'] },
+          events: { some: { toStatus: 'DELIVERED', createdAt: { lte: closedBefore } } },
+          disputes: { none: { status: { in: ['OPEN', 'UNDER_REVIEW'] } } },
+        },
+      },
+      select: { id: true },
+    });
+    if (ready.length === 0) return 0;
+    const { count } = await this.prisma.orderRelease.updateMany({
+      where: { id: { in: ready.map((r) => r.id) }, status: 'SCHEDULED' },
+      data: { status: 'DUE', dueAt: now },
+    });
+    return count;
   }
 
   /** Opens (or reuses) a payment for the deposit or balance with the chosen method. */
@@ -524,7 +669,7 @@ export class PaymentsService implements OnModuleInit {
   /** Starts (or resumes) paying a separate order charge, e.g. GarmentGate's shipping. */
   async startOrderCharge(
     order: { id: string; code: string; currency: Currency },
-    purpose: 'LOGISTICS',
+    purpose: 'LOGISTICS' | FeePurpose,
     amount: bigint,
     method: PaymentMethod,
   ): Promise<PaymentStart> {
@@ -549,7 +694,7 @@ export class PaymentsService implements OnModuleInit {
         currency: order.currency,
         method,
         provider: provider.id,
-        reference: `PAY-${order.code.slice(4)}-L${String(count + 1)}`,
+        reference: `PAY-${order.code.slice(4)}-${CHARGE_LETTER[purpose]}${String(count + 1)}`,
         status: 'PENDING',
       },
     });
@@ -570,7 +715,7 @@ export class PaymentsService implements OnModuleInit {
   /** Succeeded payments for one purpose of an order, and whether a transfer awaits staff. */
   async orderChargeState(
     orderId: string,
-    purpose: 'LOGISTICS',
+    purpose: 'LOGISTICS' | FeePurpose,
   ): Promise<{ paid: bigint; pending: boolean }> {
     const [sum, pending] = await Promise.all([
       this.prisma.payment.aggregate({
@@ -962,6 +1107,31 @@ export class PaymentsService implements OnModuleInit {
           },
         ],
       });
+      // A service fee is earned on payment: it leaves escrow for GarmentGate's revenue.
+      if (FEE_PURPOSES.includes(payment.purpose))
+        await this.ledger.post(tx, {
+          kind: 'COMMISSION',
+          key: `fee:${payment.id}`,
+          orderId: payment.orderId,
+          paymentId: payment.id,
+          currency: payment.currency,
+          description: `${PURPOSE_LABEL[payment.purpose]} ${payment.reference ?? ''} earned`,
+          rates,
+          lines: [
+            {
+              account: 'BUYER_ESCROW',
+              companyId: payer.companyId,
+              direction: 'DEBIT',
+              amountMinor: payment.amountMinor,
+            },
+            {
+              account: 'PLATFORM_REVENUE',
+              companyId: null,
+              direction: 'CREDIT',
+              amountMinor: payment.amountMinor,
+            },
+          ],
+        });
       return true;
     });
     if (!settled) return false;
@@ -985,14 +1155,59 @@ export class PaymentsService implements OnModuleInit {
         order.quantity,
         order.depositBps,
       );
-      if (state.deposit)
+      if (state.deposit) {
+        await this.creditSampleFees(order.id);
         await this.orders.advance(
           order.id,
           'IN_PRODUCTION',
           `Deposit ${payment.reference ?? ''} received`,
         );
+      }
     }
     return true;
+  }
+
+  /**
+   * The bulk order is placed: sample fees already paid are credited. GarmentGate funds the
+   * credit into escrow (revenue → escrow) and the balance due drops by the same amount, so the
+   * factory's releases still add up. Once per order.
+   */
+  private async creditSampleFees(orderId: string): Promise<void> {
+    const { creditSampleFees } = await serviceFees(this.prisma);
+    if (!creditSampleFees) return;
+    await this.prisma.$transaction(async (tx) => {
+      await this.ledger.lockOrder(tx, orderId);
+      const order = await tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        select: { currency: true, buyerCompanyId: true, sampleCreditMinor: true, code: true },
+      });
+      if (order.sampleCreditMinor > 0n) return;
+      const paid = await tx.payment.aggregate({
+        where: { orderId, purpose: 'SAMPLE_FEE', direction: 'INBOUND', status: 'SUCCEEDED' },
+        _sum: { amountMinor: true },
+      });
+      const credit = paid._sum.amountMinor ?? 0n;
+      if (credit <= 0n) return;
+      const { rates } = await this.fx.snapshot(order.currency, tx);
+      await this.ledger.post(tx, {
+        kind: 'COMMISSION',
+        key: `sample-credit:${orderId}`,
+        orderId,
+        currency: order.currency,
+        description: `${order.code}: sample fees credited against the balance`,
+        rates,
+        lines: [
+          { account: 'PLATFORM_REVENUE', companyId: null, direction: 'DEBIT', amountMinor: credit },
+          {
+            account: 'BUYER_ESCROW',
+            companyId: order.buyerCompanyId,
+            direction: 'CREDIT',
+            amountMinor: credit,
+          },
+        ],
+      });
+      await tx.order.update({ where: { id: orderId }, data: { sampleCreditMinor: credit } });
+    });
   }
 
   async presignProof(
@@ -1248,6 +1463,20 @@ export class PaymentsService implements OnModuleInit {
       },
     });
     if (!release) throw new NotFoundException('Release not found');
+    // The factory this tranche is owed to: after a replacement, still the old one.
+    const factoryCompanyId = release.manufacturerProfileId
+      ? (
+          await this.prisma.manufacturerProfile.findUniqueOrThrow({
+            where: { id: release.manufacturerProfileId },
+            select: { companyId: true },
+          })
+        ).companyId
+      : release.order.manufacturerProfile.companyId;
+    const account = await this.bankAccounts.verifiedFor(factoryCompanyId);
+    if (!account)
+      throw new ConflictException(
+        'This factory has no verified bank account: verify its details before paying',
+      );
     if (await this.prisma.payment.findFirst({ where: { providerRef: dto.bankReference } })) {
       throw new ConflictException('That bank reference is already recorded');
     }
@@ -1278,6 +1507,7 @@ export class PaymentsService implements OnModuleInit {
           paidAt: new Date(),
           confirmedById: adminId,
           releaseId: release.id,
+          factoryBankAccountId: account.id,
           unitsPerUsd: rates[release.currency] ?? '1',
           amountUsdMinor: convertMinor(release.manufacturerMinor, release.currency, 'USD', rates),
           settlementCurrency: settlementCurrency === release.currency ? null : settlementCurrency,
@@ -1303,7 +1533,7 @@ export class PaymentsService implements OnModuleInit {
         lines: [
           {
             account: 'MANUFACTURER_PAYABLE',
-            companyId: release.order.manufacturerProfile.companyId,
+            companyId: factoryCompanyId,
             direction: 'DEBIT',
             amountMinor: release.manufacturerMinor,
           },
@@ -1510,8 +1740,9 @@ export class PaymentsService implements OnModuleInit {
     const order = await this.orders.load(actor, code);
     if (actorOf(actor) !== 'MANUFACTURER')
       throw new ForbiddenException('This is the factory’s view');
+    // A replaced factory's releases are superseded: they're not this factory's money.
     const releases = await this.prisma.orderRelease.findMany({
-      where: { orderId: order.id },
+      where: { orderId: order.id, supersededAt: null },
       ...this.releaseOrder,
     });
     return this.payoutsView(order, sortReleases(releases));
@@ -1531,13 +1762,14 @@ export class PaymentsService implements OnModuleInit {
         quantity: true,
         commissionBps: true,
         commissionMinor: true,
-        releases: this.releaseOrder,
+        releases: { ...this.releaseOrder, where: { supersededAt: null } },
       },
     });
     return orders.map((o) => this.payoutsView(o, sortReleases(o.releases)));
   }
 
   async orderFinance(code: string): Promise<OrderFinance> {
+    await this.releaseClaimWindows();
     const order = await this.prisma.order.findUnique({
       where: { code },
       include: {
@@ -1643,6 +1875,7 @@ export class PaymentsService implements OnModuleInit {
   }
 
   async inbox(): Promise<FinanceInbox> {
+    await this.releaseClaimWindows();
     const party = {
       select: {
         legalName: true,
@@ -1679,6 +1912,36 @@ export class PaymentsService implements OnModuleInit {
     for (const r of releases)
       if (!escrow.has(r.orderId))
         escrow.set(r.orderId, (await this.ledger.orderPosition(r.orderId)).escrow);
+    // Payouts go to the factory each tranche is owed to, at its verified bank account.
+    const owedTo = new Map(
+      (
+        await this.prisma.manufacturerProfile.findMany({
+          where: {
+            id: {
+              in: releases.flatMap((r) =>
+                r.manufacturerProfileId ? [r.manufacturerProfileId] : [],
+              ),
+            },
+          },
+          select: {
+            id: true,
+            publicCode: true,
+            companyId: true,
+            company: { select: { legalName: true } },
+          },
+        })
+      ).map((p) => [p.id, p]),
+    );
+    const accounts = new Map(
+      (
+        await this.prisma.factoryBankAccount.findMany({
+          where: {
+            status: 'VERIFIED',
+            companyId: { in: [...owedTo.values()].map((p) => p.companyId) },
+          },
+        })
+      ).map((a) => [a.companyId, a]),
+    );
     const factory = (r: (typeof releases)[number]) => ({
       code: r.order.manufacturerProfile.publicCode,
       name: r.order.manufacturerProfile.company.legalName,
@@ -1721,14 +1984,21 @@ export class PaymentsService implements OnModuleInit {
         })),
       toPay: releases
         .filter((r) => r.status === 'RELEASED')
-        .map((r) => ({
-          releaseId: r.id,
-          orderCode: r.order.code,
-          manufacturerMinor: n(r.manufacturerMinor),
-          currency: r.currency,
-          manufacturer: factory(r),
-          releasedAt: iso(r.releasedAt),
-        })),
+        .map((r) => {
+          const owed = owedTo.get(r.manufacturerProfileId ?? '');
+          const account = owed ? accounts.get(owed.companyId) : undefined;
+          return {
+            releaseId: r.id,
+            orderCode: r.order.code,
+            manufacturerMinor: n(r.manufacturerMinor),
+            currency: r.currency,
+            manufacturer: owed
+              ? { code: owed.publicCode, name: owed.company.legalName }
+              : factory(r),
+            releasedAt: iso(r.releasedAt),
+            bank: account ? bankDetails(account) : null,
+          };
+        }),
     };
   }
 
@@ -1741,7 +2011,7 @@ export class PaymentsService implements OnModuleInit {
         })
       ).map((p) => [p.id, p]),
     );
-    const [accounts, rates, companies, payments] = await Promise.all([
+    const [accounts, rates, companies, payments, planPayments] = await Promise.all([
       this.ledger.balances(),
       this.fx.rates(),
       this.prisma.company.findMany({
@@ -1755,6 +2025,11 @@ export class PaymentsService implements OnModuleInit {
       this.prisma.payment.groupBy({
         by: ['currency', 'direction'],
         where: { status: 'SUCCEEDED' },
+        _sum: { amountMinor: true },
+      }),
+      // Factory plan payments (Stripe invoices, transfers staff recorded) are cash in too.
+      this.prisma.planInvoice.groupBy({
+        by: ['currency'],
         _sum: { amountMinor: true },
       }),
     ]);
@@ -1783,11 +2058,15 @@ export class PaymentsService implements OnModuleInit {
         const cash = sum(currency, 'PLATFORM_CASH');
         const escrow = sum(currency, 'BUYER_ESCROW');
         // Factories and logistics partners alike: what GarmentGate owes.
-        const payable = sum(currency, 'MANUFACTURER_PAYABLE') + sum(currency, 'PARTNER_PAYABLE');
+        const payable =
+          sum(currency, 'MANUFACTURER_PAYABLE') +
+          sum(currency, 'PARTNER_PAYABLE') +
+          sum(currency, 'INSPECTOR_PAYABLE');
         const revenue = sum(currency, 'PLATFORM_REVENUE');
         const paymentsIn =
-          payments.find((p) => p.currency === currency && p.direction === 'INBOUND')?._sum
-            .amountMinor ?? 0n;
+          (payments.find((p) => p.currency === currency && p.direction === 'INBOUND')?._sum
+            .amountMinor ?? 0n) +
+          BigInt(planPayments.find((p) => p.currency === currency)?._sum.amountMinor ?? 0);
         const paymentsOut =
           payments.find((p) => p.currency === currency && p.direction === 'OUTBOUND')?._sum
             .amountMinor ?? 0n;
@@ -1828,7 +2107,7 @@ export class PaymentsService implements OnModuleInit {
       totalsUsdMinor: {
         cash: n(usd('PLATFORM_CASH')),
         escrow: n(usd('BUYER_ESCROW')),
-        payable: n(usd('MANUFACTURER_PAYABLE') + usd('PARTNER_PAYABLE')),
+        payable: n(usd('MANUFACTURER_PAYABLE') + usd('PARTNER_PAYABLE') + usd('INSPECTOR_PAYABLE')),
         revenue: n(usd('PLATFORM_REVENUE')),
       },
       rates: Object.fromEntries(Object.entries(rates)),
