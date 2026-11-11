@@ -5,8 +5,14 @@ import en from '../../messages/en.json';
 
 type Messages = typeof en;
 
-/** Each locale's catalog is merged over English, so a missing key shows the English text. */
+/**
+ * Each locale's catalog is merged over English, so a missing key shows the English text.
+ * Arrays (step lists, legal sections) are values: a translated array replaces the English one
+ * whole, and is never spread into an object keyed by index.
+ */
 function merge<T>(base: T, override: unknown): T {
+  if (Array.isArray(base) || Array.isArray(override))
+    return (Array.isArray(base) && Array.isArray(override) ? override : base) as T;
   if (typeof base !== 'object' || base === null || typeof override !== 'object' || !override)
     return (typeof override === typeof base ? override : base) as T;
   const out: Record<string, unknown> = { ...(base as Record<string, unknown>) };

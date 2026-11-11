@@ -3120,3 +3120,40 @@ model OutboundMessage {
   @@index([createdAt])
   @@map("outbound_messages")
 }
+
+// ── Public website ─────────────────────────────────────────────────────────
+
+enum LeadKind {
+  SALES
+  ENTERPRISE
+  LOGISTICS_PARTNER
+  MANUFACTURER
+  SUPPORT
+  PRESS
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+/// Enquiries from the public website's forms (to GarmentGate only).
+model Lead {
+  id          String     @id @default(uuid(7)) @db.Uuid
+  kind        LeadKind
+  status      LeadStatus @default(NEW)
+  name        String
+  email       String
+  company     String?
+  country     String?    @db.Char(2)
+  phone       String?
+  message     String
+  source      String?
+  handledById String?    @db.Uuid
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([status, createdAt])
+  @@map("leads")
+}

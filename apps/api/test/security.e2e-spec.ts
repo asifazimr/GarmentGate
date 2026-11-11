@@ -26,6 +26,12 @@ const PUBLIC = new Set([
   'POST /auth/verify-email',
   'POST /auth/password/forgot',
   'POST /inspectors/apply', // freelance QC inspectors apply before they have an account
+  // The public website: aggregate counts, the price list and its enquiry form.
+  'GET /public/stats',
+  'GET /public/pricing',
+  'GET /public/directory',
+  'GET /fx/rates', // reference exchange rates for display conversions
+  'POST /leads',
   'POST /auth/password/reset',
   'GET /health',
   'GET /health/ready',

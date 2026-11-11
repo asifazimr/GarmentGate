@@ -34,6 +34,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // Absolute URLs for canonical links and social cards.
+  metadataBase: new URL(process.env.SITE_URL ?? 'http://localhost:3000'),
   title: {
     default: 'GarmentGate · Managed garment sourcing',
     template: '%s · GarmentGate',

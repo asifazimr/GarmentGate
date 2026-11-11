@@ -420,7 +420,8 @@
     "plan": "Plan",
     "plans": "Factory plans",
     "plus": "GarmentGate Plus",
-    "texts": "Texts"
+    "texts": "Texts",
+    "leads": "Leads"
   },
   "shell": {
     "search": "Search…",
@@ -638,24 +639,6 @@
     }
   },
   "marketing": {
-    "nav": {
-      "how": "How it works",
-      "trust": "Why GarmentGate",
-      "categories": "Categories",
-      "signIn": "Sign in",
-      "getStarted": "Get started"
-    },
-    "hero": {
-      "eyebrow": "Managed garment sourcing",
-      "titleStart": "Source garments from",
-      "titleAccent": "verified factories,",
-      "titleEnd": "without the risk.",
-      "body": "GarmentGate is your contracting partner for apparel manufacturing. We match you with audited factories, hold your payment in escrow, and inspect every order before it ships.",
-      "primary": "Start sourcing",
-      "secondary": "Join as a manufacturer",
-      "proof": "Factories in Bangladesh, Vietnam, India and Türkiye",
-      "countries": "Bangladesh · Vietnam · India · Türkiye"
-    },
     "mock": {
       "order": "Order",
       "factory": "Factory",
@@ -671,84 +654,1955 @@
       },
       "progress": "Production progress"
     },
-    "how": {
-      "eyebrow": "How it works",
-      "title": "From tech pack to delivery in three steps",
-      "steps": {
+    "nav": {
+      "solutions": "Solutions",
+      "how": "How it works",
+      "pricing": "Pricing",
+      "trust": "Trust & safety",
+      "contact": "Contact",
+      "signIn": "Sign in",
+      "getStarted": "Get started",
+      "menu": "Menu",
+      "home": "GarmentGate home",
+      "whoAreYou": "Who are you?",
+      "items": {
+        "buyers": {
+          "title": "For buyers",
+          "body": "Brands, retailers and importers sourcing garments"
+        },
+        "manufacturers": {
+          "title": "For manufacturers",
+          "body": "Factories that want steady global orders"
+        },
+        "inspectors": {
+          "title": "For QC inspectors",
+          "body": "Freelance inspections near you, paid weekly"
+        },
+        "logistics": {
+          "title": "For logistics partners",
+          "body": "Forwarders, carriers and hubs"
+        }
+      },
+      "start": {
+        "buyer": {
+          "title": "I’m sourcing garments",
+          "body": "Create a buyer account"
+        },
+        "manufacturer": {
+          "title": "I run a factory",
+          "body": "Apply as a manufacturer"
+        },
+        "inspector": {
+          "title": "I’m a QC inspector",
+          "body": "Apply to inspect"
+        },
+        "logistics": {
+          "title": "I move freight",
+          "body": "Become a logistics partner"
+        }
+      },
+      "help": "Help centre",
+      "about": "About",
+      "categories": "What we make",
+      "sourcing": "Sourcing countries",
+      "calculator": "Cost calculator",
+      "stories": "Sourcing stories",
+      "trackOrder": "Track order",
+      "startProject": "Start a project",
+      "audiences": "Who it’s for"
+    },
+    "footer": {
+      "tagline": "Managed garment sourcing. Verified factories worldwide; production, quality control, payment and delivery handled by GarmentGate.",
+      "platform": "Platform",
+      "solutions": "Solutions",
+      "company": "Company",
+      "legal": "Legal",
+      "signIn": "Sign in",
+      "createAccount": "Create an account",
+      "rights": "© {year} GarmentGate. All rights reserved.",
+      "draftNote": "Legal pages are drafts until reviewed by counsel.",
+      "resources": "Resources",
+      "explore": "Explore",
+      "language": "Language"
+    },
+    "common": {
+      "eyebrowLive": "Live from the platform",
+      "learnMore": "Learn more",
+      "talkToUs": "Talk to our sourcing team",
+      "createBuyer": "Start sourcing",
+      "createFactory": "Apply as a manufacturer",
+      "seePricing": "See pricing",
+      "howItWorks": "See how it works",
+      "faq": "Questions, answered",
+      "perPiece": "per piece",
+      "free": "Free",
+      "stats": {
+        "verifiedFactories": "Verified factories",
+        "sourcingCountries": "Sourcing countries",
+        "categories": "Product categories",
+        "inspections": "QC reports filed",
+        "piecesDelivered": "Pieces delivered",
+        "buyerCountries": "Countries shipped to"
+      },
+      "applyInspector": "Apply to inspect",
+      "becomePartner": "Become a partner",
+      "contactSupport": "Contact support"
+    },
+    "promises": {
+      "contract": {
+        "title": "One contract, one invoice",
+        "body": "You buy from GarmentGate. We contract the factory, so you never chase an unknown supplier across borders."
+      },
+      "escrow": {
+        "title": "Money held until it’s earned",
+        "body": "Payments sit in escrow and reach the factory in stages: when production starts, when goods ship, and after your claim window."
+      },
+      "quality": {
+        "title": "Checked before it ships",
+        "body": "Independent inspections to ISO 2859-1 (AQL), inline during production and a final random check before shipment."
+      },
+      "delivery": {
+        "title": "Delivered and tracked",
+        "body": "Goods go through GarmentGate hubs to your door, with freight, insurance, papers and live tracking handled for you."
+      }
+    },
+    "home": {
+      "meta": {
+        "title": "Managed garment sourcing",
+        "description": "Source garments from verified factories worldwide. GarmentGate manages production, quality control, payment and delivery."
+      },
+      "hero": {
+        "eyebrow": "Managed garment sourcing marketplace",
+        "titleStart": "Source garments worldwide.",
+        "titleAccent": "We manage",
+        "titleEnd": "the rest.",
+        "body": "Verified factories around the world, one contract with GarmentGate, and production, quality control, payment and delivery handled end to end.",
+        "primary": "Start sourcing",
+        "secondary": "Join as a manufacturer",
+        "route": {
+          "factory": "Factory",
+          "qc": "QC",
+          "hub": "Hub",
+          "you": "You"
+        }
+      },
+      "roles": {
+        "eyebrow": "Built for everyone in the chain",
+        "title": "Find your way in",
+        "tabs": {
+          "buyer": "Buyers",
+          "manufacturer": "Manufacturers",
+          "inspector": "QC inspectors",
+          "logistics": "Logistics partners"
+        },
+        "buyer": {
+          "title": "Source with confidence",
+          "body": "Post a request, compare quotes from verified factories and track every order to your door. One price, one invoice, money in escrow.",
+          "steps": [
+            "Describe what you need or browse the catalog",
+            "Compare quotes and order a sample",
+            "Pay into escrow and follow production to delivery"
+          ],
+          "cta": "Start sourcing",
+          "more": "For buyers"
+        },
+        "manufacturer": {
+          "title": "Fill your lines with global orders",
+          "body": "Get verified once, receive requests that fit your capacity, and get paid on schedule from escrow. No chasing buyers for money.",
+          "steps": [
+            "Apply and complete verification",
+            "Quote on requests matched to your capabilities",
+            "Produce, pass QC and get paid in stages"
+          ],
+          "cta": "Apply as a manufacturer",
+          "more": "For manufacturers"
+        },
+        "inspector": {
+          "title": "Inspect on your own schedule",
+          "body": "Certified freelance inspectors take QC jobs near them, check in at the factory and get paid weekly per inspection day.",
+          "steps": [
+            "Apply and pass the certification",
+            "Claim nearby inspections",
+            "Check in, file the AQL report, get paid weekly"
+          ],
+          "cta": "Apply to inspect",
+          "more": "How inspection works"
+        },
+        "logistics": {
+          "title": "Move garments for GarmentGate",
+          "body": "Forwarders and carriers take legs from our hubs to ports and doors, update tracking in the partner portal and get paid per leg.",
+          "steps": [
+            "Tell us your lanes and services",
+            "Agree rates with our logistics team",
+            "Accept legs and post updates in the portal"
+          ],
+          "cta": "Become a partner",
+          "more": "Talk to us"
+        }
+      },
+      "stats": {
+        "title": "The network today",
+        "body": "Live counts from the platform, refreshed every few minutes. We publish totals only, never who."
+      },
+      "journey": {
+        "eyebrow": "The managed journey",
+        "title": "Twelve stages. One partner accountable for all of them.",
+        "body": "From your first request to the end of the claim window, every stage runs through GarmentGate and shows up in your dashboard."
+      },
+      "money": {
+        "eyebrow": "How the money moves",
+        "title": "Your payment is protected at every step",
+        "body": "You pay GarmentGate, never the factory directly. We release money to the factory only as the work is done."
+      },
+      "quality": {
+        "eyebrow": "Quality control",
+        "title": "An inspector’s report, not a promise",
+        "body": "Inspectors check a random sample sized by ISO 2859-1 level II. Critical defects fail a lot outright; major and minor defects are counted against your AQL limits.",
+        "points": [
+          "Inline inspection while sewing, final random inspection before shipment",
+          "Photos and a PDF report for every inspection",
+          "A failed final lets you send the order back for rework"
+        ]
+      },
+      "cta": {
+        "title": "Ready to source smarter?",
+        "body": "Create a free account. You only pay when you order.",
+        "primary": "Create a free account",
+        "secondary": "Talk to our sourcing team"
+      }
+    },
+    "journey": {
+      "stagesLabel": "Stage {n} of 12",
+      "stages": {
         "request": {
-          "title": "Request a quote",
-          "body": "Share your tech pack, quantities and target price. We route it to factories that fit your product and certifications."
+          "title": "Request",
+          "body": "You describe the product, quantity, target price and delivery date, or start from a catalog product. Tech packs are cleaned of metadata before any factory sees them."
         },
-        "compare": {
-          "title": "Compare and confirm",
-          "body": "Review anonymised offers side by side, approve samples, and pay a deposit into escrow when you’re ready."
+        "match": {
+          "title": "Match",
+          "body": "We match verified factories by category, minimum order and monthly capacity over your production window."
         },
-        "track": {
-          "title": "Track to your door",
-          "body": "Follow every milestone with photos, independent QC reports and shipping documents, all in one place."
+        "quote": {
+          "title": "Quote",
+          "body": "Factories quote; you see one all-in GarmentGate price per piece with lead time and badges, side by side."
+        },
+        "sample": {
+          "title": "Sample",
+          "body": "Order a sample before you commit. Approve it or ask for changes with photos."
+        },
+        "confirm": {
+          "title": "Contract and deposit",
+          "body": "You confirm with GarmentGate and pay the deposit into escrow, by card or bank transfer."
+        },
+        "materials": {
+          "title": "Materials",
+          "body": "The factory sources fabric and trims against the approved sample. The first release is paid when production starts."
+        },
+        "production": {
+          "title": "Production",
+          "body": "Cutting, sewing, finishing and packing, each a milestone with photos reviewed by our team."
+        },
+        "inline": {
+          "title": "Inline inspection",
+          "body": "An inspector checks work in progress so problems are fixed before the whole lot is made."
+        },
+        "final": {
+          "title": "Final inspection",
+          "body": "A random sample of the finished lot is checked against your AQL limits. A pass makes the balance due."
+        },
+        "hub": {
+          "title": "Hub",
+          "body": "The factory delivers to a GarmentGate hub, where cartons are counted, checked and consolidated."
+        },
+        "freight": {
+          "title": "Freight",
+          "body": "We book sea, air or door-to-door freight with insurance and papers, and you follow it live."
+        },
+        "delivered": {
+          "title": "Delivery and claim window",
+          "body": "You confirm delivery. A small holdback waits through the claim window, then the factory is paid in full."
+        }
+      },
+      "demo": {
+        "order": "Order",
+        "stage": "Now",
+        "inEscrow": "in escrow",
+        "factory": "Factory"
+      }
+    },
+    "money": {
+      "buyer": "You",
+      "escrow": "GarmentGate escrow",
+      "factory": "Factory",
+      "pay": "You pay GarmentGate (card or bank transfer)",
+      "release": "Released to the factory",
+      "margin": "GarmentGate keeps a transparent margin built into your price",
+      "refund": "Anything not yet released can be refunded if something goes wrong",
+      "triggers": {
+        "PRODUCTION_START": "When production starts",
+        "QC_PASSED": "When the final inspection passes",
+        "SHIPPED": "When the goods ship",
+        "DELIVERED": "When you confirm delivery",
+        "CLAIM_WINDOW": "After your claim window closes",
+        "COMPLETED": "When the order completes"
+      }
+    },
+    "qc": {
+      "report": "Final random inspection",
+      "standard": "ISO 2859-1 · Level II",
+      "lot": "Lot",
+      "sample": "Sample",
+      "critical": "Critical",
+      "major": "Major (AQL 2.5)",
+      "minor": "Minor (AQL 4.0)",
+      "found": "{found} found · {allowed} allowed",
+      "verdict": "PASS"
+    },
+    "how": {
+      "meta": {
+        "title": "How it works",
+        "description": "Twelve managed stages from request to delivery: matching, quotes, samples, escrow, production, inspections, hubs and freight."
+      },
+      "hero": {
+        "eyebrow": "How GarmentGate works",
+        "title": "A managed marketplace, not a directory",
+        "body": "Directories hand you a list of suppliers and leave the risk with you. GarmentGate is the contracting party in the middle: we verify the factory, hold the money, inspect the goods and deliver them."
+      },
+      "compare": {
+        "title": "What “managed” means in practice",
+        "directory": "Typical sourcing directory",
+        "managed": "GarmentGate",
+        "rows": {
+          "contract": ["You contract a factory you’ve never met", "You contract GarmentGate"],
+          "payment": [
+            "You wire money up front and hope",
+            "Escrow, released in stages as work is done"
+          ],
+          "quality": ["You arrange your own inspection", "Independent AQL inspections built in"],
+          "shipping": [
+            "You find a forwarder and handle papers",
+            "Hubs, freight, insurance and tracking included"
+          ],
+          "disputes": [
+            "Your word against theirs, abroad",
+            "A claim window and GarmentGate in the middle"
+          ]
+        }
+      },
+      "roles": {
+        "title": "Who does what",
+        "buyer": {
+          "title": "You (buyer)",
+          "body": "Say what you need, choose a quote, approve the sample, pay into escrow and confirm delivery."
+        },
+        "garmentgate": {
+          "title": "GarmentGate",
+          "body": "Verifies factories, prices and contracts both sides, moderates every message, runs QC, books freight and releases payments."
+        },
+        "factory": {
+          "title": "The factory",
+          "body": "Quotes, makes the sample and the bulk order, reports progress and delivers to our hub."
+        }
+      },
+      "privacy": {
+        "title": "Why you deal with GarmentGate, not the factory directly",
+        "body": "Every message, file and payment goes through the platform. That’s what lets us guarantee quality, protect your money and step in when something goes wrong. Factories are shown by a code (for example MFR-BD-0421), and so are buyers. Our team knows both sides and is accountable to both."
+      }
+    },
+    "buyers": {
+      "meta": {
+        "title": "For buyers",
+        "description": "Source garments from verified factories worldwide with escrow payments, AQL inspections and managed delivery."
+      },
+      "hero": {
+        "eyebrow": "For brands, retailers and importers",
+        "title": "Sourcing without the guesswork",
+        "body": "Compare verified factories, order samples, and let GarmentGate manage production, quality control and delivery. You pay us, and we pay the factory only as the work is done."
+      },
+      "who": {
+        "title": "Made for how you buy",
+        "items": {
+          "brands": {
+            "title": "Fashion and lifestyle brands",
+            "body": "Seasonal ranges and repeats, with samples and inline QC before you commit to bulk."
+          },
+          "retailers": {
+            "title": "Retailers and importers",
+            "body": "Volume programmes priced per piece, delivered on the incoterm you choose."
+          },
+          "startups": {
+            "title": "Startups and new labels",
+            "body": "Find factories whose minimums fit you, with escrow so your first order isn’t a leap of faith."
+          },
+          "corporate": {
+            "title": "Uniforms and corporate",
+            "body": "Yearly supply contracts with call-offs at fixed prices and a dedicated merchandiser."
+          }
+        }
+      },
+      "path": {
+        "title": "From idea to delivered, in your dashboard",
+        "steps": {
+          "discover": {
+            "title": "Discover",
+            "body": "Search products and factory profiles by category, certification, MOQ and lead time."
+          },
+          "request": {
+            "title": "Request quotes",
+            "body": "Post an RFQ with your tech pack; matching factories quote within your deadline."
+          },
+          "compare": {
+            "title": "Compare",
+            "body": "See all-in prices, lead times and track records side by side."
+          },
+          "sample": {
+            "title": "Sample",
+            "body": "Approve a sample before bulk, or ask for changes with photos."
+          },
+          "order": {
+            "title": "Order",
+            "body": "Confirm and pay the deposit into escrow by card or bank transfer."
+          },
+          "track": {
+            "title": "Track",
+            "body": "Production milestones, inspection reports and live shipment tracking."
+          }
+        }
+      },
+      "protect": {
+        "title": "Protection built into every order",
+        "items": {
+          "escrow": {
+            "title": "Escrow",
+            "body": "Your money is released to the factory in stages, never all up front."
+          },
+          "qc": {
+            "title": "Inspections",
+            "body": "Inline and final AQL inspections, with photos and a PDF report."
+          },
+          "claims": {
+            "title": "Claim window",
+            "body": "A holdback waits after delivery so problems are handled before the factory is fully paid."
+          },
+          "insurance": {
+            "title": "Insured freight",
+            "body": "Cargo insured at 110% of its value when you choose insurance."
+          }
+        }
+      },
+      "shipping": {
+        "title": "Shipping handled, or use your own forwarder",
+        "body": "Pick a destination and incoterm and see sea, air or door-to-door prices with an estimate of landed cost including duty. Prefer your own forwarder? Hand over at our hub at no charge.",
+        "points": [
+          "Goods consolidated at GarmentGate hubs",
+          "Commercial invoice, packing list and certificate of origin prepared for you",
+          "Several orders shipped together to save on freight"
+        ]
+      },
+      "more": {
+        "title": "More ways to buy",
+        "plus": {
+          "title": "GarmentGate Plus",
+          "body": "Membership for regular buyers: free inspections, cheaper samples, priority requests and a dedicated merchandiser."
+        },
+        "contracts": {
+          "title": "Supply contracts",
+          "body": "Fixed prices for a year, call off orders when you need them, volume reserved."
+        },
+        "capacity": {
+          "title": "Capacity booking",
+          "body": "Reserve production minutes on a factory line ahead of your season."
+        }
+      },
+      "faq": {
+        "q1": {
+          "q": "Can I talk to the factory directly?",
+          "a": "No. Every message goes through GarmentGate. Our team relays what matters both ways, which is how we stay accountable for quality, payment and delivery."
+        },
+        "q2": {
+          "q": "How are prices set?",
+          "a": "Factories quote their price; you see GarmentGate’s all-in price per piece, which includes our margin. There are no hidden extras: samples, inspections and freight are shown separately before you pay."
+        },
+        "q3": {
+          "q": "What if the goods aren’t right?",
+          "a": "A failed final inspection lets you send the order back for rework. After delivery you have a claim window during which part of the payment is still held."
+        },
+        "q4": {
+          "q": "How do I pay?",
+          "a": "By card or by bank transfer (wire or letter of credit) to GarmentGate. Money is held in escrow and released to the factory in stages."
+        },
+        "q5": {
+          "q": "What are the minimum order quantities?",
+          "a": "Each factory sets its own. You can filter by MOQ when searching, and matching only sends your request to factories whose minimum fits."
+        }
+      },
+      "cta": {
+        "title": "Post your first request today",
+        "body": "Free to join. You only pay when you order."
+      }
+    },
+    "manufacturers": {
+      "meta": {
+        "title": "For manufacturers",
+        "description": "Get verified once and receive garment orders from buyers worldwide, paid on schedule from escrow."
+      },
+      "hero": {
+        "eyebrow": "For garment factories worldwide",
+        "title": "Global orders. Paid on schedule.",
+        "body": "Get verified once, receive requests that fit your capacity and get paid from escrow as you produce. GarmentGate finds the buyers, handles the contract and collects the money."
+      },
+      "why": {
+        "title": "Why factories work with GarmentGate",
+        "items": {
+          "orders": {
+            "title": "Qualified requests",
+            "body": "Requests reach you only when your categories, minimums and capacity fit."
+          },
+          "paid": {
+            "title": "Paid from escrow",
+            "body": "The buyer’s money is already with GarmentGate. You’re paid in stages to your verified bank account."
+          },
+          "noChasing": {
+            "title": "No chasing or haggling",
+            "body": "We contract the buyer, collect payment and handle disputes, so you can focus on production."
+          },
+          "capacity": {
+            "title": "Fill empty lines",
+            "body": "Publish free production windows and let buyers book minutes on your lines."
+          }
+        }
+      },
+      "steps": {
+        "title": "How to get started",
+        "items": {
+          "apply": {
+            "title": "Apply",
+            "body": "Create an account and tell us about your factory, categories and capacity."
+          },
+          "verify": {
+            "title": "Get verified",
+            "body": "Upload your business documents and certificates. Our team reviews them."
+          },
+          "profile": {
+            "title": "Build your profile",
+            "body": "Add products, photos and production lines. Buyers see your code, never your name."
+          },
+          "quote": {
+            "title": "Quote and produce",
+            "body": "Quote on matched requests, make the sample, then the bulk order."
+          },
+          "paid": {
+            "title": "Get paid",
+            "body": "Releases at production start, shipment and after the claim window, by bank transfer."
+          }
+        }
+      },
+      "payouts": {
+        "title": "When you get paid",
+        "body": "The schedule is fixed when the order is confirmed, so you know exactly what you’ll receive and when."
+      },
+      "expect": {
+        "title": "What we expect from partners",
+        "items": [
+          "Accurate capacity, minimums and lead times",
+          "Production updates with photos at each milestone",
+          "Access for inline and final inspections",
+          "Delivery to the GarmentGate hub on the agreed date",
+          "All contact with buyers through GarmentGate"
+        ]
+      },
+      "plans": {
+        "title": "Start free, grow with a plan",
+        "body": "List your factory for free. Paid plans add more listed products, a boost in buyers’ search and a smaller GarmentGate markup on your prices.",
+        "cta": "Compare plans"
+      },
+      "faq": {
+        "q1": {
+          "q": "Does it cost anything to join?",
+          "a": "No. The Free plan lists up to the free product limit and receives matched requests. GarmentGate earns a margin on orders; paid plans are optional."
+        },
+        "q2": {
+          "q": "How do I get paid?",
+          "a": "By bank transfer (SWIFT or local) to a bank account in your company’s name that our team has verified. Payments follow the release schedule fixed when the order is confirmed."
+        },
+        "q3": {
+          "q": "Why can’t I see the buyer’s name?",
+          "a": "GarmentGate contracts both sides. Buyers are shown by a code; our team relays everything you need to produce the order."
+        },
+        "q4": {
+          "q": "Which countries can join?",
+          "a": "Factories anywhere can apply. Verification checks your business registration and certificates."
+        }
+      },
+      "cta": {
+        "title": "Put your factory in front of global buyers",
+        "body": "Apply in a few minutes. Verification usually takes a few working days."
+      }
+    },
+    "pricing": {
+      "meta": {
+        "title": "Pricing",
+        "description": "Free to join. Transparent fees for samples and inspections, plans for factories and GarmentGate Plus for regular buyers."
+      },
+      "hero": {
+        "eyebrow": "Pricing",
+        "title": "Free to join. Clear when you pay.",
+        "body": "Buyers see one all-in price per piece on every quote. Samples, inspections and freight are priced separately and shown before you pay."
+      },
+      "unavailable": "Live prices are unavailable right now. Please try again shortly.",
+      "buyers": {
+        "title": "For buyers",
+        "orders": {
+          "title": "Orders",
+          "value": "All-in price per piece",
+          "body": "GarmentGate’s margin is built into the price you see. No platform subscription required."
+        },
+        "sample": {
+          "title": "Sample fee",
+          "body": "Per sample requested.",
+          "credit": "Credited against your order when you go to bulk."
+        },
+        "inspection": {
+          "title": "Inspection",
+          "body": "Per inspection day.",
+          "firstFree": "Your first inspection is free."
+        },
+        "freight": {
+          "title": "Freight",
+          "value": "Quoted per shipment",
+          "body": "Sea, air or door to door, with insurance and an estimate of landed cost before you choose."
+        },
+        "claim": "Claim window after delivery: {days} days."
+      },
+      "plus": {
+        "title": "GarmentGate Plus",
+        "body": "For buyers who order regularly.",
+        "month": "{price} / month",
+        "year": "or {price} / year",
+        "perks": {
+          "inspections": "Every inspection free",
+          "samples": "{percent}% off sample fees",
+          "freeSamples": "Free samples",
+          "priority": "Priority requests, listed first for factories",
+          "merchandiser": "A dedicated merchandiser"
+        },
+        "cta": "Join Plus"
+      },
+      "factories": {
+        "title": "For manufacturers",
+        "body": "List for free. Upgrade when you want more reach.",
+        "tiers": {
+          "FREE": "Free",
+          "PRO": "Pro",
+          "PREMIUM": "Premium"
+        },
+        "month": "/ month",
+        "year": "or {price} / year",
+        "perks": {
+          "products": "Up to {count} listed products",
+          "unlimited": "Unlimited listed products",
+          "boost": "Search boost, level {level}",
+          "markup": "{points, plural, one {# point} other {# points}} off GarmentGate’s markup",
+          "headStart": "New open requests {hours} hours early",
+          "matched": "Matched requests and escrow payouts"
+        },
+        "cta": "Start free",
+        "upgrade": "Choose {tier}",
+        "popular": "Most popular",
+        "forever": "free forever"
+      },
+      "schedule": {
+        "title": "How factories are paid",
+        "body": "Every order’s payment is released to the factory in these stages."
+      },
+      "faq": {
+        "q1": {
+          "q": "Are there setup or subscription fees for buyers?",
+          "a": "No. Creating an account is free. Plus is optional for buyers who order often."
+        },
+        "q2": {
+          "q": "Which currencies can I pay in?",
+          "a": "Orders are priced in the currency of the quote (for example USD or EUR). Card payments go through Stripe; bank transfers go to GarmentGate’s account."
+        },
+        "q3": {
+          "q": "Do prices change after I accept a quote?",
+          "a": "No. The price you accept is locked into your order."
         }
       }
     },
     "trust": {
-      "eyebrow": "Why GarmentGate",
-      "title": "Built so you never have to take a factory’s word for it",
-      "items": {
-        "verified": {
+      "meta": {
+        "title": "Trust & safety",
+        "description": "How GarmentGate verifies factories, protects payments, inspects quality and keeps every party’s data safe."
+      },
+      "hero": {
+        "eyebrow": "Trust & safety",
+        "title": "Built so nobody has to take anyone’s word for it",
+        "body": "Every safeguard below is part of how the platform works, not a policy on paper."
+      },
+      "pillars": {
+        "verification": {
           "title": "Verified factories",
-          "body": "Every manufacturer passes business and export checks, and their BSCI, WRAP, GOTS or OEKO-TEX certificates are verified before they can quote."
+          "body": "Every factory submits its business registration and certificates, reviewed by our team before it can quote. Certificates are checked again when they change.",
+          "points": [
+            "Company documents reviewed by staff",
+            "Certifications verified (e.g. GOTS, OEKO-TEX, BSCI)",
+            "Payout bank accounts checked against the legal name"
+          ]
         },
-        "escrow": {
-          "title": "Escrow-protected payments",
-          "body": "You pay GarmentGate, not the factory. Funds are released in stages as production milestones are approved."
+        "money": {
+          "title": "Protected payments",
+          "body": "Buyers pay GarmentGate; factories are paid by GarmentGate. A double-entry ledger records every movement and balances to the cent.",
+          "points": [
+            "Escrow released in stages",
+            "Card payments through Stripe, bank transfers confirmed with proof",
+            "Refunds only from money not yet released"
+          ]
         },
-        "qc": {
-          "title": "Independent QC inspection",
-          "body": "AQL inspections during and after production. Nothing ships until it passes, and you get the full report."
+        "quality": {
+          "title": "Independent quality control",
+          "body": "Certified inspectors work to ISO 2859-1. They check in at the factory by GPS, and a share of reports is re-inspected at random.",
+          "points": [
+            "Inline and final random inspections",
+            "Photos and PDF report for every inspection",
+            "Inspectors rotated between factories"
+          ]
+        },
+        "delivery": {
+          "title": "Managed delivery",
+          "body": "Goods are received and checked at GarmentGate hubs before they ship, with insurance and claims handled by our team.",
+          "points": [
+            "Carton counts and condition recorded at the hub",
+            "Insurance at 110% of cargo value when chosen",
+            "Claims for loss, damage, shortage or delay"
+          ]
+        },
+        "privacy": {
+          "title": "Data and documents",
+          "body": "Photos, videos and PDFs are stripped of metadata (including GPS) before anyone else sees them, and files are scanned for malware.",
+          "points": [
+            "Private storage with short-lived links",
+            "Metadata removed from every upload",
+            "Personal data never sent to error monitoring"
+          ]
+        },
+        "conduct": {
+          "title": "Fair conduct",
+          "body": "Messages are checked for contact details and moderated, so deals stay inside the protections. Repeated attempts lead to warnings.",
+          "points": [
+            "Every conversation relayed by our team",
+            "Contact details hidden automatically",
+            "Clear rules in the acceptable use policy"
+          ]
         }
       },
-      "stats": {
-        "countries": {
-          "value": "4",
-          "label": "Sourcing countries"
+      "cta": {
+        "title": "Questions about compliance or due diligence?",
+        "body": "Our team can walk you through verification, payments and inspections in detail."
+      }
+    },
+    "contact": {
+      "meta": {
+        "title": "Contact",
+        "description": "Talk to GarmentGate about sourcing, enterprise contracts, becoming a manufacturer or logistics partner, or get support."
+      },
+      "hero": {
+        "eyebrow": "Contact",
+        "title": "Talk to GarmentGate",
+        "body": "Tell us what you need and the right team will get back to you, usually within one working day."
+      },
+      "topics": {
+        "SALES": "Sourcing garments",
+        "ENTERPRISE": "Enterprise or supply contract",
+        "MANUFACTURER": "Joining as a manufacturer",
+        "LOGISTICS_PARTNER": "Becoming a logistics partner",
+        "SUPPORT": "Help with my account or an order",
+        "PRESS": "Press and partnerships"
+      },
+      "form": {
+        "topic": "What’s it about?",
+        "name": "Your name",
+        "email": "Work email",
+        "company": "Company",
+        "country": "Country",
+        "phone": "Phone (optional)",
+        "message": "How can we help?",
+        "messageHint": "Products, quantities, timing, or the lanes you serve.",
+        "choose": "Choose…",
+        "send": "Send",
+        "sending": "Sending…",
+        "sentTitle": "Thanks, we’ve got it",
+        "sentBody": "Someone from our team will reply to {email}.",
+        "another": "Send another message",
+        "privacy": "We use these details only to reply to you. See our privacy policy.",
+        "failed": "We couldn’t send your message. Please try again.",
+        "website": "Leave this empty"
+      },
+      "aside": {
+        "customers": {
+          "title": "Already a customer?",
+          "body": "Sign in and message us from your order or request: it reaches the team handling it fastest."
         },
-        "aql": {
-          "value": "AQL 2.5",
-          "label": "Inspection standard"
-        },
-        "escrow": {
-          "value": "100%",
-          "label": "Orders paid through escrow"
-        },
-        "certs": {
-          "value": "13",
-          "label": "Certifications we verify"
+        "hours": {
+          "title": "Response times",
+          "body": "Sourcing and partner enquiries: within one working day. Order support: same day on working days."
         }
       }
     },
-    "categories": {
-      "eyebrow": "Categories",
-      "title": "Whatever you make, there’s a factory for it",
-      "items": {
-        "tees": "T-shirts & polos",
-        "hoodies": "Hoodies & sweatshirts",
-        "denim": "Denim",
-        "activewear": "Activewear",
-        "outerwear": "Outerwear",
-        "knitwear": "Knitwear",
-        "kidswear": "Kidswear",
-        "workwear": "Workwear"
+    "legal": {
+      "draft": "Draft for review. This text is a placeholder until reviewed by GarmentGate’s legal counsel and must not be relied on.",
+      "updated": "Last updated: draft",
+      "docs": {
+        "terms": {
+          "title": "Terms of service",
+          "description": "The general terms for using GarmentGate.",
+          "sections": [
+            [
+              "About GarmentGate",
+              "GarmentGate operates a managed marketplace for garments. GarmentGate is the contracting party: buyers buy from GarmentGate and GarmentGate contracts manufacturers."
+            ],
+            [
+              "Accounts",
+              "You must give accurate information, keep your login secure and tell us about unauthorised use. Business accounts are subject to verification."
+            ],
+            [
+              "Using the platform",
+              "All communication, files and payments between buyers and manufacturers go through GarmentGate. Arranging business directly with a party you met through GarmentGate is not allowed."
+            ],
+            [
+              "Fees",
+              "Fees are shown before you pay and set out on the pricing page and in your order."
+            ],
+            [
+              "Liability",
+              "To be completed by counsel: limitations of liability, governing law and dispute resolution."
+            ]
+          ]
+        },
+        "buyer-terms": {
+          "title": "Buyer terms",
+          "description": "Terms for buying through GarmentGate.",
+          "sections": [
+            [
+              "Orders",
+              "An order is a contract between you and GarmentGate at the price shown when you accept a quote."
+            ],
+            [
+              "Payment",
+              "You pay GarmentGate by card or bank transfer. Payments are held in escrow and released to the manufacturer in stages."
+            ],
+            [
+              "Samples and inspections",
+              "Sample and inspection fees are charged as shown. Inspection results follow ISO 2859-1."
+            ],
+            [
+              "Delivery and claims",
+              "Delivery follows the incoterm you choose. You may raise a claim within the claim window after delivery."
+            ],
+            ["Cancellations and refunds", "To be completed by counsel."]
+          ]
+        },
+        "manufacturer-terms": {
+          "title": "Manufacturer terms",
+          "description": "Terms for manufacturers supplying GarmentGate.",
+          "sections": [
+            [
+              "Verification",
+              "You must pass verification and keep your documents and certificates current."
+            ],
+            [
+              "Quotes and orders",
+              "A quote you submit is an offer to GarmentGate. An accepted quote becomes a purchase order from GarmentGate."
+            ],
+            [
+              "Quality and inspections",
+              "You give inspectors access and deliver goods that meet the approved sample and AQL limits."
+            ],
+            [
+              "Payment",
+              "GarmentGate pays you by bank transfer to your verified account following the release schedule fixed at confirmation."
+            ],
+            [
+              "Conduct",
+              "You must not contact buyers directly or share contact details. To be completed by counsel."
+            ]
+          ]
+        },
+        "privacy": {
+          "title": "Privacy policy",
+          "description": "How GarmentGate handles personal data.",
+          "sections": [
+            [
+              "What we collect",
+              "Account details, company and verification documents, messages, files and payment records needed to run the service."
+            ],
+            [
+              "How we use it",
+              "To provide the marketplace, verify businesses, process payments, prevent fraud and meet legal obligations."
+            ],
+            [
+              "Who we share it with",
+              "Service providers acting for us (hosting, payments, email, SMS). Buyers and manufacturers never receive each other’s identity or contact details."
+            ],
+            [
+              "Your rights",
+              "To be completed by counsel, including access, correction and deletion requests."
+            ]
+          ]
+        },
+        "cookies": {
+          "title": "Cookie policy",
+          "description": "The cookies GarmentGate uses.",
+          "sections": [
+            [
+              "Essential cookies",
+              "We use cookies to keep you signed in securely and to remember your language. They are needed for the service to work."
+            ],
+            ["Analytics", "To be completed once an analytics provider is chosen."]
+          ]
+        },
+        "acceptable-use": {
+          "title": "Acceptable use policy",
+          "description": "The rules for everyone on GarmentGate.",
+          "sections": [
+            [
+              "No direct contact",
+              "Do not share or ask for contact details (email, phone, messaging apps, websites) with the other side. They are hidden automatically and repeated attempts lead to warnings and suspension."
+            ],
+            [
+              "Honest information",
+              "Do not misrepresent your company, capacity, certifications or products."
+            ],
+            [
+              "Respectful conduct",
+              "No harassment, discrimination or illegal content in messages, files or listings."
+            ],
+            [
+              "Enforcement",
+              "GarmentGate may remove content, limit or close accounts that break these rules."
+            ]
+          ]
+        }
       }
     },
-    "cta": {
-      "title": "Ready to source with confidence?",
-      "body": "Create a free account in a minute. Our team will help you place your first order.",
-      "primary": "Create a free account",
-      "secondary": "Sign in"
+    "inspectors": {
+      "meta": {
+        "title": "For QC inspectors",
+        "description": "Freelance garment QC inspections near you: claim tasks, check in at the factory, file AQL reports and get paid weekly."
+      },
+      "hero": {
+        "eyebrow": "For freelance QC inspectors",
+        "title": "Inspect garments near you. Get paid weekly.",
+        "body": "GarmentGate needs certified inspectors close to factories. Claim inspections from a task feed, check in on site, file the AQL report in the app and get paid for every inspection day."
+      },
+      "rate": {
+        "label": "Paid per inspection day",
+        "note": "Current rate, paid weekly"
+      },
+      "task": {
+        "title": "Final random inspection",
+        "distance": "{km} km away",
+        "pieces": "6,000 pcs",
+        "claim": "Claim"
+      },
+      "how": {
+        "title": "How it works",
+        "items": {
+          "apply": {
+            "title": "Apply",
+            "body": "Tell us about your QC experience, the inspections you can do and where you are based."
+          },
+          "certify": {
+            "title": "Get certified",
+            "body": "Pass GarmentGate’s certification on AQL sampling, defect classification and our report standard."
+          },
+          "claim": {
+            "title": "Claim nearby tasks",
+            "body": "Your feed shows open inspections within your service radius, nearest first. Claim one and it’s yours."
+          },
+          "checkin": {
+            "title": "Check in on site",
+            "body": "Share your location when you arrive; the report opens once you’re at the factory."
+          },
+          "report": {
+            "title": "File the report",
+            "body": "Count defects against the AQL sample, add photos and submit. The app works out the verdict."
+          },
+          "paid": {
+            "title": "Get paid weekly",
+            "body": "Earnings for each filed report are paid weekly to your bank account or mobile wallet."
+          }
+        }
+      },
+      "need": {
+        "title": "What you need",
+        "items": [
+          "Experience in garment quality control or inspection",
+          "Working knowledge of AQL sampling (ISO 2859-1)",
+          "A smartphone with location turned on and a camera",
+          "Bank account or mobile wallet in your own name",
+          "Ability to travel to factories in your area"
+        ]
+      },
+      "fair": {
+        "title": "Fair for inspectors, reliable for buyers",
+        "items": {
+          "rotation": {
+            "title": "Rotation",
+            "body": "You won’t inspect the same factory too often, which keeps reports independent."
+          },
+          "ratings": {
+            "title": "Ratings",
+            "body": "Staff rate every report. Consistent, careful work keeps you active and earns more tasks."
+          },
+          "audits": {
+            "title": "Random re-checks",
+            "body": "A share of reports is re-inspected by our team, protecting the standard everyone relies on."
+          }
+        }
+      },
+      "faq": {
+        "q1": {
+          "q": "Is this a job or freelance work?",
+          "a": "Freelance. You choose which tasks to claim and when you work. GarmentGate pays per inspection day."
+        },
+        "q2": {
+          "q": "How and when am I paid?",
+          "a": "Every filed report earns the day rate shown when you claimed it. Staff pay out weekly by bank transfer or mobile wallet (for example bKash or Nagad) once your payout details are verified."
+        },
+        "q3": {
+          "q": "Where are inspections?",
+          "a": "At the factories producing GarmentGate orders. Your task feed only shows inspections within your service radius."
+        },
+        "q4": {
+          "q": "Do I deal with the buyer or the factory?",
+          "a": "You work for GarmentGate. You visit the factory to inspect, but reports go to GarmentGate, which shares them with the buyer."
+        }
+      },
+      "cta": {
+        "title": "Put your QC experience to work",
+        "body": "Apply in a few minutes. We’ll invite you to the certification once we’ve reviewed your application."
+      }
     },
-    "footer": {
-      "tagline": "Managed garment sourcing between global buyers and verified factories.",
-      "rights": "© {year} GarmentGate. All rights reserved.",
-      "inspectors": "Become a QC inspector"
+    "logistics": {
+      "meta": {
+        "title": "For logistics partners",
+        "description": "Forwarders, carriers and hauliers: move garments for GarmentGate from our hubs to ports and doors worldwide."
+      },
+      "hero": {
+        "eyebrow": "For forwarders, carriers and hauliers",
+        "title": "Move garments for GarmentGate",
+        "body": "GarmentGate is the shipper on every order it manages. We consolidate at our hubs and book partners for each leg, from factory pickup to port, sea or air, and final delivery."
+      },
+      "leg": {
+        "title": "Leg to accept",
+        "route": "GarmentGate hub → Chittagong port",
+        "mode": "Road · 42 cartons · 1.8 t",
+        "accept": "Accept leg"
+      },
+      "what": {
+        "title": "What we book",
+        "items": {
+          "pickup": {
+            "title": "Factory pickups",
+            "body": "Collection from factories to a GarmentGate hub in the same country."
+          },
+          "main": {
+            "title": "Main carriage",
+            "body": "Sea (LCL and FCL) and air freight from origin ports and airports."
+          },
+          "delivery": {
+            "title": "Final mile",
+            "body": "Destination handling and door delivery for buyers who choose it."
+          },
+          "docs": {
+            "title": "Documents",
+            "body": "Bills of lading and air waybills issued to the order of GarmentGate."
+          }
+        }
+      },
+      "portal": {
+        "title": "One portal for every leg",
+        "body": "Partners get their own login. Everything for a leg is in one place: no email chains.",
+        "items": [
+          "Accept the legs we offer you",
+          "Add booking, container and waybill references",
+          "Post tracking events: picked up, departed, arrived, delivered",
+          "Upload papers; we clean and share them with the buyer",
+          "See your agreed cost and payouts per leg"
+        ]
+      },
+      "terms": {
+        "title": "How we work with partners",
+        "items": {
+          "rates": {
+            "title": "Agreed rate cards",
+            "body": "Rates are agreed with our logistics team per lane and mode, then used to quote buyers."
+          },
+          "paid": {
+            "title": "Paid per leg",
+            "body": "Each leg is paid by GarmentGate at the agreed cost, recorded in the portal."
+          },
+          "customer": {
+            "title": "GarmentGate is your customer",
+            "body": "You deal only with GarmentGate. Buyer and factory details stay with us."
+          },
+          "claims": {
+            "title": "Clear claims",
+            "body": "Loss, damage or delay is handled as a claim linked to the leg where it happened."
+          }
+        }
+      },
+      "form": {
+        "title": "Tell us about your lanes",
+        "body": "Share the routes, modes and services you offer. Our logistics team will get back to you."
+      }
+    },
+    "help": {
+      "meta": {
+        "title": "Help centre",
+        "description": "Answers for buyers, manufacturers, QC inspectors and logistics partners: orders, payments, quality control and shipping."
+      },
+      "hero": {
+        "eyebrow": "Help centre",
+        "title": "How can we help?",
+        "body": "Answers to common questions, grouped by topic. Can’t find yours? Contact our team."
+      },
+      "search": "Search the help centre",
+      "searchPlaceholder": "e.g. escrow, sample, inspection, payout",
+      "results": "{count, plural, =0 {No answers match “{query}”.} one {# answer} other {# answers}}",
+      "noResultsBody": "Try another word, or ask our team.",
+      "topicCount": "{count, plural, one {# answer} other {# answers}}",
+      "back": "All topics",
+      "stillStuck": {
+        "title": "Still need help?",
+        "body": "Signed in? Message us from your order or request so it reaches the right person. Otherwise send us a message and we’ll reply by email."
+      },
+      "topics": {
+        "getting-started": {
+          "title": "Getting started",
+          "body": "Accounts, verification and how GarmentGate works.",
+          "items": [
+            [
+              "What is GarmentGate?",
+              "A managed garment-sourcing marketplace. Buyers contract with GarmentGate, and GarmentGate contracts verified factories, managing production, quality control, payment and delivery in between."
+            ],
+            [
+              "Who can join?",
+              "Brands, retailers and importers (buyers), garment factories (manufacturers), freelance QC inspectors and logistics partners. Buyers and manufacturers are verified before they trade."
+            ],
+            [
+              "How does verification work?",
+              "After you create an account, you complete onboarding with your company details and documents. Our team reviews them, usually within a few working days, and you’re notified of the decision."
+            ],
+            [
+              "Why can’t buyers and factories contact each other?",
+              "GarmentGate is the contracting party for both sides. Keeping every message, file and payment on the platform is what lets us guarantee quality, protect money and resolve problems."
+            ]
+          ]
+        },
+        "buyers": {
+          "title": "Buying",
+          "body": "Requests, quotes, samples and orders.",
+          "items": [
+            [
+              "How do I request quotes?",
+              "Post an RFQ with the product, quantity, target price, delivery date and tech pack. Matching factories quote before your deadline, and you compare them side by side."
+            ],
+            [
+              "Can I order from the catalog?",
+              "Yes. On a product page, choose “Request quote” or “Order sample”: the request goes to that factory only."
+            ],
+            [
+              "How do samples work?",
+              "Request a sample on your order. A sample fee applies (credited when you go to bulk). Approve it or ask for changes with photos."
+            ],
+            [
+              "Can I change an order after confirming?",
+              "Contact us from the order. Changes depend on how far production has gone and are agreed with the factory through GarmentGate."
+            ],
+            [
+              "What is a supply contract?",
+              "A yearly frame agreement at fixed prices. You call off orders against it when you need them, within the contracted volume."
+            ]
+          ]
+        },
+        "manufacturers": {
+          "title": "Manufacturing",
+          "body": "Profiles, requests, production and plans.",
+          "items": [
+            [
+              "How do I receive requests?",
+              "Requests reach you when your categories, minimum order quantity and monthly capacity fit. Invitations from catalog requests go only to you."
+            ],
+            [
+              "Why do buyers see a code instead of my name?",
+              "Buyers see your MFR- code and an anonymised profile. GarmentGate contracts both sides; the profile preview shows exactly what buyers see."
+            ],
+            [
+              "How do I report production progress?",
+              "Mark each production stage on the order and add photos. Our team reviews photos before buyers see them."
+            ],
+            [
+              "What do the plans include?",
+              "Free lists your factory and receives matched requests. Pro and Premium add more listed products, a search boost and a smaller markup on your prices; Premium also sees new open requests first."
+            ]
+          ]
+        },
+        "payments": {
+          "title": "Payments and payouts",
+          "body": "Escrow, releases, fees and refunds.",
+          "items": [
+            [
+              "How do buyers pay?",
+              "By card (processed by Stripe) or bank transfer and letter of credit to GarmentGate. Bank payments are confirmed by our team against your proof of transfer."
+            ],
+            [
+              "What is escrow?",
+              "Your payment is held by GarmentGate and released to the factory in stages: when production starts, when the goods ship, and a small holdback after the claim window."
+            ],
+            [
+              "How are factories paid?",
+              "By bank transfer to a verified bank account in the company’s legal name, following the release schedule fixed when the order was confirmed."
+            ],
+            [
+              "Can I get a refund?",
+              "Refunds come from money not yet released to the factory, for example after a dispute or a cancelled booking."
+            ],
+            [
+              "Which fees apply?",
+              "Sample fees, inspection fees (your first inspection is free) and freight are shown before you pay. See the pricing page for current amounts."
+            ]
+          ]
+        },
+        "quality": {
+          "title": "Quality control",
+          "body": "Inspections, AQL and what happens if an order fails.",
+          "items": [
+            [
+              "Which inspections are there?",
+              "An inline inspection during production and a final random inspection before shipment. Entering QC always opens a final inspection."
+            ],
+            [
+              "What is AQL?",
+              "Acceptance Quality Limit (ISO 2859-1). Inspectors check a random sample sized to the lot and count critical, major and minor defects against agreed limits."
+            ],
+            [
+              "What if the final inspection fails?",
+              "You can send the order back for rework and re-inspection, or open a dispute. The balance isn’t due until a final inspection passes."
+            ],
+            [
+              "Who are the inspectors?",
+              "GarmentGate staff and certified freelance inspectors who check in at the factory by GPS. Reports are rated and some are re-inspected at random."
+            ]
+          ]
+        },
+        "shipping": {
+          "title": "Shipping and delivery",
+          "body": "Hubs, freight, documents and claims.",
+          "items": [
+            [
+              "How are orders shipped?",
+              "Factories deliver to a GarmentGate hub. We book sea, air or door-to-door freight on the incoterm you choose, with insurance if you want it."
+            ],
+            [
+              "Can I use my own forwarder?",
+              "Yes. Choose hand-over at the hub: your forwarder collects from us at no charge, and you receive the commercial invoice, packing list and certificate of origin."
+            ],
+            [
+              "How do I track my order?",
+              "The order page shows every tracking event and, once the goods have left, the shipping documents."
+            ],
+            [
+              "What if goods arrive damaged or late?",
+              "Open a dispute within the claim window after delivery. Our team handles the claim, including insurance where you took it."
+            ]
+          ]
+        },
+        "inspectors": {
+          "title": "QC inspectors",
+          "body": "Applying, tasks and payouts.",
+          "items": [
+            [
+              "How do I apply?",
+              "Use the application form. We review it and invite suitable applicants to the certification."
+            ],
+            [
+              "How do I get tasks?",
+              "Your task feed lists open inspections within your service radius. Claim one, check in at the factory and file the report."
+            ],
+            [
+              "How am I paid?",
+              "Weekly, per inspection day, to your verified bank account or mobile wallet."
+            ]
+          ]
+        },
+        "partners": {
+          "title": "Logistics partners",
+          "body": "The partner portal, legs and payment.",
+          "items": [
+            [
+              "How do I become a partner?",
+              "Send us your lanes and services through the logistics partner form. Our team agrees rates and creates your portal login."
+            ],
+            [
+              "What can I do in the portal?",
+              "Accept legs, add references, post tracking events, upload papers and see your agreed costs and payouts."
+            ],
+            [
+              "Who is my customer?",
+              "GarmentGate. Buyer and factory details are never shared with partners."
+            ]
+          ]
+        },
+        "account": {
+          "title": "Account and security",
+          "body": "Sign-in, notifications, texts and data.",
+          "items": [
+            [
+              "I forgot my password",
+              "Use “Forgot password” on the sign-in page; we’ll email you a reset link."
+            ],
+            [
+              "How do I choose notifications?",
+              "In Settings, choose per category whether you get in-app notifications, emails and texts."
+            ],
+            [
+              "Can I get texts?",
+              "Yes. Add and verify your mobile number in Settings, then choose SMS or WhatsApp."
+            ],
+            [
+              "How is my data protected?",
+              "Files are stored privately, uploads are stripped of metadata and scanned, and the other side never receives your identity or contact details."
+            ]
+          ]
+        }
+      }
+    },
+    "about": {
+      "meta": {
+        "title": "About",
+        "description": "GarmentGate is a managed garment-sourcing marketplace: verified factories worldwide, with production, quality control, payment and delivery managed in between."
+      },
+      "hero": {
+        "eyebrow": "About GarmentGate",
+        "title": "Making global garment sourcing safe for both sides",
+        "body": "Buying garments abroad has always meant trusting a stranger with your money, and selling abroad has meant trusting a stranger to pay. GarmentGate stands in the middle and carries that trust for both."
+      },
+      "model": {
+        "title": "How the model works",
+        "body": "GarmentGate is the contracting party. Buyers contract with us; we contract verified manufacturers. Every quote, message, file and payment runs through the platform, and our team manages production, quality control, payment and delivery."
+      },
+      "earn": {
+        "title": "How GarmentGate earns",
+        "body": "We think you should know. Our income comes from:",
+        "items": [
+          "A margin built into the price per piece buyers see",
+          "Fees for samples and inspections",
+          "A margin on freight we arrange",
+          "Optional plans for factories and Plus membership for buyers"
+        ],
+        "note": "We never take payments from buyers on a factory’s behalf, and never sell anyone’s data."
+      },
+      "principles": {
+        "title": "What we hold ourselves to",
+        "items": {
+          "accountable": {
+            "title": "Accountable",
+            "body": "One party responsible for the whole order, from request to the end of the claim window."
+          },
+          "verified": {
+            "title": "Verified",
+            "body": "Every factory and buyer checked before they trade, and every payout account before it’s paid."
+          },
+          "fair": {
+            "title": "Fair both ways",
+            "body": "Buyers are protected by escrow and inspections; factories by money already held and paid on schedule."
+          },
+          "transparent": {
+            "title": "Transparent",
+            "body": "Prices, fees and payment schedules published and fixed before anyone commits."
+          }
+        }
+      },
+      "cta": {
+        "title": "Work with us",
+        "body": "Partnerships, press or investment: we’d like to hear from you.",
+        "primary": "Get in touch"
+      }
+    },
+    "plus": {
+      "meta": {
+        "title": "GarmentGate Plus",
+        "description": "Membership for buyers who source regularly: free inspections, cheaper samples, priority requests and a dedicated merchandiser."
+      },
+      "hero": {
+        "eyebrow": "For buyers who order regularly",
+        "title": "GarmentGate Plus",
+        "body": "Lower fees, faster answers and a dedicated contact at GarmentGate. One membership, all your orders."
+      },
+      "price": "{price} / month",
+      "yearly": "or {price} / year",
+      "perksTitle": "What’s included",
+      "perks": {
+        "inspections": {
+          "title": "Every inspection free",
+          "body": "Inline and final inspections on every order, with no inspection fee."
+        },
+        "samples": {
+          "title": "{percent}% off samples",
+          "body": "Sample fees discounted on every sample you request."
+        },
+        "freeSamples": {
+          "title": "Free samples",
+          "body": "No sample fee on any sample you request."
+        },
+        "priority": {
+          "title": "Priority requests",
+          "body": "Your RFQs are marked priority and listed first in factories’ inboxes (without your name)."
+        },
+        "merchandiser": {
+          "title": "A dedicated merchandiser",
+          "body": "One person at GarmentGate who knows your account and your orders."
+        }
+      },
+      "join": {
+        "title": "How to join",
+        "items": [
+          "Create a buyer account and get verified",
+          "Open Plus in your dashboard and pay by card, monthly or yearly",
+          "Prefer a bank transfer? Ask our team and we’ll set it up"
+        ],
+        "cta": "Create a buyer account"
+      },
+      "faq": {
+        "q1": {
+          "q": "Can I cancel any time?",
+          "a": "Yes. Card memberships end at the end of the period you’ve paid for."
+        },
+        "q2": {
+          "q": "Do discounts apply to fees I’ve already been charged?",
+          "a": "No. Benefits apply to samples requested and inspections booked while you’re a member."
+        },
+        "q3": {
+          "q": "Is Plus required to buy?",
+          "a": "No. Anyone can buy on GarmentGate. Plus suits buyers who order often."
+        }
+      }
+    },
+    "enterprise": {
+      "meta": {
+        "title": "Enterprise and supply contracts",
+        "description": "Yearly supply contracts at fixed prices, call-offs when you need them and a dedicated merchandiser, for uniforms, corporate and high-volume buyers."
+      },
+      "hero": {
+        "eyebrow": "For corporate, uniform and high-volume buyers",
+        "title": "Fixed prices. Reserved volume. One contact.",
+        "body": "Agree a supply contract for the year and call off orders when you need them. GarmentGate holds the factory to the agreed price, volume and lead time, and a dedicated merchandiser runs your account."
+      },
+      "contract": {
+        "title": "Supply contract",
+        "product": "Hotel staff polo, 220 GSM",
+        "price": "Fixed price per piece",
+        "volume": "Contracted volume",
+        "used": "called off",
+        "callOff": "Call off an order"
+      },
+      "how": {
+        "title": "How supply contracts work",
+        "items": {
+          "agree": {
+            "title": "Agree the terms",
+            "body": "Product, price per piece, yearly volume, minimum call-off, deposit, incoterm and lead time, set with our team."
+          },
+          "calloff": {
+            "title": "Call off orders",
+            "body": "Order any quantity above the minimum, whenever you need it, at the contract price."
+          },
+          "produce": {
+            "title": "We run production",
+            "body": "Each call-off becomes an order with the usual escrow, inspections and shipping."
+          },
+          "review": {
+            "title": "Review with your merchandiser",
+            "body": "Your merchandiser tracks volume used, lead times and quality across the year."
+          }
+        }
+      },
+      "fit": {
+        "title": "Built for",
+        "items": [
+          "Hotel, airline and hospital uniforms",
+          "Corporate wear and promotional programmes",
+          "Retail basics replenished all year",
+          "Schools, clubs and public-sector tenders"
+        ]
+      },
+      "form": {
+        "title": "Plan a supply contract",
+        "body": "Tell us the products, yearly volumes and timing. We’ll come back with factories and terms."
+      }
+    },
+    "capacity": {
+      "meta": {
+        "title": "Capacity booking",
+        "description": "Reserve production minutes on verified factory lines ahead of your season, with a deposit in escrow."
+      },
+      "hero": {
+        "eyebrow": "For planners and seasonal buyers",
+        "title": "Book production capacity before your season",
+        "body": "Factories publish free windows on their production lines. Reserve the minutes you need now, confirm with a deposit in escrow, and turn the booking into an order when your styles are ready."
+      },
+      "calendar": {
+        "title": "Line 2 · Knit tops",
+        "weeks": "Weeks",
+        "booked": "Booked",
+        "open": "Open",
+        "yours": "Your hold"
+      },
+      "how": {
+        "title": "How capacity booking works",
+        "items": {
+          "search": {
+            "title": "Search open windows",
+            "body": "Filter by category, dates and minutes needed. You see the rate per 100 production minutes, including GarmentGate’s fee."
+          },
+          "hold": {
+            "title": "Place a hold",
+            "body": "The minutes are reserved for you at once, for a limited time while the factory confirms."
+          },
+          "confirm": {
+            "title": "Confirm with a deposit",
+            "body": "The booking is confirmed when the factory accepts and your deposit is in escrow."
+          },
+          "convert": {
+            "title": "Turn it into an order",
+            "body": "Cut-make-trim bookings become an order at the booked rate; full-package bookings open a request to that factory."
+          }
+        }
+      },
+      "terms": {
+        "title": "Clear terms",
+        "items": [
+          "Price and deposit are fixed when you book",
+          "Cancelling earlier refunds more of the deposit, on a published scale",
+          "Unused minutes go back to the factory’s line",
+          "Partnerships reserve capacity every month for 6 to 12 months"
+        ]
+      },
+      "cta": {
+        "title": "Reserve capacity for your next season",
+        "body": "Create a buyer account to search open windows."
+      }
+    },
+    "directory": {
+      "unavailable": "The live directory is unavailable right now. Please try again shortly.",
+      "factories": "{count, plural, one {# verified factory} other {# verified factories}}",
+      "products": "{count, plural, one {# catalog product} other {# catalog products}}",
+      "countries": "{count, plural, one {# country} other {# countries}}",
+      "moqFrom": "MOQ from {count} pcs",
+      "leadTime": "{min}–{max} days lead time",
+      "leadTimeOne": "{min} days lead time",
+      "facts": {
+        "factories": "Verified factories",
+        "countries": "Countries",
+        "moq": "Lowest MOQ",
+        "leadTime": "Catalog lead times",
+        "products": "Catalog products",
+        "pcs": "{count} pcs",
+        "days": "{min}–{max} days",
+        "none": "—"
+      },
+      "categories": {
+        "meta": {
+          "title": "What we make",
+          "description": "Garment categories made by verified factories on GarmentGate: tops, bottoms, outerwear, activewear, kidswear, workwear and more."
+        },
+        "hero": {
+          "eyebrow": "What we make",
+          "title": "Garments made by verified factories",
+          "body": "Browse the categories factories on GarmentGate produce, with live counts of factories, countries and minimum orders. Figures update as factories join."
+        },
+        "subcategories": "Includes",
+        "cta": {
+          "title": "Can’t see your product?",
+          "body": "Post a request anyway: our sourcing team finds factories beyond the catalog."
+        }
+      },
+      "category": {
+        "eyebrow": "Category",
+        "title": "{name} manufacturing",
+        "body": "Source {name} from verified factories, compare quotes and let GarmentGate manage sampling, production, quality control, payment and delivery.",
+        "subcategories": "Sub-categories",
+        "where": "Where it’s made",
+        "whereBody": "Countries with verified factories making {name} on GarmentGate.",
+        "tips": {
+          "title": "Sourcing {name} with GarmentGate",
+          "items": [
+            "Share a tech pack with measurements, fabric and trims: factories quote more precisely.",
+            "Order a sample before bulk and approve it with photos.",
+            "Book an inline inspection on a first order with a new factory.",
+            "Pick your incoterm and destination: we price sea, air or door to door."
+          ]
+        },
+        "faq": {
+          "moq": {
+            "q": "What is the minimum order for {name}?",
+            "a": "Factories set their own minimums. The lowest on GarmentGate for {name} is currently {moq} pieces.",
+            "none": "Factories set their own minimums; post a request and matching only reaches factories whose minimum fits your quantity."
+          },
+          "lead": {
+            "q": "How long does production take?",
+            "a": "Catalog lead times for {name} currently range from {min} to {max} days after the sample is approved, plus shipping.",
+            "none": "It depends on the factory, quantity and season. Quotes show each factory’s lead time."
+          },
+          "pay": {
+            "q": "How do I pay?",
+            "a": "You pay GarmentGate by card or bank transfer. The money is held in escrow and released to the factory in stages as the work is done."
+          }
+        },
+        "cta": {
+          "title": "Request quotes for {name}",
+          "body": "Free to post. Matching factories quote before your deadline."
+        }
+      },
+      "sourcing": {
+        "meta": {
+          "title": "Sourcing countries",
+          "description": "Where GarmentGate’s verified garment factories are: categories, certifications and minimum orders by country."
+        },
+        "hero": {
+          "eyebrow": "Sourcing countries",
+          "title": "Verified factories, worldwide",
+          "body": "See where factories on GarmentGate are based, what they make and which certifications they hold. One contract with GarmentGate, wherever the factory is."
+        },
+        "certs": "Verified certifications",
+        "cta": {
+          "title": "Not sure where to source from?",
+          "body": "Tell us the product and target price; our sourcing team will suggest countries and factories."
+        }
+      },
+      "country": {
+        "eyebrow": "Sourcing country",
+        "title": "Garment manufacturing in {country}",
+        "body": "Work with verified factories in {country} through GarmentGate: one contract, escrow payments, independent inspections and managed delivery.",
+        "makes": "What factories in {country} make",
+        "certs": "Verified certifications",
+        "certsBody": "Certificates checked by our team. Each counts the factories holding it.",
+        "certFactories": "{count, plural, one {# factory} other {# factories}}",
+        "noCerts": "No verified certifications yet.",
+        "about": "About sourcing from {country}",
+        "cta": {
+          "title": "Source from {country}",
+          "body": "Post a request and verified factories in {country} that fit will quote."
+        },
+        "notes": {
+          "BD": "Bangladesh is one of the world’s largest garment exporters, known for knitwear, T-shirts, sweatshirts and denim at scale. Most export cargo moves through Chittagong port, with air freight from Dhaka.",
+          "VN": "Vietnam is strong in activewear, outerwear and technical garments, with fast-growing synthetic and performance fabric supply. Exports move through Ho Chi Minh City and Haiphong.",
+          "IN": "India combines vertically integrated cotton supply with skills in organic basics, kidswear, prints and embroidery. Export ports include Nhava Sheva, Chennai and Tuticorin.",
+          "TR": "Türkiye offers short lead times to Europe, with strength in denim, knits and fashion-forward small runs. Goods often travel to the EU by road as well as sea.",
+          "CN": "China has the broadest range of fabrics, trims and garment categories, from basics to complex technical outerwear, and extensive port connections.",
+          "PK": "Pakistan is known for cotton home textiles, denim, knitwear and sportswear, with exports through Karachi."
+        },
+        "noteGeneric": "GarmentGate verifies every factory’s business registration and certificates before it can quote, wherever it is based."
+      }
+    },
+    "calculator": {
+      "meta": {
+        "title": "Cost calculator",
+        "description": "Estimate what a garment order costs end to end with GarmentGate: goods, samples, inspections, freight, duty and when each part is paid."
+      },
+      "hero": {
+        "eyebrow": "Cost calculator",
+        "title": "What will my order really cost?",
+        "body": "Estimate the landed cost of an order and when each part is paid, using GarmentGate’s current fees. Quotes give the real price per piece; this shows how it all adds up."
+      },
+      "inputs": "Your order",
+      "fields": {
+        "quantity": "Quantity (pieces)",
+        "unitPrice": "Price per piece (USD)",
+        "unitPriceHint": "The all-in GarmentGate price from a quote, or your target.",
+        "samples": "Samples",
+        "inspections": "Inspection days",
+        "inspectionsHint": "Usually one inline and one final.",
+        "freight": "Freight estimate (USD)",
+        "freightHint": "Shown on your order when you choose shipping. Leave 0 to skip.",
+        "duty": "Import duty (%)",
+        "dutyHint": "Depends on the product and destination. Leave 0 to skip.",
+        "firstOrder": "This is my first order (first inspection free)",
+        "plus": "I’m a GarmentGate Plus member"
+      },
+      "results": "Estimate",
+      "rows": {
+        "goods": "Goods",
+        "samples": "Sample fees",
+        "sampleCredit": "Sample fees credited back",
+        "inspections": "Inspection fees",
+        "freight": "Freight",
+        "toGarmentGate": "Paid to GarmentGate",
+        "duty": "Import duty (to customs)",
+        "landed": "Landed cost",
+        "perPiece": "per piece"
+      },
+      "timeline": {
+        "title": "When you pay",
+        "samples": "When you request samples",
+        "deposit": "Deposit when you confirm ({percent})",
+        "inspections": "When inspections are booked",
+        "balance": "Balance once the final inspection passes",
+        "freight": "Freight when you choose shipping",
+        "duty": "Duty to customs at import"
+      },
+      "escrow": "Everything you pay GarmentGate is held in escrow and released to the factory in stages.",
+      "disclaimer": "An estimate using current fees and a typical {percent} deposit. Your quote, order and shipping step show the exact amounts.",
+      "cta": "Get real quotes",
+      "unavailable": "Live fees are unavailable right now, so the calculator can’t run. Please try again shortly."
+    },
+    "stories": {
+      "meta": {
+        "title": "Sourcing stories",
+        "description": "Worked examples of garment orders through GarmentGate: what happens at each stage and what it costs."
+      },
+      "hero": {
+        "eyebrow": "Sourcing stories",
+        "title": "How an order runs, start to finish",
+        "body": "Worked examples of typical orders through GarmentGate, with costs calculated from today’s fees. Customer stories will join them as buyers agree to share."
+      },
+      "illustrative": "Illustrative example",
+      "illustrativeNote": "This is a worked example, not a customer story. Costs are calculated from GarmentGate’s current fees and the assumptions shown.",
+      "read": "Read the example",
+      "facts": {
+        "buyer": "Buyer",
+        "route": "Route",
+        "quantity": "Quantity",
+        "price": "Price per piece",
+        "landed": "Landed per piece",
+        "total": "Paid to GarmentGate"
+      },
+      "journey": "How it ran",
+      "costs": "What it cost",
+      "assumptions": "Assumptions: {samples} samples, {inspections} inspection days, freight {freight}, import duty {duty}.",
+      "plusNote": "Buyer is a GarmentGate Plus member.",
+      "firstNote": "First order: first inspection free.",
+      "cta": {
+        "title": "Run your own numbers",
+        "body": "Try the cost calculator with your quantities, or post a request for real quotes."
+      },
+      "items": {
+        "organic-tees": {
+          "title": "Organic tees for a German basics label",
+          "summary": "6,000 GOTS-certified organic cotton T-shirts from Bangladesh to Hamburg.",
+          "buyer": "Sustainable basics brand, Germany",
+          "route": "Bangladesh → Hamburg (sea)",
+          "steps": [
+            "Posted an RFQ with a tech pack and a GOTS requirement; three verified factories quoted within a week.",
+            "Ordered two samples, asked for a neck-rib change, approved the second.",
+            "Confirmed and paid the 30% deposit into escrow; the factory was paid its first release when production started.",
+            "An inline inspection caught a shade variation early; the final random inspection passed.",
+            "Goods were consolidated at the GarmentGate hub and shipped LCL to Hamburg with papers prepared.",
+            "Confirmed delivery; the holdback was released after the claim window."
+          ]
+        },
+        "hotel-uniforms": {
+          "title": "A year of hotel uniforms on one contract",
+          "summary": "A 40,000-piece supply contract for staff polos, called off in batches of 10,000.",
+          "buyer": "Hotel group, Spain (Plus member)",
+          "route": "Bangladesh → Valencia (sea)",
+          "steps": [
+            "Agreed a yearly supply contract at a fixed price per piece with a 10,000-piece minimum call-off.",
+            "A dedicated merchandiser coordinated colours and sizing across properties.",
+            "Each call-off became an order with its own deposit, inspections and shipment.",
+            "As a Plus member, inspections were free and samples half price.",
+            "Volume used and lead times were reviewed with the merchandiser each quarter."
+          ]
+        },
+        "startup-activewear": {
+          "title": "A first activewear run for a US startup",
+          "summary": "800 leggings from Vietnam, flown to Los Angeles for a product launch.",
+          "buyer": "Activewear startup, United States",
+          "route": "Vietnam → Los Angeles (air)",
+          "steps": [
+            "Searched the catalog by MOQ and found factories accepting small first orders.",
+            "Iterated three samples on fit and waistband before approving.",
+            "Paid by card; the deposit sat in escrow during production.",
+            "One final inspection before shipment (the first inspection was free).",
+            "Chose air freight to meet the launch date and followed it on the tracking page."
+          ]
+        }
+      }
+    },
+    "region": {
+      "label": "Language and currency",
+      "language": "Language",
+      "currency": "Display currency",
+      "hint": "Prices are charged in USD or in your quote’s currency. Other currencies are shown as approximate conversions at GarmentGate’s reference rates.",
+      "saved": "Saved"
+    },
+    "menu": {
+      "buyers": {
+        "tab": "Buyers",
+        "steps": {
+          "post": "Post request",
+          "quote": "Get quotes",
+          "sample": "Approve sample",
+          "track": "Track production",
+          "receive": "Receive at door"
+        },
+        "columns": {
+          "start": "Start",
+          "manage": "Manage",
+          "explore": "Explore"
+        },
+        "links": {
+          "requestQuotes": "Request quotes",
+          "estimate": "Estimate your costs",
+          "samples": "Order samples",
+          "capacity": "Book capacity",
+          "tracker": "Live order tracker",
+          "qc": "QC reports",
+          "escrow": "Escrow payments",
+          "shipping": "Shipping and delivery",
+          "categories": "Garment categories",
+          "sourcing": "Sourcing countries",
+          "corporate": "Corporate uniforms",
+          "plus": "GarmentGate Plus"
+        },
+        "promo": {
+          "title": "Pay the balance only after your goods pass inspection",
+          "cta": "Start a project"
+        }
+      },
+      "manufacturers": {
+        "tab": "Manufacturers",
+        "steps": {
+          "apply": "Apply",
+          "verify": "Get verified",
+          "quote": "Quote on requests",
+          "produce": "Produce and pass QC",
+          "paid": "Get paid"
+        },
+        "columns": {
+          "start": "Start",
+          "manage": "Manage",
+          "explore": "Explore"
+        },
+        "links": {
+          "apply": "Apply as a manufacturer",
+          "why": "Why join GarmentGate",
+          "verification": "How verification works",
+          "plans": "Factory plans",
+          "requests": "Matched requests",
+          "orders": "Orders in production",
+          "capacity": "Capacity windows",
+          "payouts": "Payouts",
+          "categories": "Categories",
+          "sourcing": "Sourcing countries",
+          "stories": "Sourcing stories",
+          "help": "Help for factories"
+        },
+        "promo": {
+          "title": "Paid from escrow, on a schedule fixed before you start",
+          "cta": "Apply now"
+        }
+      },
+      "gig": {
+        "tab": "Gig network",
+        "steps": {
+          "apply": "Apply",
+          "certify": "Get certified",
+          "claim": "Claim nearby tasks",
+          "checkin": "Check in on site",
+          "paid": "Get paid weekly"
+        },
+        "columns": {
+          "start": "Start",
+          "work": "Work",
+          "explore": "Explore"
+        },
+        "links": {
+          "apply": "Apply to inspect",
+          "how": "How it works",
+          "need": "What you need",
+          "faq": "Inspector FAQ",
+          "tasks": "Task feed",
+          "jobs": "Your inspections",
+          "earnings": "Earnings",
+          "aql": "AQL reports",
+          "fair": "Ratings and rotation",
+          "trust": "Trust & safety",
+          "sourcing": "Where factories are",
+          "about": "About GarmentGate"
+        },
+        "promo": {
+          "title": "Freelance QC work near you, paid per inspection day",
+          "cta": "Apply to inspect"
+        }
+      },
+      "logistics": {
+        "tab": "Logistics",
+        "steps": {
+          "lanes": "Share your lanes",
+          "rates": "Agree rates",
+          "accept": "Accept legs",
+          "track": "Update tracking",
+          "paid": "Get paid per leg"
+        },
+        "columns": {
+          "start": "Start",
+          "manage": "Manage",
+          "explore": "Explore"
+        },
+        "links": {
+          "apply": "Become a partner",
+          "what": "What we book",
+          "terms": "How we work with partners",
+          "faq": "Partner FAQ",
+          "portal": "Partner portal",
+          "tracking": "Tracking updates",
+          "papers": "Shipping papers",
+          "payouts": "Leg payouts",
+          "journey": "The managed journey",
+          "shipping": "Shipping and delivery",
+          "sourcing": "Sourcing countries",
+          "contact": "Talk to our logistics team"
+        },
+        "promo": {
+          "title": "GarmentGate is your customer: one contract, paid per leg",
+          "cta": "Become a partner"
+        }
+      },
+      "support": {
+        "tab": "Support",
+        "steps": {
+          "search": "Search the help centre",
+          "topic": "Pick a topic",
+          "message": "Message us",
+          "reply": "Get a reply by email"
+        },
+        "columns": {
+          "help": "Help topics",
+          "account": "Your account",
+          "company": "Company"
+        },
+        "links": {
+          "gettingStarted": "Getting started",
+          "payments": "Payments and payouts",
+          "shipping": "Shipping and delivery",
+          "quality": "Quality control",
+          "signIn": "Sign in",
+          "reset": "Reset your password",
+          "track": "Track an order",
+          "texts": "Notifications and texts",
+          "how": "How it works",
+          "pricing": "Pricing",
+          "trust": "Trust & safety",
+          "about": "About"
+        },
+        "promo": {
+          "title": "Already a customer? Message us from your order for the fastest answer",
+          "cta": "Contact support"
+        }
+      }
     }
   },
   "manufacturer": {
@@ -4534,5 +6388,26 @@
       "send": "Send test",
       "testSent": "Test sent"
     }
+  },
+  "leads": {
+    "title": "Leads",
+    "description": "Enquiries from the public website: sourcing, enterprise, manufacturers, logistics partners, support and press.",
+    "cols": {
+      "received": "Received",
+      "kind": "Topic",
+      "who": "From",
+      "message": "Message",
+      "source": "Page",
+      "status": "Status"
+    },
+    "status": {
+      "NEW": "New",
+      "CONTACTED": "Contacted",
+      "CLOSED": "Closed"
+    },
+    "empty": "No enquiries yet",
+    "emptyBody": "Messages sent from the website’s contact forms appear here.",
+    "saved": "Status updated",
+    "failed": "Couldn’t update the status"
   }
 }

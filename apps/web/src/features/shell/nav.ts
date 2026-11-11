@@ -37,6 +37,7 @@ export type NavLabel =
   | 'tasks'
   | 'plan'
   | 'texts'
+  | 'leads'
   | 'plus'
   | 'plans'
   | 'earnings'
@@ -126,6 +127,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/admin/contracts', label: 'contracts', icon: FileSignature, built: true },
     { href: '/admin/plans', label: 'plans', icon: Sparkles, built: true },
     { href: '/admin/messaging', label: 'texts', icon: MessageSquare, built: true },
+    { href: '/admin/leads', label: 'leads', icon: Inbox, built: true },
     {
       href: '/admin/logistics',
       label: 'logistics',
