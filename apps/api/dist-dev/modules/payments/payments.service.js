@@ -1,0 +1,1786 @@
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var PaymentsService_1;
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException, } from '@nestjs/common';
+import { commissionAmount, commissionRate, convertMinor, DEFAULT_RELEASE_SCHEDULE, paymentPlan, ReleaseScheduleSchema, releaseTranches, } from '@garmentgate/shared';
+import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
+import { AuditService } from '../audit/audit.service.js';
+import { OrderHooks } from '../orders/order-hooks.js';
+import { pickQuoteRule } from '../pricing/margin.js';
+import { actorOf, OrdersService } from '../orders/orders.service.js';
+import { FilesService } from '../storage/files.service.js';
+import { StorageService } from '../storage/storage.service.js';
+import { BankAccountsService, bankDetails } from './bank-accounts.service.js';
+import { SERVICE_FEES_KEY, serviceFees } from './charges.js';
+import { FxService } from './fx.service.js';
+import { LedgerService } from './ledger.service.js';
+import { ManualProvider } from './providers/manual.provider.js';
+import { StripeProvider } from './providers/stripe.provider.js';
+const SCHEDULE_KEY = 'release_schedule';
+const TRIGGER_AT = {
+    IN_PRODUCTION: 'PRODUCTION_START',
+    READY_TO_SHIP: 'QC_PASSED',
+    SHIPPED: 'SHIPPED',
+    DELIVERED: 'DELIVERED',
+    COMPLETED: 'COMPLETED',
+};
+const PAYABLE = {
+    DEPOSIT: ['DEPOSIT_PENDING'],
+    BALANCE: ['IN_PRODUCTION', 'QC', 'READY_TO_SHIP'],
+};
+const DUE = {
+    DEPOSIT: ['DEPOSIT_PENDING'],
+    BALANCE: ['READY_TO_SHIP'],
+};
+const OPEN = ['PENDING', 'PROCESSING'];
+const PURPOSE_LABEL = {
+    DEPOSIT: 'Deposit',
+    BALANCE: 'Balance',
+    SAMPLE_FEE: 'Sample fee',
+    PAYOUT: 'Payout',
+    REFUND: 'Refund',
+    LOGISTICS: 'Shipping',
+    INSURANCE_RECOVERY: 'Insurance recovery',
+    INSPECTION_FEE: 'Inspection fee',
+};
+const CHARGE_LETTER = { LOGISTICS: 'L', SAMPLE_FEE: 'S', INSPECTION_FEE: 'I' };
+const FEE_PURPOSES = ['SAMPLE_FEE', 'INSPECTION_FEE'];
+const PROOF_MAX_BYTES = 10 * 1024 * 1024;
+const n = (v) => Number(v);
+const payerInclude = {
+    order: { select: { code: true, buyerCompanyId: true } },
+    capacityBooking: { select: { code: true, buyerCompanyId: true } },
+};
+function payerOf(payment) {
+    if (payment.order)
+        return {
+            companyId: payment.order.buyerCompanyId,
+            code: payment.order.code,
+            link: { orderCode: payment.order.code },
+        };
+    if (payment.capacityBooking)
+        return {
+            companyId: payment.capacityBooking.buyerCompanyId,
+            code: payment.capacityBooking.code,
+            link: { bookingCode: payment.capacityBooking.code },
+        };
+    throw new Error('Payment without an order or a booking');
+}
+const iso = (d) => d?.toISOString() ?? null;
+let PaymentsService = PaymentsService_1 = class PaymentsService {
+    prisma;
+    notifier;
+    ledger;
+    fx;
+    manual;
+    stripe;
+    orders;
+    hooks;
+    files;
+    storage;
+    audit;
+    bankAccounts;
+    logger = new Logger(PaymentsService_1.name);
+    constructor(prisma, notifier, ledger, fx, manual, stripe, orders, hooks, files, storage, audit, bankAccounts) {
+        this.prisma = prisma;
+        this.notifier = notifier;
+        this.ledger = ledger;
+        this.fx = fx;
+        this.manual = manual;
+        this.stripe = stripe;
+        this.orders = orders;
+        this.hooks = hooks;
+        this.files = files;
+        this.storage = storage;
+        this.audit = audit;
+        this.bankAccounts = bankAccounts;
+    }
+    onModuleInit() {
+        this.hooks.register({
+            within: (tx, order, to) => this.onTransition(tx, order, to),
+        });
+    }
+    providers() {
+        return [this.manual, this.stripe];
+    }
+    providerFor(method) {
+        const provider = this.providers().find((p) => p.methods.includes(method) && p.enabled());
+        if (!provider)
+            throw new BadRequestException(`${method.replace('_', ' ').toLowerCase()} isn’t available`);
+        return provider;
+    }
+    methods() {
+        return this.providers().flatMap((p) => (p.enabled() ? [...p.methods] : []));
+    }
+    bookingSettled = null;
+    onBookingDepositSettled(handler) {
+        this.bookingSettled = handler;
+    }
+    async releaseSchedule(client = this.prisma) {
+        const row = await client.platformSetting.findUnique({ where: { key: SCHEDULE_KEY } });
+        const parsed = ReleaseScheduleSchema.safeParse(row?.value);
+        return parsed.success ? parsed.data : DEFAULT_RELEASE_SCHEDULE;
+    }
+    async setReleaseSchedule(adminId, schedule) {
+        const value = schedule;
+        await this.prisma.platformSetting.upsert({
+            where: { key: SCHEDULE_KEY },
+            create: { key: SCHEDULE_KEY, value },
+            update: { value },
+        });
+        await this.audit.log({
+            actorUserId: adminId,
+            action: 'finance.schedule_updated',
+            entityType: 'PlatformSetting',
+            entityId: SCHEDULE_KEY,
+            metadata: { schedule: value },
+        });
+    }
+    async commissionFor(tx, order, factoryTotal) {
+        const [category, rules, previous] = await Promise.all([
+            this.orderCategory(tx, order.id),
+            tx.marginRule.findMany({ where: { active: true } }),
+            tx.order.count({
+                where: {
+                    id: { not: order.id },
+                    buyerCompanyId: order.buyerCompanyId,
+                    manufacturerProfileId: order.manufacturerProfileId,
+                    status: 'COMPLETED',
+                },
+            }),
+        ]);
+        const rule = category
+            ? pickQuoteRule(rules, category, order.buyerCompanyId)
+            : (rules.find((r) => r.categoryId === null && r.companyId === order.buyerCompanyId) ??
+                rules.find((r) => r.categoryId === null && r.companyId === null) ??
+                null);
+        const repeatOrder = order.reorderOfId !== null || previous > 0;
+        const commissionBps = commissionRate(rule, repeatOrder);
+        return {
+            commissionBps,
+            commissionMinor: commissionAmount(factoryTotal, commissionBps),
+            repeatOrder,
+        };
+    }
+    async orderCategory(tx, orderId) {
+        let id = orderId;
+        for (let depth = 0; id && depth < 10; depth++) {
+            const row = await tx.order.findUnique({
+                where: { id },
+                select: {
+                    reorderOfId: true,
+                    rfq: { select: { category: { select: { id: true, parentId: true } } } },
+                },
+            });
+            if (row?.rfq)
+                return row.rfq.category;
+            id = row?.reorderOfId ?? null;
+        }
+        return null;
+    }
+    async onTransition(tx, order, to) {
+        const now = new Date();
+        if (to === 'DEPOSIT_PENDING' &&
+            (await tx.orderRelease.count({ where: { orderId: order.id } })) === 0) {
+            const schedule = await this.releaseSchedule(tx);
+            const factoryTotal = BigInt(order.manufacturerUnitPriceMinor) * BigInt(order.quantity);
+            const commission = await this.commissionFor(tx, order, factoryTotal);
+            await tx.order.update({ where: { id: order.id }, data: commission });
+            const tranches = releaseTranches(BigInt(order.buyerUnitPriceMinor) * BigInt(order.quantity), factoryTotal - commission.commissionMinor, schedule.map((s) => s.bps));
+            await tx.orderRelease.createMany({
+                data: schedule.map((s, i) => ({
+                    orderId: order.id,
+                    trigger: s.trigger,
+                    bps: s.bps,
+                    currency: order.currency,
+                    buyerMinor: tranches[i]?.buyerMinor ?? 0n,
+                    manufacturerMinor: tranches[i]?.manufacturerMinor ?? 0n,
+                    commissionMinor: tranches[i]?.commissionMinor ?? 0n,
+                    manufacturerProfileId: order.manufacturerProfileId,
+                })),
+            });
+        }
+        const trigger = TRIGGER_AT[to];
+        if (trigger) {
+            const flow = [
+                'PRODUCTION_START',
+                'QC_PASSED',
+                'SHIPPED',
+                'DELIVERED',
+                'CLAIM_WINDOW',
+                'COMPLETED',
+            ];
+            await tx.orderRelease.updateMany({
+                where: {
+                    orderId: order.id,
+                    status: 'SCHEDULED',
+                    trigger: { in: flow.slice(0, flow.indexOf(trigger) + 1) },
+                },
+                data: { status: 'DUE', dueAt: now },
+            });
+        }
+        if (to === 'DELIVERED') {
+            const due = await tx.orderRelease.findMany({
+                where: { orderId: order.id, status: 'DUE', trigger: 'DELIVERED' },
+            });
+            const parties = {
+                buyerCompanyId: order.buyerCompanyId,
+                manufacturerProfile: { companyId: order.manufacturerProfile.company.id },
+            };
+            for (const release of due) {
+                const position = await this.ledger.orderPosition(order.id, tx);
+                if (position.escrow < release.buyerMinor)
+                    continue;
+                await this.releaseWithin(tx, { ...release, order: parties }, null);
+            }
+        }
+        if (to === 'CANCELLED') {
+            await tx.orderRelease.updateMany({
+                where: { orderId: order.id, status: { in: ['SCHEDULED', 'DUE'] } },
+                data: { status: 'CANCELLED' },
+            });
+            await tx.payment.updateMany({
+                where: { orderId: order.id, direction: 'INBOUND', status: { in: [...OPEN] } },
+                data: { status: 'CANCELLED' },
+            });
+        }
+    }
+    async paid(orderId, unit, quantity, depositBps) {
+        const goods = paymentPlan(BigInt(unit) * BigInt(quantity), depositBps);
+        const credit = (await this.prisma.order.findUnique({
+            where: { id: orderId },
+            select: { sampleCreditMinor: true },
+        }))?.sampleCreditMinor ?? 0n;
+        const plan = {
+            ...goods,
+            balance: goods.balance > credit ? goods.balance - credit : 0n,
+        };
+        const rows = await this.prisma.payment.groupBy({
+            by: ['purpose'],
+            where: { orderId, direction: 'INBOUND', status: 'SUCCEEDED' },
+            _sum: { amountMinor: true },
+        });
+        const sum = (p) => rows.find((r) => r.purpose === p)?._sum.amountMinor ?? 0n;
+        return {
+            plan,
+            depositPaid: sum('DEPOSIT'),
+            balancePaid: sum('BALANCE'),
+            deposit: sum('DEPOSIT') >= plan.deposit,
+            balance: sum('BALANCE') >= plan.balance,
+        };
+    }
+    async buyerView(actor, code) {
+        const order = await this.orders.load(actor, code);
+        if (actorOf(actor) !== 'BUYER')
+            throw new ForbiddenException('This is the buyer’s view');
+        const payments = await this.prisma.payment.findMany({
+            where: {
+                orderId: order.id,
+                purpose: { in: ['DEPOSIT', 'BALANCE', 'REFUND', 'SAMPLE_FEE', 'INSPECTION_FEE'] },
+            },
+            orderBy: { createdAt: 'asc' },
+        });
+        const fees = await this.fees(order.id);
+        const state = await this.paid(order.id, order.buyerUnitPriceMinor, order.quantity, order.depositBps);
+        const total = BigInt(order.buyerUnitPriceMinor) * BigInt(order.quantity);
+        const refunded = payments
+            .filter((p) => p.purpose === 'REFUND' && p.status === 'SUCCEEDED')
+            .reduce((a, p) => a + p.amountMinor, 0n);
+        const paidTotal = state.depositPaid + state.balancePaid;
+        const part = (purpose, amount, paidAmount) => {
+            const open = payments.find((p) => p.purpose === purpose && OPEN.includes(p.status));
+            const status = paidAmount >= amount
+                ? 'PAID'
+                : open?.status === 'PROCESSING'
+                    ? 'PROCESSING'
+                    : DUE[purpose].includes(order.status)
+                        ? 'DUE'
+                        : 'NOT_DUE';
+            return { purpose, amountMinor: n(amount), status, paymentId: open?.id ?? null };
+        };
+        return {
+            currency: order.currency,
+            totalMinor: n(total),
+            paidMinor: n(paidTotal),
+            refundedMinor: n(refunded),
+            outstandingMinor: n(total - order.sampleCreditMinor - paidTotal > 0n
+                ? total - order.sampleCreditMinor - paidTotal
+                : 0n),
+            plan: [
+                part('DEPOSIT', state.plan.deposit, state.depositPaid),
+                part('BALANCE', state.plan.balance, state.balancePaid),
+            ],
+            payments: payments.map((p) => ({
+                id: p.id,
+                reference: p.reference ?? p.id,
+                purpose: p.purpose === 'REFUND' ||
+                    p.purpose === 'BALANCE' ||
+                    p.purpose === 'SAMPLE_FEE' ||
+                    p.purpose === 'INSPECTION_FEE'
+                    ? p.purpose
+                    : 'DEPOSIT',
+                method: p.method,
+                amountMinor: n(p.amountMinor),
+                status: p.status,
+                createdAt: p.createdAt.toISOString(),
+                paidAt: iso(p.paidAt),
+            })),
+            methods: this.methods(),
+            instructions: this.manual.bankLines(),
+            sampleCreditMinor: n(order.sampleCreditMinor),
+            fees: fees.map((f) => ({
+                purpose: f.purpose,
+                chargedMinor: n(f.charged),
+                paidMinor: n(f.paid),
+                dueMinor: n(f.due),
+                pending: f.pending,
+                items: f.items.map((c) => ({
+                    amountMinor: n(c.amountMinor),
+                    waived: c.waived,
+                    createdAt: c.createdAt.toISOString(),
+                })),
+            })),
+        };
+    }
+    async fees(orderId) {
+        const [charges, payments] = await Promise.all([
+            this.prisma.orderCharge.findMany({ where: { orderId }, orderBy: { createdAt: 'asc' } }),
+            this.prisma.payment.findMany({
+                where: {
+                    orderId,
+                    direction: 'INBOUND',
+                    purpose: { in: ['SAMPLE_FEE', 'INSPECTION_FEE'] },
+                    status: { in: ['SUCCEEDED', 'PROCESSING'] },
+                },
+                select: { purpose: true, status: true, amountMinor: true },
+            }),
+        ]);
+        return ['SAMPLE_FEE', 'INSPECTION_FEE']
+            .map((purpose) => {
+            const items = charges.filter((c) => c.kind === purpose);
+            const charged = items.reduce((a, c) => a + (c.waived ? 0n : c.amountMinor), 0n);
+            const paid = payments
+                .filter((p) => p.purpose === purpose && p.status === 'SUCCEEDED')
+                .reduce((a, p) => a + p.amountMinor, 0n);
+            return {
+                purpose,
+                items,
+                charged,
+                paid,
+                due: charged > paid ? charged - paid : 0n,
+                pending: payments.some((p) => p.purpose === purpose && p.status === 'PROCESSING'),
+            };
+        })
+            .filter((f) => f.items.length > 0);
+    }
+    async feesDue(orderId) {
+        return (await this.fees(orderId)).reduce((a, f) => a + f.due, 0n);
+    }
+    async payFees(actor, code, dto) {
+        const order = await this.orders.load(actor, code);
+        if (actorOf(actor) !== 'BUYER')
+            throw new ForbiddenException('Only the buyer pays');
+        if (order.status === 'CANCELLED')
+            throw new ConflictException('This order was cancelled');
+        const fee = (await this.fees(order.id)).find((f) => f.purpose === dto.purpose);
+        return this.startOrderCharge(order, dto.purpose, fee?.due ?? 0n, dto.method);
+    }
+    async serviceFees() {
+        return serviceFees(this.prisma);
+    }
+    async setServiceFees(adminId, fees) {
+        const value = { ...fees };
+        await this.prisma.platformSetting.upsert({
+            where: { key: SERVICE_FEES_KEY },
+            create: { key: SERVICE_FEES_KEY, value },
+            update: { value },
+        });
+        await this.audit.log({
+            actorUserId: adminId,
+            action: 'payments.service_fees_updated',
+            entityType: 'PlatformSetting',
+            entityId: SERVICE_FEES_KEY,
+            metadata: value,
+        });
+        return fees;
+    }
+    async releaseClaimWindows(now = new Date()) {
+        const { claimWindowDays } = await serviceFees(this.prisma);
+        const closedBefore = new Date(now.getTime() - claimWindowDays * 86_400_000);
+        const ready = await this.prisma.orderRelease.findMany({
+            where: {
+                trigger: 'CLAIM_WINDOW',
+                status: 'SCHEDULED',
+                order: {
+                    status: { in: ['DELIVERED', 'COMPLETED'] },
+                    events: { some: { toStatus: 'DELIVERED', createdAt: { lte: closedBefore } } },
+                    disputes: { none: { status: { in: ['OPEN', 'UNDER_REVIEW'] } } },
+                },
+            },
+            select: { id: true },
+        });
+        if (ready.length === 0)
+            return 0;
+        const { count } = await this.prisma.orderRelease.updateMany({
+            where: { id: { in: ready.map((r) => r.id) }, status: 'SCHEDULED' },
+            data: { status: 'DUE', dueAt: now },
+        });
+        return count;
+    }
+    async start(actor, code, dto) {
+        const order = await this.orders.load(actor, code);
+        if (actorOf(actor) !== 'BUYER')
+            throw new ForbiddenException('Only the buyer pays');
+        if (!PAYABLE[dto.purpose].includes(order.status)) {
+            throw new ConflictException(dto.purpose === 'DEPOSIT'
+                ? 'The deposit is due once the order is confirmed'
+                : 'The balance can be paid once production has started');
+        }
+        const state = await this.paid(order.id, order.buyerUnitPriceMinor, order.quantity, order.depositBps);
+        const amount = dto.purpose === 'DEPOSIT'
+            ? state.plan.deposit - state.depositPaid
+            : state.plan.balance - state.balancePaid;
+        if (amount <= 0n)
+            throw new ConflictException('Already paid');
+        const provider = this.providerFor(dto.method);
+        const open = await this.prisma.payment.findFirst({
+            where: {
+                orderId: order.id,
+                purpose: dto.purpose,
+                direction: 'INBOUND',
+                status: { in: [...OPEN] },
+            },
+        });
+        if (open?.status === 'PROCESSING')
+            throw new ConflictException('A payment is already on its way: we’ll confirm it shortly');
+        if (open?.method === dto.method && open.amountMinor === amount && provider.id === 'manual') {
+            return this.startResult(open, provider, order.code);
+        }
+        if (open)
+            await this.prisma.payment.update({ where: { id: open.id }, data: { status: 'CANCELLED' } });
+        const count = await this.prisma.payment.count({
+            where: { orderId: order.id, purpose: dto.purpose },
+        });
+        const payment = await this.prisma.payment.create({
+            data: {
+                orderId: order.id,
+                direction: 'INBOUND',
+                purpose: dto.purpose,
+                amountMinor: amount,
+                currency: order.currency,
+                method: dto.method,
+                provider: provider.id,
+                reference: `PAY-${order.code.slice(4)}-${dto.purpose === 'DEPOSIT' ? 'D' : 'B'}${String(count + 1)}`,
+                status: 'PENDING',
+            },
+        });
+        return this.startResult(payment, provider, order.code);
+    }
+    async startResult(payment, provider, orderCode) {
+        const result = await provider.start({
+            paymentId: payment.id,
+            reference: payment.reference ?? payment.id,
+            orderCode,
+            amountMinor: payment.amountMinor,
+            currency: payment.currency,
+            method: payment.method,
+        });
+        if (result.providerRef && result.providerRef !== payment.providerRef) {
+            await this.prisma.payment.update({
+                where: { id: payment.id },
+                data: { providerRef: result.providerRef },
+            });
+        }
+        return {
+            paymentId: payment.id,
+            reference: payment.reference ?? payment.id,
+            method: payment.method,
+            amountMinor: n(payment.amountMinor),
+            currency: payment.currency,
+            instructions: result.instructions,
+            stripe: result.stripe,
+        };
+    }
+    async markSent(actor, code, paymentId, dto) {
+        const order = await this.orders.load(actor, code);
+        if (actorOf(actor) !== 'BUYER')
+            throw new ForbiddenException('Only the buyer pays');
+        const { count } = await this.prisma.payment.updateMany({
+            where: { id: paymentId, orderId: order.id, provider: 'manual', status: 'PENDING' },
+            data: { status: 'PROCESSING', payerReference: dto.payerReference ?? null },
+        });
+        if (count === 0)
+            throw new NotFoundException('Payment not found');
+        await this.notifyAdmins(`${order.code}: payment sent`, `Check the bank for ${order.buyerCompany.buyerProfile?.publicCode ?? ''}'s transfer`, { orderCode: order.code });
+    }
+    async startOrderCharge(order, purpose, amount, method) {
+        if (amount <= 0n)
+            throw new ConflictException('Already paid');
+        const provider = this.providerFor(method);
+        const open = await this.prisma.payment.findFirst({
+            where: { orderId: order.id, purpose, direction: 'INBOUND', status: { in: [...OPEN] } },
+        });
+        if (open?.status === 'PROCESSING')
+            throw new ConflictException('A payment is already on its way: we’ll confirm it shortly');
+        if (open?.method === method && open.amountMinor === amount && provider.id === 'manual')
+            return this.startResult(open, provider, order.code);
+        if (open)
+            await this.prisma.payment.update({ where: { id: open.id }, data: { status: 'CANCELLED' } });
+        const count = await this.prisma.payment.count({ where: { orderId: order.id, purpose } });
+        const payment = await this.prisma.payment.create({
+            data: {
+                orderId: order.id,
+                direction: 'INBOUND',
+                purpose,
+                amountMinor: amount,
+                currency: order.currency,
+                method,
+                provider: provider.id,
+                reference: `PAY-${order.code.slice(4)}-${CHARGE_LETTER[purpose]}${String(count + 1)}`,
+                status: 'PENDING',
+            },
+        });
+        return this.startResult(payment, provider, order.code);
+    }
+    async balancePaid(order) {
+        return (await this.paid(order.id, order.buyerUnitPriceMinor, order.quantity, order.depositBps))
+            .balance;
+    }
+    async orderChargeState(orderId, purpose) {
+        const [sum, pending] = await Promise.all([
+            this.prisma.payment.aggregate({
+                where: { orderId, purpose, direction: 'INBOUND', status: 'SUCCEEDED' },
+                _sum: { amountMinor: true },
+            }),
+            this.prisma.payment.count({
+                where: { orderId, purpose, direction: 'INBOUND', status: 'PROCESSING' },
+            }),
+        ]);
+        return { paid: sum._sum.amountMinor ?? 0n, pending: pending > 0 };
+    }
+    async startBookingDeposit(booking, amount, method) {
+        if (amount <= 0n)
+            throw new ConflictException('Already paid');
+        const provider = this.providerFor(method);
+        const open = await this.prisma.payment.findFirst({
+            where: {
+                capacityBookingId: booking.id,
+                direction: 'INBOUND',
+                status: { in: [...OPEN] },
+            },
+        });
+        if (open?.status === 'PROCESSING')
+            throw new ConflictException('A payment is already on its way: we’ll confirm it shortly');
+        if (open?.method === method && open.amountMinor === amount && provider.id === 'manual')
+            return this.startResult(open, provider, booking.code);
+        if (open)
+            await this.prisma.payment.update({ where: { id: open.id }, data: { status: 'CANCELLED' } });
+        const count = await this.prisma.payment.count({ where: { capacityBookingId: booking.id } });
+        const payment = await this.prisma.payment.create({
+            data: {
+                capacityBookingId: booking.id,
+                direction: 'INBOUND',
+                purpose: 'DEPOSIT',
+                amountMinor: amount,
+                currency: booking.currency,
+                method,
+                provider: provider.id,
+                reference: `PAY-${booking.code}-D${String(count + 1)}`,
+                status: 'PENDING',
+            },
+        });
+        return this.startResult(payment, provider, booking.code);
+    }
+    async markBookingDepositSent(booking, paymentId, dto) {
+        const { count } = await this.prisma.payment.updateMany({
+            where: {
+                id: paymentId,
+                capacityBookingId: booking.id,
+                provider: 'manual',
+                status: 'PENDING',
+            },
+            data: { status: 'PROCESSING', payerReference: dto.payerReference ?? null },
+        });
+        if (count === 0)
+            throw new NotFoundException('Payment not found');
+        await this.notifyAdmins(`${booking.code}: deposit sent`, 'Check the bank and confirm it in Finance', {
+            bookingCode: booking.code,
+        });
+    }
+    async bookingDepositState(bookingId) {
+        const [paid, pending] = await Promise.all([
+            this.ledger.bookingEscrow(bookingId),
+            this.prisma.payment.count({
+                where: { capacityBookingId: bookingId, direction: 'INBOUND', status: 'PROCESSING' },
+            }),
+        ]);
+        return { paid, pending: pending > 0 };
+    }
+    async settleBookingCancellation(booking, factoryCompanyId, split, reason) {
+        const total = split.refundMinor + split.factoryMinor + split.platformMinor;
+        await this.prisma.payment.updateMany({
+            where: { capacityBookingId: booking.id, direction: 'INBOUND', status: { in: [...OPEN] } },
+            data: { status: 'CANCELLED' },
+        });
+        if (total === 0n)
+            return;
+        const card = await this.prisma.payment.findFirst({
+            where: {
+                capacityBookingId: booking.id,
+                direction: 'INBOUND',
+                status: 'SUCCEEDED',
+                method: 'CARD',
+                amountMinor: { gte: split.refundMinor },
+            },
+        });
+        let refundRef = null;
+        let refundId = null;
+        if (split.refundMinor > 0n) {
+            const refund = await this.prisma.payment.create({
+                data: {
+                    capacityBookingId: booking.id,
+                    direction: 'OUTBOUND',
+                    purpose: 'REFUND',
+                    amountMinor: split.refundMinor,
+                    currency: booking.currency,
+                    method: card ? 'CARD' : 'BANK_TRANSFER',
+                    provider: card ? 'stripe' : 'manual',
+                    reference: `REF-${booking.code}`,
+                    status: 'PENDING',
+                },
+            });
+            refundId = refund.id;
+            try {
+                const result = await (card ? this.stripe : this.manual).refund({
+                    refundPaymentId: refund.id,
+                    providerRef: card?.providerRef ?? null,
+                    amountMinor: split.refundMinor,
+                    currency: booking.currency,
+                });
+                refundRef = result.providerRef;
+            }
+            catch (error) {
+                await this.prisma.payment.update({
+                    where: { id: refund.id },
+                    data: {
+                        status: 'FAILED',
+                        failureReason: error instanceof Error ? error.message.slice(0, 300) : 'Refund failed',
+                    },
+                });
+                throw new ConflictException('The refund failed at the payment provider');
+            }
+        }
+        await this.prisma.$transaction(async (tx) => {
+            await this.ledger.lockBooking(tx, booking.id);
+            const escrow = await this.ledger.bookingEscrow(booking.id, tx);
+            if (escrow < total)
+                throw new ConflictException(`Only ${String(escrow)} is in escrow`);
+            const { rates } = await this.fx.snapshot(booking.currency, tx);
+            const base = { capacityBookingId: booking.id, currency: booking.currency, rates };
+            const fromEscrow = (amount) => ({
+                account: 'BUYER_ESCROW',
+                companyId: booking.buyerCompanyId,
+                direction: 'DEBIT',
+                amountMinor: amount,
+            });
+            if (refundId && split.refundMinor > 0n) {
+                await tx.payment.update({
+                    where: { id: refundId },
+                    data: {
+                        status: 'SUCCEEDED',
+                        paidAt: new Date(),
+                        providerRef: refundRef,
+                        unitsPerUsd: rates[booking.currency] ?? '1',
+                        amountUsdMinor: convertMinor(split.refundMinor, booking.currency, 'USD', rates),
+                    },
+                });
+                await this.ledger.post(tx, {
+                    ...base,
+                    kind: 'REFUND',
+                    key: `booking-refund:${booking.id}`,
+                    paymentId: refundId,
+                    description: `${booking.code} refund: ${reason}`,
+                    lines: [
+                        fromEscrow(split.refundMinor),
+                        {
+                            account: 'PLATFORM_CASH',
+                            companyId: null,
+                            direction: 'CREDIT',
+                            amountMinor: split.refundMinor,
+                        },
+                    ],
+                });
+            }
+            if (split.factoryMinor > 0n)
+                await this.ledger.post(tx, {
+                    ...base,
+                    kind: 'RELEASE',
+                    key: `booking-compensation:${booking.id}`,
+                    description: `${booking.code} cancelled: the factory's share of the kept deposit`,
+                    lines: [
+                        fromEscrow(split.factoryMinor),
+                        {
+                            account: 'MANUFACTURER_PAYABLE',
+                            companyId: factoryCompanyId,
+                            direction: 'CREDIT',
+                            amountMinor: split.factoryMinor,
+                        },
+                    ],
+                });
+            if (split.platformMinor > 0n)
+                await this.ledger.post(tx, {
+                    ...base,
+                    kind: 'COMMISSION',
+                    key: `booking-fee:${booking.id}`,
+                    description: `${booking.code} cancelled: GarmentGate's share of the kept deposit`,
+                    lines: [
+                        fromEscrow(split.platformMinor),
+                        {
+                            account: 'PLATFORM_REVENUE',
+                            companyId: null,
+                            direction: 'CREDIT',
+                            amountMinor: split.platformMinor,
+                        },
+                    ],
+                });
+        });
+        if (split.refundMinor > 0n && !card)
+            await this.notifyAdmins(`${booking.code}: refund to send`, `Send ${String(split.refundMinor)} ${booking.currency} back by bank transfer (REF-${booking.code})`, { bookingCode: booking.code });
+    }
+    async payBookingCompensation(adminId, booking, factoryCompanyId, amount) {
+        await this.prisma.$transaction(async (tx) => {
+            await this.ledger.lockBooking(tx, booking.id);
+            const { rates } = await this.fx.snapshot(booking.currency, tx);
+            const payout = await tx.payment.create({
+                data: {
+                    capacityBookingId: booking.id,
+                    direction: 'OUTBOUND',
+                    purpose: 'PAYOUT',
+                    amountMinor: amount,
+                    currency: booking.currency,
+                    method: 'BANK_TRANSFER',
+                    provider: 'manual',
+                    reference: `OUT-${booking.code}`,
+                    status: 'SUCCEEDED',
+                    paidAt: new Date(),
+                    confirmedById: adminId,
+                    unitsPerUsd: rates[booking.currency] ?? '1',
+                    amountUsdMinor: convertMinor(amount, booking.currency, 'USD', rates),
+                },
+            });
+            const posted = await this.ledger.post(tx, {
+                kind: 'PAYOUT',
+                key: `booking-payout:${booking.id}`,
+                capacityBookingId: booking.id,
+                paymentId: payout.id,
+                currency: booking.currency,
+                rates,
+                description: `${booking.code}: cancellation compensation paid to the factory`,
+                lines: [
+                    {
+                        account: 'MANUFACTURER_PAYABLE',
+                        companyId: factoryCompanyId,
+                        direction: 'DEBIT',
+                        amountMinor: amount,
+                    },
+                    { account: 'PLATFORM_CASH', companyId: null, direction: 'CREDIT', amountMinor: amount },
+                ],
+            });
+            if (!posted)
+                throw new ConflictException('Already paid');
+        });
+    }
+    async carryBookingDepositIntoOrder(booking, order) {
+        return this.prisma.$transaction(async (tx) => {
+            await this.ledger.lockBooking(tx, booking.id);
+            await this.ledger.lockOrder(tx, order.id);
+            const amount = await this.ledger.bookingEscrow(booking.id, tx);
+            if (amount <= 0n)
+                return 0n;
+            const { rates } = await this.fx.snapshot(booking.currency, tx);
+            const escrow = (direction) => ({
+                account: 'BUYER_ESCROW',
+                companyId: booking.buyerCompanyId,
+                direction,
+                amountMinor: amount,
+            });
+            const cash = (direction) => ({
+                account: 'PLATFORM_CASH',
+                companyId: null,
+                direction,
+                amountMinor: amount,
+            });
+            await this.ledger.post(tx, {
+                kind: 'HOLD',
+                key: `booking-carry-out:${booking.id}`,
+                capacityBookingId: booking.id,
+                currency: booking.currency,
+                rates,
+                description: `${booking.code} deposit carried into ${order.code}`,
+                lines: [escrow('DEBIT'), cash('CREDIT')],
+            });
+            await this.ledger.post(tx, {
+                kind: 'DEPOSIT',
+                key: `booking-carry-in:${booking.id}`,
+                orderId: order.id,
+                currency: booking.currency,
+                rates,
+                description: `Deposit from capacity booking ${booking.code}`,
+                lines: [cash('DEBIT'), escrow('CREDIT')],
+            });
+            await tx.payment.updateMany({
+                where: { capacityBookingId: booking.id, direction: 'INBOUND', status: 'SUCCEEDED' },
+                data: { orderId: order.id },
+            });
+            return amount;
+        });
+    }
+    async settle(paymentId, data) {
+        const payment = await this.prisma.payment.findUniqueOrThrow({
+            where: { id: paymentId },
+            include: {
+                order: { select: { id: true, code: true, buyerCompanyId: true, status: true } },
+                capacityBooking: { select: { id: true, code: true, buyerCompanyId: true } },
+            },
+        });
+        const payer = payerOf(payment);
+        const settled = await this.prisma.$transaction(async (tx) => {
+            if (payment.orderId)
+                await this.ledger.lockOrder(tx, payment.orderId);
+            else if (payment.capacityBookingId)
+                await this.ledger.lockBooking(tx, payment.capacityBookingId);
+            const { rates } = await this.fx.snapshot(payment.currency, tx);
+            const { count } = await tx.payment.updateMany({
+                where: { id: payment.id, status: { in: [...OPEN] } },
+                data: {
+                    ...data,
+                    status: 'SUCCEEDED',
+                    paidAt: new Date(),
+                    unitsPerUsd: rates[payment.currency] ?? '1',
+                    amountUsdMinor: convertMinor(payment.amountMinor, payment.currency, 'USD', rates),
+                },
+            });
+            if (count === 0)
+                return false;
+            await this.ledger.post(tx, {
+                kind: 'DEPOSIT',
+                key: `payment:${payment.id}`,
+                orderId: payment.orderId,
+                capacityBookingId: payment.orderId ? null : payment.capacityBookingId,
+                paymentId: payment.id,
+                currency: payment.currency,
+                description: `${PURPOSE_LABEL[payment.purpose]} ${payment.reference ?? ''} received into escrow`,
+                rates,
+                lines: [
+                    {
+                        account: 'PLATFORM_CASH',
+                        companyId: null,
+                        direction: 'DEBIT',
+                        amountMinor: payment.amountMinor,
+                    },
+                    {
+                        account: 'BUYER_ESCROW',
+                        companyId: payer.companyId,
+                        direction: 'CREDIT',
+                        amountMinor: payment.amountMinor,
+                    },
+                ],
+            });
+            if (FEE_PURPOSES.includes(payment.purpose))
+                await this.ledger.post(tx, {
+                    kind: 'COMMISSION',
+                    key: `fee:${payment.id}`,
+                    orderId: payment.orderId,
+                    paymentId: payment.id,
+                    currency: payment.currency,
+                    description: `${PURPOSE_LABEL[payment.purpose]} ${payment.reference ?? ''} earned`,
+                    rates,
+                    lines: [
+                        {
+                            account: 'BUYER_ESCROW',
+                            companyId: payer.companyId,
+                            direction: 'DEBIT',
+                            amountMinor: payment.amountMinor,
+                        },
+                        {
+                            account: 'PLATFORM_REVENUE',
+                            companyId: null,
+                            direction: 'CREDIT',
+                            amountMinor: payment.amountMinor,
+                        },
+                    ],
+                });
+            return true;
+        });
+        if (!settled)
+            return false;
+        await this.notifyCompany(payer.companyId, `${payer.code}: payment received`, `Thank you: ${payment.reference ?? ''} is in escrow.`, payer.link);
+        if (!payment.order) {
+            if (payment.capacityBookingId && this.bookingSettled)
+                await this.bookingSettled(payment.capacityBookingId);
+            return true;
+        }
+        if (payment.purpose === 'DEPOSIT' && payment.order.status === 'DEPOSIT_PENDING') {
+            const order = await this.prisma.order.findUniqueOrThrow({ where: { id: payment.order.id } });
+            const state = await this.paid(order.id, order.buyerUnitPriceMinor, order.quantity, order.depositBps);
+            if (state.deposit) {
+                await this.creditSampleFees(order.id);
+                await this.orders.advance(order.id, 'IN_PRODUCTION', `Deposit ${payment.reference ?? ''} received`);
+            }
+        }
+        return true;
+    }
+    async creditSampleFees(orderId) {
+        const { creditSampleFees } = await serviceFees(this.prisma);
+        if (!creditSampleFees)
+            return;
+        await this.prisma.$transaction(async (tx) => {
+            await this.ledger.lockOrder(tx, orderId);
+            const order = await tx.order.findUniqueOrThrow({
+                where: { id: orderId },
+                select: { currency: true, buyerCompanyId: true, sampleCreditMinor: true, code: true },
+            });
+            if (order.sampleCreditMinor > 0n)
+                return;
+            const paid = await tx.payment.aggregate({
+                where: { orderId, purpose: 'SAMPLE_FEE', direction: 'INBOUND', status: 'SUCCEEDED' },
+                _sum: { amountMinor: true },
+            });
+            const credit = paid._sum.amountMinor ?? 0n;
+            if (credit <= 0n)
+                return;
+            const { rates } = await this.fx.snapshot(order.currency, tx);
+            await this.ledger.post(tx, {
+                kind: 'COMMISSION',
+                key: `sample-credit:${orderId}`,
+                orderId,
+                currency: order.currency,
+                description: `${order.code}: sample fees credited against the balance`,
+                rates,
+                lines: [
+                    { account: 'PLATFORM_REVENUE', companyId: null, direction: 'DEBIT', amountMinor: credit },
+                    {
+                        account: 'BUYER_ESCROW',
+                        companyId: order.buyerCompanyId,
+                        direction: 'CREDIT',
+                        amountMinor: credit,
+                    },
+                ],
+            });
+            await tx.order.update({ where: { id: orderId }, data: { sampleCreditMinor: credit } });
+        });
+    }
+    async presignProof(adminId, paymentId, dto) {
+        const payment = await this.prisma.payment.findUnique({
+            where: { id: paymentId },
+            include: payerInclude,
+        });
+        if (!payment)
+            throw new NotFoundException('Payment not found');
+        return this.files.reserveUpload({
+            userId: adminId,
+            companyId: payerOf(payment).companyId,
+            purpose: 'PAYMENT_PROOF',
+            folder: 'finance',
+            fileName: dto.fileName,
+            contentType: dto.contentType,
+            sizeBytes: dto.sizeBytes,
+            maxBytes: PROOF_MAX_BYTES,
+        });
+    }
+    async confirm(adminId, paymentId, dto) {
+        const payment = await this.prisma.payment.findUnique({
+            where: { id: paymentId },
+            include: payerInclude,
+        });
+        if (payment?.direction !== 'INBOUND')
+            throw new NotFoundException('Payment not found');
+        if (payment.provider !== 'manual')
+            throw new BadRequestException('Card payments are confirmed by Stripe');
+        if (!OPEN.includes(payment.status))
+            throw new ConflictException('This payment is already settled');
+        const duplicate = await this.prisma.payment.findFirst({
+            where: { providerRef: dto.bankReference, id: { not: paymentId } },
+        });
+        if (duplicate)
+            throw new ConflictException('That bank reference already settled another payment');
+        const proof = await this.files.confirmUpload(dto.proofFileId, payerOf(payment).companyId, 'PAYMENT_PROOF', PROOF_MAX_BYTES);
+        const settled = await this.settle(paymentId, {
+            proofFileId: proof.id,
+            confirmedById: adminId,
+            providerRef: dto.bankReference,
+        });
+        if (!settled)
+            throw new ConflictException('This payment is already settled');
+        await this.audit.log({
+            actorUserId: adminId,
+            action: 'payment.confirmed',
+            entityType: 'Payment',
+            entityId: paymentId,
+            metadata: { bankReference: dto.bankReference },
+        });
+    }
+    async reject(adminId, paymentId, reason) {
+        const payment = await this.prisma.payment.findUnique({
+            where: { id: paymentId },
+            include: payerInclude,
+        });
+        if (!payment)
+            throw new NotFoundException('Payment not found');
+        const { count } = await this.prisma.payment.updateMany({
+            where: { id: paymentId, status: { in: [...OPEN] } },
+            data: { status: 'FAILED', failureReason: reason },
+        });
+        if (count === 0)
+            throw new ConflictException('This payment is already settled');
+        const payer = payerOf(payment);
+        await this.notifyCompany(payer.companyId, `${payer.code}: payment not received`, reason, payer.link);
+        await this.audit.log({
+            actorUserId: adminId,
+            action: 'payment.rejected',
+            entityType: 'Payment',
+            entityId: paymentId,
+            metadata: { reason },
+        });
+    }
+    async stripeEvent(event) {
+        if (event.type !== 'payment_intent.succeeded' && event.type !== 'payment_intent.payment_failed')
+            return;
+        const intent = event.data.object;
+        const payment = await this.prisma.payment.findFirst({
+            where: { provider: 'stripe', providerRef: intent.id },
+        });
+        if (!payment) {
+            this.logger.warn({ intent: intent.id }, 'Stripe event for an unknown payment');
+            return;
+        }
+        if (event.type === 'payment_intent.payment_failed') {
+            await this.prisma.payment.updateMany({
+                where: { id: payment.id, status: { in: [...OPEN] } },
+                data: {
+                    status: 'FAILED',
+                    failureReason: intent.last_payment_error?.message ?? 'Card payment failed',
+                },
+            });
+            return;
+        }
+        if (intent.currency.toUpperCase() !== payment.currency ||
+            BigInt(intent.amount_received) < payment.amountMinor) {
+            this.logger.error({ intent: intent.id, payment: payment.id }, 'Stripe amount or currency mismatch');
+            await this.notifyAdmins('Card payment mismatch', `${payment.reference ?? ''}: Stripe reports ${String(intent.amount_received)} ${intent.currency}`, { paymentId: payment.id });
+            return;
+        }
+        await this.settle(payment.id, {});
+    }
+    async approveRelease(adminId, releaseId) {
+        const release = await this.prisma.orderRelease.findUnique({
+            where: { id: releaseId },
+            include: {
+                order: {
+                    select: {
+                        id: true,
+                        code: true,
+                        buyerCompanyId: true,
+                        manufacturerProfile: { select: { companyId: true } },
+                    },
+                },
+            },
+        });
+        if (!release)
+            throw new NotFoundException('Release not found');
+        await this.prisma.$transaction(async (tx) => {
+            await this.releaseWithin(tx, release, adminId);
+        });
+        await this.notifyCompany(release.order.manufacturerProfile.companyId, `${release.order.code}: payment released`, `${String(release.bps / 100)}% of your order value is released and will be paid out shortly.`, { orderCode: release.order.code });
+        await this.audit.log({
+            actorUserId: adminId,
+            action: 'finance.release_approved',
+            entityType: 'OrderRelease',
+            entityId: release.id,
+        });
+    }
+    async releaseWithin(tx, release, approvedById) {
+        await this.ledger.lockOrder(tx, release.orderId);
+        const { count } = await tx.orderRelease.updateMany({
+            where: { id: release.id, status: 'DUE' },
+            data: { status: 'RELEASED', releasedAt: new Date(), approvedById },
+        });
+        if (count !== 1)
+            throw new ConflictException('This tranche isn’t due, or was already released');
+        const position = await this.ledger.orderPosition(release.orderId, tx);
+        if (position.escrow < release.buyerMinor) {
+            throw new ConflictException(`Not enough in escrow: ${String(position.escrow)} held, ${String(release.buyerMinor)} needed`);
+        }
+        const { rates } = await this.fx.snapshot(release.currency, tx);
+        const base = { orderId: release.orderId, currency: release.currency, rates };
+        await this.ledger.post(tx, {
+            ...base,
+            kind: 'RELEASE',
+            key: `release:${release.id}`,
+            description: `${release.trigger} tranche released to the factory`,
+            lines: [
+                {
+                    account: 'BUYER_ESCROW',
+                    companyId: release.order.buyerCompanyId,
+                    direction: 'DEBIT',
+                    amountMinor: release.manufacturerMinor,
+                },
+                {
+                    account: 'MANUFACTURER_PAYABLE',
+                    companyId: release.order.manufacturerProfile.companyId,
+                    direction: 'CREDIT',
+                    amountMinor: release.manufacturerMinor,
+                },
+            ],
+        });
+        if (release.commissionMinor > 0n) {
+            await this.ledger.post(tx, {
+                ...base,
+                kind: 'COMMISSION',
+                key: `commission:${release.id}`,
+                description: `Commission on the ${release.trigger} tranche`,
+                lines: [
+                    {
+                        account: 'BUYER_ESCROW',
+                        companyId: release.order.buyerCompanyId,
+                        direction: 'DEBIT',
+                        amountMinor: release.commissionMinor,
+                    },
+                    {
+                        account: 'PLATFORM_REVENUE',
+                        companyId: null,
+                        direction: 'CREDIT',
+                        amountMinor: release.commissionMinor,
+                    },
+                ],
+            });
+        }
+    }
+    async payout(adminId, releaseId, dto) {
+        const release = await this.prisma.orderRelease.findUnique({
+            where: { id: releaseId },
+            include: {
+                order: {
+                    select: { id: true, code: true, manufacturerProfile: { select: { companyId: true } } },
+                },
+            },
+        });
+        if (!release)
+            throw new NotFoundException('Release not found');
+        const factoryCompanyId = release.manufacturerProfileId
+            ? (await this.prisma.manufacturerProfile.findUniqueOrThrow({
+                where: { id: release.manufacturerProfileId },
+                select: { companyId: true },
+            })).companyId
+            : release.order.manufacturerProfile.companyId;
+        const account = await this.bankAccounts.verifiedFor(factoryCompanyId);
+        if (!account)
+            throw new ConflictException('This factory has no verified bank account: verify its details before paying');
+        if (await this.prisma.payment.findFirst({ where: { providerRef: dto.bankReference } })) {
+            throw new ConflictException('That bank reference is already recorded');
+        }
+        await this.prisma.$transaction(async (tx) => {
+            await this.ledger.lockOrder(tx, release.orderId);
+            const { count } = await tx.orderRelease.updateMany({
+                where: { id: release.id, status: 'RELEASED' },
+                data: { status: 'PAID', paidAt: new Date() },
+            });
+            if (count !== 1)
+                throw new ConflictException('This tranche isn’t released, or was already paid');
+            const settlementCurrency = dto.settlementCurrency ?? release.currency;
+            const { rates } = await this.fx.snapshot(release.currency, tx);
+            if (!rates[settlementCurrency])
+                throw new BadRequestException(`No exchange rate for ${settlementCurrency}`);
+            const payout = await tx.payment.create({
+                data: {
+                    orderId: release.orderId,
+                    direction: 'OUTBOUND',
+                    purpose: 'PAYOUT',
+                    amountMinor: release.manufacturerMinor,
+                    currency: release.currency,
+                    method: 'BANK_TRANSFER',
+                    provider: 'manual',
+                    providerRef: dto.bankReference,
+                    reference: `OUT-${release.order.code.slice(4)}-${release.trigger}`,
+                    status: 'SUCCEEDED',
+                    paidAt: new Date(),
+                    confirmedById: adminId,
+                    releaseId: release.id,
+                    factoryBankAccountId: account.id,
+                    unitsPerUsd: rates[release.currency] ?? '1',
+                    amountUsdMinor: convertMinor(release.manufacturerMinor, release.currency, 'USD', rates),
+                    settlementCurrency: settlementCurrency === release.currency ? null : settlementCurrency,
+                    settlementAmountMinor: settlementCurrency === release.currency
+                        ? null
+                        : convertMinor(release.manufacturerMinor, release.currency, settlementCurrency, rates),
+                },
+            });
+            await this.ledger.post(tx, {
+                kind: 'PAYOUT',
+                key: `payout:${release.id}`,
+                orderId: release.orderId,
+                paymentId: payout.id,
+                currency: release.currency,
+                rates,
+                description: `${release.trigger} tranche paid to the factory`,
+                lines: [
+                    {
+                        account: 'MANUFACTURER_PAYABLE',
+                        companyId: factoryCompanyId,
+                        direction: 'DEBIT',
+                        amountMinor: release.manufacturerMinor,
+                    },
+                    {
+                        account: 'PLATFORM_CASH',
+                        companyId: null,
+                        direction: 'CREDIT',
+                        amountMinor: release.manufacturerMinor,
+                    },
+                ],
+            });
+        });
+        await this.notifyCompany(release.order.manufacturerProfile.companyId, `${release.order.code}: payout sent`, `Bank reference ${dto.bankReference}.`, { orderCode: release.order.code });
+        await this.audit.log({
+            actorUserId: adminId,
+            action: 'finance.payout',
+            entityType: 'OrderRelease',
+            entityId: release.id,
+            metadata: { bankReference: dto.bankReference },
+        });
+    }
+    async refund(adminId, code, dto) {
+        const order = await this.prisma.order.findUnique({
+            where: { code },
+            select: { id: true, code: true, currency: true, buyerCompanyId: true },
+        });
+        if (!order)
+            throw new NotFoundException('Order not found');
+        const amount = BigInt(dto.amountMinor);
+        const card = await this.prisma.payment.findFirst({
+            where: {
+                orderId: order.id,
+                direction: 'INBOUND',
+                status: 'SUCCEEDED',
+                method: 'CARD',
+                amountMinor: { gte: amount },
+            },
+            orderBy: { paidAt: 'desc' },
+        });
+        const refund = await this.prisma.$transaction(async (tx) => {
+            await this.ledger.lockOrder(tx, order.id);
+            const position = await this.ledger.orderPosition(order.id, tx);
+            const pending = await tx.payment.aggregate({
+                where: { orderId: order.id, purpose: 'REFUND', status: { in: [...OPEN] } },
+                _sum: { amountMinor: true },
+            });
+            const available = position.escrow - (pending._sum.amountMinor ?? 0n);
+            if (amount > available)
+                throw new ConflictException(`Only ${String(available)} is still in escrow`);
+            const count = await tx.payment.count({ where: { orderId: order.id, purpose: 'REFUND' } });
+            return tx.payment.create({
+                data: {
+                    orderId: order.id,
+                    direction: 'OUTBOUND',
+                    purpose: 'REFUND',
+                    amountMinor: amount,
+                    currency: order.currency,
+                    method: card ? 'CARD' : 'BANK_TRANSFER',
+                    provider: card ? 'stripe' : 'manual',
+                    reference: `REF-${order.code.slice(4)}-${String(count + 1)}`,
+                    status: 'PENDING',
+                    failureReason: null,
+                    confirmedById: adminId,
+                },
+            });
+        });
+        const provider = card ? this.stripe : this.manual;
+        let result;
+        try {
+            result = await provider.refund({
+                refundPaymentId: refund.id,
+                providerRef: card?.providerRef ?? null,
+                amountMinor: amount,
+                currency: order.currency,
+            });
+        }
+        catch (error) {
+            await this.prisma.payment.update({
+                where: { id: refund.id },
+                data: {
+                    status: 'FAILED',
+                    failureReason: error instanceof Error ? error.message.slice(0, 300) : 'Refund failed',
+                },
+            });
+            throw new ConflictException('The refund failed at the payment provider');
+        }
+        await this.prisma.$transaction(async (tx) => {
+            await this.ledger.lockOrder(tx, order.id);
+            const { rates } = await this.fx.snapshot(order.currency, tx);
+            await tx.payment.update({
+                where: { id: refund.id },
+                data: {
+                    status: 'SUCCEEDED',
+                    paidAt: new Date(),
+                    providerRef: result.providerRef,
+                    unitsPerUsd: rates[order.currency] ?? '1',
+                    amountUsdMinor: convertMinor(amount, order.currency, 'USD', rates),
+                },
+            });
+            await this.ledger.post(tx, {
+                kind: 'REFUND',
+                key: `refund:${refund.id}`,
+                orderId: order.id,
+                paymentId: refund.id,
+                currency: order.currency,
+                rates,
+                description: `Refund ${refund.reference ?? ''}: ${dto.reason}`,
+                lines: [
+                    {
+                        account: 'BUYER_ESCROW',
+                        companyId: order.buyerCompanyId,
+                        direction: 'DEBIT',
+                        amountMinor: amount,
+                    },
+                    { account: 'PLATFORM_CASH', companyId: null, direction: 'CREDIT', amountMinor: amount },
+                ],
+            });
+        });
+        await this.notifyCompany(order.buyerCompanyId, `${order.code}: refund issued`, dto.reason, {
+            orderCode: order.code,
+        });
+        await this.audit.log({
+            actorUserId: adminId,
+            action: 'finance.refund',
+            entityType: 'Payment',
+            entityId: refund.id,
+            metadata: { amountMinor: dto.amountMinor, reason: dto.reason },
+        });
+    }
+    payoutsView(order, releases) {
+        const released = releases.filter((r) => r.status === 'RELEASED' || r.status === 'PAID');
+        return {
+            orderCode: order.code,
+            currency: order.currency,
+            totalMinor: n(BigInt(order.manufacturerUnitPriceMinor) * BigInt(order.quantity)),
+            commissionBps: order.commissionBps,
+            commissionMinor: n(order.commissionMinor),
+            netMinor: n(BigInt(order.manufacturerUnitPriceMinor) * BigInt(order.quantity) - order.commissionMinor),
+            releasedMinor: n(released.reduce((a, r) => a + r.manufacturerMinor, 0n)),
+            paidMinor: n(releases.filter((r) => r.status === 'PAID').reduce((a, r) => a + r.manufacturerMinor, 0n)),
+            schedule: releases.map((r) => ({
+                id: r.id,
+                trigger: r.trigger,
+                bps: r.bps,
+                amountMinor: n(r.manufacturerMinor),
+                status: r.status,
+                dueAt: iso(r.dueAt),
+                releasedAt: iso(r.releasedAt),
+                paidAt: iso(r.paidAt),
+            })),
+            payouts: releases.flatMap((r) => r.payout
+                ? [
+                    {
+                        reference: r.payout.reference ?? r.payout.id,
+                        amountMinor: n(r.payout.amountMinor),
+                        currency: r.payout.currency,
+                        settlementCurrency: r.payout.settlementCurrency,
+                        settlementAmountMinor: r.payout.settlementAmountMinor === null
+                            ? null
+                            : n(r.payout.settlementAmountMinor),
+                        paidAt: iso(r.payout.paidAt),
+                    },
+                ]
+                : []),
+        };
+    }
+    releaseOrder = {
+        orderBy: { createdAt: 'asc' },
+        include: { payout: true },
+    };
+    async manufacturerView(actor, code) {
+        const order = await this.orders.load(actor, code);
+        if (actorOf(actor) !== 'MANUFACTURER')
+            throw new ForbiddenException('This is the factory’s view');
+        const releases = await this.prisma.orderRelease.findMany({
+            where: { orderId: order.id, supersededAt: null },
+            ...this.releaseOrder,
+        });
+        return this.payoutsView(order, sortReleases(releases));
+    }
+    async manufacturerOverview(actor) {
+        if (actorOf(actor) !== 'MANUFACTURER' || !actor.manufacturerProfileId)
+            throw new ForbiddenException('Factories only');
+        const orders = await this.prisma.order.findMany({
+            where: { manufacturerProfileId: actor.manufacturerProfileId, releases: { some: {} } },
+            orderBy: { createdAt: 'desc' },
+            select: {
+                code: true,
+                currency: true,
+                manufacturerUnitPriceMinor: true,
+                quantity: true,
+                commissionBps: true,
+                commissionMinor: true,
+                releases: { ...this.releaseOrder, where: { supersededAt: null } },
+            },
+        });
+        return orders.map((o) => this.payoutsView(o, sortReleases(o.releases)));
+    }
+    async orderFinance(code) {
+        await this.releaseClaimWindows();
+        const order = await this.prisma.order.findUnique({
+            where: { code },
+            include: {
+                buyerCompany: {
+                    select: { legalName: true, buyerProfile: { select: { publicCode: true } } },
+                },
+                manufacturerProfile: {
+                    select: { publicCode: true, company: { select: { legalName: true } } },
+                },
+                releases: { orderBy: { createdAt: 'asc' } },
+                payments: {
+                    orderBy: { createdAt: 'asc' },
+                    include: { proofFile: { select: { storageKey: true, originalFilename: true } } },
+                },
+                ledgerTransactions: {
+                    orderBy: { postedAt: 'asc' },
+                    include: { entries: { include: { account: { select: { type: true } } } } },
+                },
+            },
+        });
+        if (!order)
+            throw new NotFoundException('Order not found');
+        const position = await this.ledger.orderPosition(order.id);
+        const buyerTotal = BigInt(order.buyerUnitPriceMinor) * BigInt(order.quantity);
+        const manufacturerTotal = BigInt(order.manufacturerUnitPriceMinor) * BigInt(order.quantity);
+        const sumPayments = (purposes) => order.payments
+            .filter((p) => purposes.includes(p.purpose) && p.status === 'SUCCEEDED')
+            .reduce((a, p) => a + p.amountMinor, 0n);
+        return {
+            orderCode: order.code,
+            status: order.status,
+            currency: order.currency,
+            buyer: {
+                code: order.buyerCompany.buyerProfile?.publicCode ?? '',
+                name: order.buyerCompany.legalName,
+            },
+            manufacturer: {
+                code: order.manufacturerProfile.publicCode,
+                name: order.manufacturerProfile.company.legalName,
+            },
+            buyerTotalMinor: n(buyerTotal),
+            manufacturerTotalMinor: n(manufacturerTotal),
+            marginMinor: n(buyerTotal - manufacturerTotal + order.commissionMinor),
+            markupMinor: n(buyerTotal - manufacturerTotal),
+            factoryCommissionMinor: n(order.commissionMinor),
+            factoryCommissionBps: order.commissionBps,
+            repeatOrder: order.repeatOrder,
+            receivedMinor: n(sumPayments(['DEPOSIT', 'BALANCE'])),
+            escrowMinor: n(position.escrow),
+            releasedMinor: n(position.releasedToPayable),
+            commissionMinor: n(position.revenue),
+            payableMinor: n(position.payable),
+            paidOutMinor: n(position.paidOut),
+            refundedMinor: n(sumPayments(['REFUND'])),
+            payments: await Promise.all(order.payments.map(async (p) => ({
+                id: p.id,
+                reference: p.reference ?? p.id,
+                direction: p.direction,
+                purpose: p.purpose,
+                method: p.method,
+                provider: p.provider ?? 'manual',
+                amountMinor: n(p.amountMinor),
+                currency: p.currency,
+                status: p.status,
+                paidAt: iso(p.paidAt),
+                proofUrl: p.proofFile
+                    ? await this.storage.presignDownload(p.proofFile.storageKey, p.proofFile.originalFilename)
+                    : null,
+            }))),
+            releases: sortReleases(order.releases).map((r) => ({
+                id: r.id,
+                trigger: r.trigger,
+                bps: r.bps,
+                amountMinor: n(r.manufacturerMinor),
+                buyerMinor: n(r.buyerMinor),
+                commissionMinor: n(r.commissionMinor),
+                status: r.status,
+                dueAt: iso(r.dueAt),
+                releasedAt: iso(r.releasedAt),
+                paidAt: iso(r.paidAt),
+                fundedEnough: position.escrow >= r.buyerMinor,
+            })),
+            ledger: order.ledgerTransactions.map((t) => ({
+                id: t.id,
+                kind: t.kind,
+                description: t.description,
+                currency: t.currency,
+                postedAt: t.postedAt.toISOString(),
+                unitsPerUsd: t.unitsPerUsd.toString(),
+                amountUsdMinor: n(t.amountUsdMinor),
+                entries: t.entries.map((e) => ({
+                    account: e.account.type,
+                    direction: e.direction,
+                    amountMinor: n(e.amountMinor),
+                })),
+            })),
+        };
+    }
+    async inbox() {
+        await this.releaseClaimWindows();
+        const party = {
+            select: {
+                legalName: true,
+                buyerProfile: { select: { publicCode: true } },
+                manufacturerProfile: { select: { publicCode: true } },
+            },
+        };
+        const [payments, releases] = await Promise.all([
+            this.prisma.payment.findMany({
+                where: { direction: 'INBOUND', provider: 'manual', status: { in: [...OPEN] } },
+                orderBy: [{ status: 'desc' }, { createdAt: 'asc' }],
+                include: {
+                    order: { select: { code: true, buyerCompany: party } },
+                    capacityBooking: { select: { code: true, buyerCompany: party } },
+                },
+            }),
+            this.prisma.orderRelease.findMany({
+                where: { status: { in: ['DUE', 'RELEASED'] } },
+                orderBy: { dueAt: 'asc' },
+                include: {
+                    order: {
+                        select: {
+                            id: true,
+                            code: true,
+                            manufacturerProfile: {
+                                select: { publicCode: true, company: { select: { legalName: true } } },
+                            },
+                        },
+                    },
+                },
+            }),
+        ]);
+        const escrow = new Map();
+        for (const r of releases)
+            if (!escrow.has(r.orderId))
+                escrow.set(r.orderId, (await this.ledger.orderPosition(r.orderId)).escrow);
+        const owedTo = new Map((await this.prisma.manufacturerProfile.findMany({
+            where: {
+                id: {
+                    in: releases.flatMap((r) => r.manufacturerProfileId ? [r.manufacturerProfileId] : []),
+                },
+            },
+            select: {
+                id: true,
+                publicCode: true,
+                companyId: true,
+                company: { select: { legalName: true } },
+            },
+        })).map((p) => [p.id, p]));
+        const accounts = new Map((await this.prisma.factoryBankAccount.findMany({
+            where: {
+                status: 'VERIFIED',
+                companyId: { in: [...owedTo.values()].map((p) => p.companyId) },
+            },
+        })).map((a) => [a.companyId, a]));
+        const factory = (r) => ({
+            code: r.order.manufacturerProfile.publicCode,
+            name: r.order.manufacturerProfile.company.legalName,
+        });
+        return {
+            toConfirm: payments.flatMap((p) => {
+                const owner = p.order ?? p.capacityBooking;
+                if (!owner)
+                    return [];
+                return [
+                    {
+                        paymentId: p.id,
+                        orderCode: owner.code,
+                        reference: p.reference ?? p.id,
+                        purpose: p.purpose,
+                        method: p.method,
+                        amountMinor: n(p.amountMinor),
+                        currency: p.currency,
+                        status: p.status,
+                        buyer: {
+                            code: owner.buyerCompany.buyerProfile?.publicCode ?? '',
+                            name: owner.buyerCompany.legalName,
+                        },
+                        payerReference: p.payerReference,
+                        createdAt: p.createdAt.toISOString(),
+                    },
+                ];
+            }),
+            toRelease: releases
+                .filter((r) => r.status === 'DUE')
+                .map((r) => ({
+                releaseId: r.id,
+                orderCode: r.order.code,
+                trigger: r.trigger,
+                manufacturerMinor: n(r.manufacturerMinor),
+                buyerMinor: n(r.buyerMinor),
+                currency: r.currency,
+                manufacturer: factory(r),
+                fundedEnough: (escrow.get(r.orderId) ?? 0n) >= r.buyerMinor,
+                dueAt: iso(r.dueAt),
+            })),
+            toPay: releases
+                .filter((r) => r.status === 'RELEASED')
+                .map((r) => {
+                const owed = owedTo.get(r.manufacturerProfileId ?? '');
+                const account = owed ? accounts.get(owed.companyId) : undefined;
+                return {
+                    releaseId: r.id,
+                    orderCode: r.order.code,
+                    manufacturerMinor: n(r.manufacturerMinor),
+                    currency: r.currency,
+                    manufacturer: owed
+                        ? { code: owed.publicCode, name: owed.company.legalName }
+                        : factory(r),
+                    releasedAt: iso(r.releasedAt),
+                    bank: account ? bankDetails(account) : null,
+                };
+            }),
+        };
+    }
+    async balances() {
+        const partners = new Map((await this.prisma.logisticsPartner.findMany({
+            select: { id: true, code: true, name: true },
+        })).map((p) => [p.id, p]));
+        const [accounts, rates, companies, payments, planPayments] = await Promise.all([
+            this.ledger.balances(),
+            this.fx.rates(),
+            this.prisma.company.findMany({
+                select: {
+                    id: true,
+                    legalName: true,
+                    buyerProfile: { select: { publicCode: true } },
+                    manufacturerProfile: { select: { publicCode: true } },
+                },
+            }),
+            this.prisma.payment.groupBy({
+                by: ['currency', 'direction'],
+                where: { status: 'SUCCEEDED' },
+                _sum: { amountMinor: true },
+            }),
+            this.prisma.planInvoice.groupBy({
+                by: ['currency'],
+                _sum: { amountMinor: true },
+            }),
+        ]);
+        const byId = new Map(companies.map((c) => [c.id, c]));
+        const currencies = [...new Set(accounts.map((a) => a.currency))].sort();
+        const sum = (currency, type) => accounts
+            .filter((a) => a.currency === currency && a.type === type)
+            .reduce((x, a) => x + a.balance, 0n);
+        const usd = (type) => accounts
+            .filter((a) => a.type === type)
+            .reduce((x, a) => x + (rates[a.currency] ? convertMinor(a.balance, a.currency, 'USD', rates) : 0n), 0n);
+        return {
+            currencies: currencies.map((currency) => {
+                const debits = accounts
+                    .filter((a) => a.currency === currency)
+                    .reduce((x, a) => x + a.debit, 0n);
+                const credits = accounts
+                    .filter((a) => a.currency === currency)
+                    .reduce((x, a) => x + a.credit, 0n);
+                const cash = sum(currency, 'PLATFORM_CASH');
+                const escrow = sum(currency, 'BUYER_ESCROW');
+                const payable = sum(currency, 'MANUFACTURER_PAYABLE') +
+                    sum(currency, 'PARTNER_PAYABLE') +
+                    sum(currency, 'INSPECTOR_PAYABLE');
+                const revenue = sum(currency, 'PLATFORM_REVENUE');
+                const paymentsIn = (payments.find((p) => p.currency === currency && p.direction === 'INBOUND')?._sum
+                    .amountMinor ?? 0n) +
+                    BigInt(planPayments.find((p) => p.currency === currency)?._sum.amountMinor ?? 0);
+                const paymentsOut = payments.find((p) => p.currency === currency && p.direction === 'OUTBOUND')?._sum
+                    .amountMinor ?? 0n;
+                return {
+                    currency,
+                    debitsMinor: n(debits),
+                    creditsMinor: n(credits),
+                    balanced: debits === credits,
+                    cashMinor: n(cash),
+                    escrowMinor: n(escrow),
+                    payableMinor: n(payable),
+                    revenueMinor: n(revenue),
+                    reconciled: cash === escrow + payable + revenue,
+                    paymentsNetMinor: n(paymentsIn - paymentsOut),
+                    cashMatchesPayments: cash === paymentsIn - paymentsOut,
+                };
+            }),
+            accounts: accounts.map((a) => {
+                const company = a.companyId ? byId.get(a.companyId) : undefined;
+                const partner = a.logisticsPartnerId ? partners.get(a.logisticsPartnerId) : undefined;
+                return {
+                    type: a.type,
+                    currency: a.currency,
+                    party: partner
+                        ? { code: partner.code, name: partner.name }
+                        : company
+                            ? {
+                                code: company.buyerProfile?.publicCode ??
+                                    company.manufacturerProfile?.publicCode ??
+                                    '',
+                                name: company.legalName,
+                            }
+                            : null,
+                    balanceMinor: n(a.balance),
+                };
+            }),
+            totalsUsdMinor: {
+                cash: n(usd('PLATFORM_CASH')),
+                escrow: n(usd('BUYER_ESCROW')),
+                payable: n(usd('MANUFACTURER_PAYABLE') + usd('PARTNER_PAYABLE') + usd('INSPECTOR_PAYABLE')),
+                revenue: n(usd('PLATFORM_REVENUE')),
+            },
+            rates: Object.fromEntries(Object.entries(rates)),
+        };
+    }
+    async notifyCompany(companyId, title, body, data) {
+        await this.notifier.notify({
+            to: { companyId },
+            type: 'PAYMENT_UPDATE',
+            title,
+            body,
+            link: data,
+        });
+    }
+    async notifyAdmins(title, body, data) {
+        await this.notifier.notify({ to: 'ADMINS', type: 'PAYMENT_UPDATE', title, body, link: data });
+    }
+};
+PaymentsService = PaymentsService_1 = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [PrismaService,
+        Notifier,
+        LedgerService,
+        FxService,
+        ManualProvider,
+        StripeProvider,
+        OrdersService,
+        OrderHooks,
+        FilesService,
+        StorageService,
+        AuditService,
+        BankAccountsService])
+], PaymentsService);
+export { PaymentsService };
+const TRIGGER_ORDER = [
+    'PRODUCTION_START',
+    'QC_PASSED',
+    'SHIPPED',
+    'DELIVERED',
+    'COMPLETED',
+];
+function sortReleases(rows) {
+    return [...rows].sort((a, b) => TRIGGER_ORDER.indexOf(a.trigger) - TRIGGER_ORDER.indexOf(b.trigger));
+}
+//# sourceMappingURL=payments.service.js.map

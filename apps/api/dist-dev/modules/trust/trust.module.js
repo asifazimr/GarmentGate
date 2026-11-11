@@ -1,0 +1,26 @@
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+import { Module } from '@nestjs/common';
+import { ChatModule } from '../chat/chat.module.js';
+import { OrdersModule } from '../orders/orders.module.js';
+import { PaymentsModule } from '../payments/payments.module.js';
+import { DisputesService } from './disputes.service.js';
+import { PerformanceService } from './performance.service.js';
+import { ReviewsService } from './reviews.service.js';
+import { AdminDisputesController, OrderTrustController, PublicReviewsController, } from './trust.controller.js';
+let TrustModule = class TrustModule {
+};
+TrustModule = __decorate([
+    Module({
+        imports: [ChatModule, OrdersModule, PaymentsModule],
+        controllers: [OrderTrustController, PublicReviewsController, AdminDisputesController],
+        providers: [ReviewsService, PerformanceService, DisputesService],
+        exports: [PerformanceService],
+    })
+], TrustModule);
+export { TrustModule };
+//# sourceMappingURL=trust.module.js.map

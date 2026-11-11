@@ -1,0 +1,283 @@
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ROLE_HOME, } from '@garmentgate/shared';
+import { PrismaService } from '../../prisma/prisma.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
+import { AuditService } from '../audit/audit.service.js';
+import { MailService } from '../mail/mail.service.js';
+import { SearchService } from '../search/search.service.js';
+const listInclude = {
+    users: { where: { companyRole: 'OWNER' }, take: 1 },
+    buyerProfile: { select: { publicCode: true } },
+    manufacturerProfile: {
+        select: { publicCode: true, _count: { select: { certifications: true } } },
+    },
+    _count: { select: { documents: true } },
+};
+const detailInclude = {
+    ...listInclude,
+    buyerProfile: { include: { categories: true } },
+    manufacturerProfile: {
+        include: {
+            categories: true,
+            certifications: { include: { file: true } },
+            _count: { select: { certifications: true } },
+        },
+    },
+    documents: { include: { file: true }, orderBy: { createdAt: 'asc' } },
+};
+let AdminKycService = class AdminKycService {
+    prisma;
+    notifier;
+    mail;
+    audit;
+    config;
+    search;
+    constructor(prisma, notifier, mail, audit, config, search) {
+        this.prisma = prisma;
+        this.notifier = notifier;
+        this.mail = mail;
+        this.audit = audit;
+        this.config = config;
+        this.search = search;
+    }
+    async list(status) {
+        const companies = await this.prisma.company.findMany({
+            where: { kycStatus: status, deletedAt: null },
+            include: listInclude,
+            orderBy: [{ kycSubmittedAt: 'asc' }, { createdAt: 'asc' }],
+            take: 200,
+        });
+        return companies.map((c) => this.toListItem(c));
+    }
+    async detail(companyId) {
+        const c = await this.prisma.company.findUnique({
+            where: { id: companyId },
+            include: detailInclude,
+        });
+        if (!c)
+            throw new NotFoundException('Company not found');
+        const mp = c.manufacturerProfile;
+        const bp = c.buyerProfile;
+        return {
+            ...this.toListItem(c),
+            rejectionReason: c.kycRejectionReason,
+            company: {
+                legalName: c.legalName,
+                tradeName: c.tradeName ?? undefined,
+                country: c.country,
+                city: c.city ?? '',
+                addressLine1: c.addressLine1 ?? '',
+                addressLine2: c.addressLine2 ?? undefined,
+                postalCode: c.postalCode ?? undefined,
+                registrationNumber: c.registrationNumber ?? '',
+                website: c.website ?? undefined,
+                phone: c.phone ?? undefined,
+                yearEstablished: c.yearEstablished ?? undefined,
+            },
+            categories: (mp?.categories ?? bp?.categories ?? []).map((cat) => cat.name),
+            profileSummary: mp
+                ? {
+                    'Monthly capacity (pcs)': mp.monthlyCapacityPcs,
+                    'MOQ (pcs)': mp.moqPcs,
+                    'Sample lead time (days)': mp.sampleLeadTimeDays,
+                    'Production lead time (days)': mp.productionLeadTimeMinDays !== null
+                        ? `${mp.productionLeadTimeMinDays}–${mp.productionLeadTimeMaxDays ?? '?'}`
+                        : null,
+                    Workforce: mp.workforceSize,
+                    'Factory size (m²)': mp.factorySizeSqm,
+                    'Export markets': mp.exportMarkets.length > 0 ? mp.exportMarkets.join(', ') : null,
+                    About: mp.about,
+                }
+                : {
+                    'Business type': bp?.businessType ?? null,
+                    'Annual volume (pcs)': bp?.annualVolumePcs ?? null,
+                    'Typical order (pcs)': bp?.typicalOrderQuantityPcs ?? null,
+                    'Target markets': bp && bp.targetMarkets.length > 0 ? bp.targetMarkets.join(', ') : null,
+                    'Sourcing needs': bp?.sourcingNeeds ?? null,
+                },
+            documents: c.documents.map((doc) => ({
+                id: doc.id,
+                fileId: doc.fileId,
+                type: doc.type,
+                status: doc.status,
+                documentNumber: doc.documentNumber,
+                expiresAt: doc.expiresAt?.toISOString() ?? null,
+                file: {
+                    fileName: doc.file.originalFilename,
+                    contentType: doc.file.mimeType,
+                    sizeBytes: doc.file.sizeBytes,
+                },
+                createdAt: doc.createdAt.toISOString(),
+            })),
+            certifications: (mp?.certifications ?? []).map((cert) => ({
+                id: cert.id,
+                fileId: cert.fileId,
+                type: cert.type,
+                customName: cert.customName,
+                certificateNumber: cert.certificateNumber,
+                issuedAt: cert.issuedAt?.toISOString() ?? null,
+                expiresAt: cert.expiresAt?.toISOString() ?? null,
+                status: cert.status,
+                file: cert.file
+                    ? {
+                        fileName: cert.file.originalFilename,
+                        contentType: cert.file.mimeType,
+                        sizeBytes: cert.file.sizeBytes,
+                    }
+                    : null,
+            })),
+        };
+    }
+    async approve(adminId, companyId, note) {
+        const company = await this.pending(companyId);
+        const now = new Date();
+        await this.prisma.$transaction([
+            this.prisma.company.update({
+                where: { id: company.id },
+                data: {
+                    kycStatus: 'VERIFIED',
+                    kycReviewedAt: now,
+                    kycReviewedById: adminId,
+                    kycRejectionReason: null,
+                },
+            }),
+            this.prisma.companyDocument.updateMany({
+                where: { companyId: company.id, status: 'PENDING' },
+                data: { status: 'VERIFIED', reviewedAt: now },
+            }),
+            this.prisma.certification.updateMany({
+                where: { manufacturerProfile: { companyId: company.id }, status: 'PENDING' },
+                data: { status: 'VERIFIED', verifiedAt: now },
+            }),
+            this.prisma.manufacturerProfile.updateMany({
+                where: { companyId: company.id },
+                data: { isListed: true },
+            }),
+        ]);
+        await this.notifier.notify({
+            to: { companyId: company.id },
+            type: 'KYC_APPROVED',
+            title: 'Your company is verified',
+            body: 'Welcome aboard. Your dashboard is ready.',
+            email: false,
+        });
+        await this.syncListing(company.id);
+        await this.audit.log({
+            actorUserId: adminId,
+            action: 'kyc.approved',
+            entityType: 'Company',
+            entityId: company.id,
+            ...(note && { metadata: { note } }),
+        });
+        for (const user of company.users) {
+            await this.mail.send('kyc-decision', user.email, {
+                firstName: user.firstName,
+                approved: true,
+                actionUrl: this.webUrl(ROLE_HOME[company.type]),
+            });
+        }
+    }
+    async reject(adminId, companyId, reason) {
+        const company = await this.pending(companyId);
+        await this.prisma.$transaction([
+            this.prisma.company.update({
+                where: { id: company.id },
+                data: {
+                    kycStatus: 'REJECTED',
+                    onboardingStep: 'DOCUMENTS',
+                    kycReviewedAt: new Date(),
+                    kycReviewedById: adminId,
+                    kycRejectionReason: reason,
+                },
+            }),
+        ]);
+        await this.notifier.notify({
+            to: { companyId: company.id },
+            type: 'KYC_REJECTED',
+            title: 'A few changes needed',
+            body: reason,
+            email: false,
+        });
+        await this.syncListing(company.id);
+        await this.audit.log({
+            actorUserId: adminId,
+            action: 'kyc.rejected',
+            entityType: 'Company',
+            entityId: company.id,
+            metadata: { reason },
+        });
+        for (const user of company.users) {
+            await this.mail.send('kyc-decision', user.email, {
+                firstName: user.firstName,
+                approved: false,
+                reason,
+                actionUrl: this.webUrl('/onboarding'),
+            });
+        }
+    }
+    async syncListing(companyId) {
+        const profile = await this.prisma.manufacturerProfile.findUnique({
+            where: { companyId },
+            select: { id: true },
+        });
+        if (profile)
+            await this.search.syncManufacturer(profile.id);
+    }
+    async pending(companyId) {
+        const company = await this.prisma.company.findUnique({
+            where: { id: companyId },
+            include: { users: true },
+        });
+        if (!company)
+            throw new NotFoundException('Company not found');
+        if (company.kycStatus !== 'PENDING_REVIEW') {
+            throw new ConflictException(`This company is ${company.kycStatus.toLowerCase().replace('_', ' ')}, not pending review`);
+        }
+        return company;
+    }
+    toListItem(c) {
+        const owner = c.users[0];
+        return {
+            id: c.id,
+            type: c.type,
+            legalName: c.legalName,
+            country: c.country,
+            publicCode: c.manufacturerProfile?.publicCode ?? c.buyerProfile?.publicCode ?? null,
+            kycStatus: c.kycStatus,
+            submittedAt: c.kycSubmittedAt?.toISOString() ?? null,
+            owner: owner
+                ? {
+                    name: `${owner.firstName} ${owner.lastName}`,
+                    email: owner.email,
+                    emailVerified: owner.emailVerifiedAt !== null,
+                }
+                : null,
+            documentCount: c._count.documents,
+            certificationCount: c.manufacturerProfile?._count.certifications ?? 0,
+        };
+    }
+    webUrl(path) {
+        return new URL(path, this.config.get('WEB_APP_URL', { infer: true })).toString();
+    }
+};
+AdminKycService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [PrismaService,
+        Notifier,
+        MailService,
+        AuditService,
+        ConfigService,
+        SearchService])
+], AdminKycService);
+export { AdminKycService };
+//# sourceMappingURL=admin-kyc.service.js.map

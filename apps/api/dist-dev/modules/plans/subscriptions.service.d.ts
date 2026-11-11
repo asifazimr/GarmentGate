@@ -1,0 +1,125 @@
+import { type OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { PlanInterval, SubscriptionPlan, SubscriptionStatus } from '@garmentgate/shared';
+import type Stripe from 'stripe';
+import type { Env } from '../../config/env.schema.js';
+import type { PlanSubscription, Prisma } from '../../generated/prisma/client.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
+import { Notifier } from '../notifications/notifier.service.js';
+import { FxService } from '../payments/fx.service.js';
+import { LedgerService } from '../payments/ledger.service.js';
+import { StripeProvider } from '../payments/providers/stripe.provider.js';
+import { StripeEvents } from '../payments/stripe-events.js';
+export type PlanOwner = {
+    kind: 'FACTORY';
+    profileId: string;
+} | {
+    kind: 'BUYER';
+    companyId: string;
+};
+export declare const LIVE: SubscriptionStatus[];
+export declare const planLabel: (t: SubscriptionPlan) => string;
+export declare function ownerWhere(owner: PlanOwner): Prisma.PlanSubscriptionWhereInput;
+export declare function ownerOf(row: PlanSubscription): PlanOwner;
+type Handler = (owner: PlanOwner) => Promise<unknown>;
+export declare class SubscriptionsService implements OnModuleInit {
+    private readonly prisma;
+    private readonly ledger;
+    private readonly fx;
+    private readonly notifier;
+    private readonly audit;
+    private readonly stripeProvider;
+    private readonly stripeEvents;
+    private readonly config;
+    private readonly stripe;
+    private readonly logger;
+    private readonly handlers;
+    constructor(prisma: PrismaService, ledger: LedgerService, fx: FxService, notifier: Notifier, audit: AuditService, stripeProvider: StripeProvider, stripeEvents: StripeEvents, config: ConfigService<Env, true>, stripe: Stripe | null);
+    onModuleInit(): void;
+    onChange(kind: PlanOwner['kind'], handler: Handler): void;
+    private changed;
+    cardEnabled(): boolean;
+    live(owner: PlanOwner, client?: Prisma.TransactionClient): Prisma.Prisma__PlanSubscriptionClient<{
+        id: string;
+        status: import("../../generated/prisma/enums.js").SubscriptionStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        manufacturerProfileId: string | null;
+        tier: import("../../generated/prisma/enums.js").SubscriptionPlan;
+        note: string | null;
+        buyerCompanyId: string | null;
+        createdById: string | null;
+        source: import("../../generated/prisma/enums.js").SubscriptionSource;
+        amountUsdMinor: number;
+        bankReference: string | null;
+        interval: import("../../generated/prisma/enums.js").PlanInterval | null;
+        stripeCustomerId: string | null;
+        stripeSubscriptionId: string | null;
+        stripeCheckoutSessionId: string | null;
+        currentPeriodEnd: Date | null;
+        cancelAtPeriodEnd: boolean;
+        canceledAt: Date | null;
+    } | null, null, import("@prisma/client/runtime/client").DefaultArgs, {
+        omit: Prisma.GlobalOmitConfig | undefined;
+    }>;
+    liveAll(owner: PlanOwner): Prisma.PrismaPromise<{
+        id: string;
+        status: import("../../generated/prisma/enums.js").SubscriptionStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        manufacturerProfileId: string | null;
+        tier: import("../../generated/prisma/enums.js").SubscriptionPlan;
+        note: string | null;
+        buyerCompanyId: string | null;
+        createdById: string | null;
+        source: import("../../generated/prisma/enums.js").SubscriptionSource;
+        amountUsdMinor: number;
+        bankReference: string | null;
+        interval: import("../../generated/prisma/enums.js").PlanInterval | null;
+        stripeCustomerId: string | null;
+        stripeSubscriptionId: string | null;
+        stripeCheckoutSessionId: string | null;
+        currentPeriodEnd: Date | null;
+        cancelAtPeriodEnd: boolean;
+        canceledAt: Date | null;
+    }[]>;
+    invoices(owner: PlanOwner): Prisma.PrismaPromise<{
+        id: string;
+        createdAt: Date;
+        currency: import("../../generated/prisma/enums.js").Currency;
+        amountMinor: number;
+        paidAt: Date;
+        subscriptionId: string;
+        stripeInvoiceId: string | null;
+        periodEnd: Date | null;
+    }[]>;
+    checkout(owner: PlanOwner, p: {
+        tier: SubscriptionPlan;
+        interval: PlanInterval;
+        amountUsdMinor: number;
+        customerName: string;
+        email: string;
+        userId: string;
+        returnPath: string;
+    }): Promise<{
+        url: string;
+    }>;
+    cancel(owner: PlanOwner, userId: string): Promise<void>;
+    grant(owner: PlanOwner, p: {
+        tier: SubscriptionPlan | null;
+        endsOn?: string;
+        paidUsdMinor?: number;
+        bankReference?: string;
+        note: string;
+        adminId: string;
+    }): Promise<void>;
+    expireGrants(now?: Date): Promise<PlanOwner[]>;
+    stripeEvent(event: Stripe.Event): Promise<void>;
+    private onSubscription;
+    private rowForInvoice;
+    private onInvoicePaid;
+    private book;
+    companyOf(owner: PlanOwner): Promise<string>;
+}
+export {};

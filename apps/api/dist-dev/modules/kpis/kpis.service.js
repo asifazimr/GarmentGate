@@ -1,0 +1,332 @@
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+import { Injectable } from '@nestjs/common';
+import { convertMinor, DEFAULT_UNIT_ECONOMICS, gates, orderContribution, rateBps, UnitEconomicsSettingsSchema, } from '@garmentgate/shared';
+import { PrismaService } from '../../prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
+import { FxService } from '../payments/fx.service.js';
+const KEY = 'unit_economics';
+const DAY = 86_400_000;
+const REPEAT_WINDOW = 183 * DAY;
+const ACTIVE_WINDOW = 90 * DAY;
+const FEE_PURPOSES = ['SAMPLE_FEE', 'INSPECTION_FEE'];
+const n = (v) => Number(v);
+let KpisService = class KpisService {
+    prisma;
+    fx;
+    audit;
+    constructor(prisma, fx, audit) {
+        this.prisma = prisma;
+        this.fx = fx;
+        this.audit = audit;
+    }
+    async settings() {
+        const row = await this.prisma.platformSetting.findUnique({ where: { key: KEY } });
+        const parsed = UnitEconomicsSettingsSchema.safeParse(row?.value);
+        return parsed.success ? parsed.data : DEFAULT_UNIT_ECONOMICS;
+    }
+    async setSettings(adminId, settings) {
+        const value = { ...settings };
+        await this.prisma.platformSetting.upsert({
+            where: { key: KEY },
+            create: { key: KEY, value },
+            update: { value },
+        });
+        await this.audit.log({
+            actorUserId: adminId,
+            action: 'kpis.settings_updated',
+            entityType: 'PlatformSetting',
+            entityId: KEY,
+            metadata: value,
+        });
+        return settings;
+    }
+    async report(q) {
+        const from = new Date(`${q.from}T00:00:00.000Z`);
+        const to = new Date(new Date(`${q.to}T00:00:00.000Z`).getTime() + DAY);
+        const [settings, rates] = await Promise.all([this.settings(), this.fx.rates()]);
+        const usd = (amount, currency) => {
+            try {
+                return convertMinor(amount, currency, 'USD', rates);
+            }
+            catch {
+                return 0n;
+            }
+        };
+        const economics = await this.economics(from, to, settings, rates);
+        const last30 = await this.economics(new Date(to.getTime() - 30 * DAY), to, settings, rates);
+        const [paidOrders, onTime, firstPass, repeat, quotes, activeFactories, capacity, claims, assignHours,] = await Promise.all([
+            this.prisma.order.count({
+                where: {
+                    payments: {
+                        some: {
+                            purpose: 'DEPOSIT',
+                            direction: 'INBOUND',
+                            status: 'SUCCEEDED',
+                            paidAt: { lt: to },
+                        },
+                    },
+                },
+            }),
+            this.onTime(from, to),
+            this.firstPass(from, to),
+            this.repeatBuyers(from, to),
+            this.quoteConversion(from, to),
+            this.prisma.manufacturerProfile.count({
+                where: {
+                    company: { kycStatus: 'VERIFIED' },
+                    orders: { some: { createdAt: { gte: new Date(to.getTime() - ACTIVE_WINDOW), lt: to } } },
+                },
+            }),
+            this.capacity(from, to),
+            this.claimRate(from, to),
+            this.inspectorAssignHours(from, to),
+        ]);
+        const gmv = economics.reduce((a, e) => a + usd(e.buyerGoods, e.currency), 0n);
+        const gross = economics.reduce((a, e) => a + usd(e.c.grossRevenueMinor, e.currency), 0n);
+        const contribution = economics.reduce((a, e) => a + usd(e.c.contributionMinor, e.currency), 0n);
+        const monthly = last30.reduce((a, e) => a + usd(e.c.contributionMinor, e.currency), 0n);
+        const positive = economics.filter((e) => e.c.contributionMinor > 0n).length;
+        const report = {
+            gmvUsdMinor: n(gmv),
+            grossRevenueUsdMinor: n(gross),
+            contributionUsdMinor: n(contribution),
+            orders: economics.length,
+            takeRateBps: gmv === 0n ? null : Number((gross * 10000n) / gmv),
+            contributionPerOrderUsdMinor: economics.length === 0 ? null : Math.round(n(contribution) / economics.length),
+            positiveContributionBps: rateBps(positive, economics.length),
+            onTimeBps: rateBps(onTime.onTime, onTime.shipped),
+            shipped: onTime.shipped,
+            firstPassBps: rateBps(firstPass.passed, firstPass.total),
+            finalInspections: firstPass.total,
+            repeatBuyerBps: rateBps(repeat.repeat, repeat.buyers),
+            quoteToOrderBps: rateBps(quotes.accepted, quotes.offered),
+            quotesOffered: quotes.offered,
+            activeFactories,
+            capacityUtilisationBps: rateBps(capacity.booked, capacity.total),
+            claimRateBps: rateBps(claims.claimed, claims.delivered),
+            delivered: claims.delivered,
+            inspectorAssignHours: assignHours,
+            paidOrders,
+        };
+        return {
+            from: q.from,
+            to: q.to,
+            ...report,
+            gates: gates({
+                paidOrders,
+                onTimeBps: report.onTimeBps,
+                positiveContributionBps: report.positiveContributionBps,
+                repeatBuyerBps: report.repeatBuyerBps,
+                monthlyContributionUsdMinor: n(monthly),
+                monthlyFixedCostsUsdMinor: settings.monthlyFixedCostsUsdMinor,
+                workingCapitalLine: settings.workingCapitalLine,
+            }),
+            settings,
+            economics: economics.map((e) => ({
+                orderCode: e.code,
+                buyerCode: e.buyerCode,
+                manufacturerCode: e.manufacturerCode,
+                status: e.status,
+                confirmedAt: e.confirmedAt.toISOString(),
+                currency: e.currency,
+                buyerPaysMinor: n(e.c.buyerPaysMinor),
+                grossRevenueMinor: n(e.c.grossRevenueMinor),
+                paymentFeesMinor: n(e.c.paymentFeesMinor),
+                merchandisingMinor: n(e.c.merchandisingMinor),
+                claimsReserveMinor: n(e.c.claimsReserveMinor),
+                contributionMinor: n(e.c.contributionMinor),
+                contributionUsdMinor: n(usd(e.c.contributionMinor, e.currency)),
+            })),
+        };
+    }
+    async economics(from, to, settings, rates) {
+        const orders = await this.prisma.order.findMany({
+            where: { confirmedAt: { gte: from, lt: to }, status: { not: 'CANCELLED' } },
+            orderBy: { confirmedAt: 'desc' },
+            select: {
+                code: true,
+                status: true,
+                currency: true,
+                confirmedAt: true,
+                buyerTotalMinor: true,
+                manufacturerTotalMinor: true,
+                commissionMinor: true,
+                buyerCompany: { select: { buyerProfile: { select: { publicCode: true } } } },
+                manufacturerProfile: { select: { publicCode: true } },
+                logisticsQuotes: { where: { status: 'ACCEPTED' }, select: { partnerCostMinor: true } },
+                logisticsShipments: { where: { active: true }, select: { costShareMinor: true } },
+                payments: {
+                    where: {
+                        direction: 'INBOUND',
+                        status: 'SUCCEEDED',
+                        purpose: { in: ['LOGISTICS', ...FEE_PURPOSES] },
+                    },
+                    select: { purpose: true, amountMinor: true },
+                },
+            },
+        });
+        return orders.map((o) => {
+            const paid = (purposes) => o.payments
+                .filter((p) => purposes.includes(p.purpose))
+                .reduce((a, p) => a + p.amountMinor, 0n);
+            const logisticsCharged = paid(['LOGISTICS']);
+            const logisticsCost = o.logisticsShipments[0]?.costShareMinor ??
+                (logisticsCharged > 0n ? (o.logisticsQuotes[0]?.partnerCostMinor ?? 0n) : 0n);
+            let merchandising = 0n;
+            try {
+                merchandising = convertMinor(BigInt(settings.merchandisingUsdMinor), 'USD', o.currency, rates);
+            }
+            catch {
+                merchandising = 0n;
+            }
+            return {
+                code: o.code,
+                status: o.status,
+                currency: o.currency,
+                confirmedAt: o.confirmedAt ?? new Date(0),
+                buyerCode: o.buyerCompany.buyerProfile?.publicCode ?? 'BYR',
+                manufacturerCode: o.manufacturerProfile.publicCode,
+                buyerGoods: o.buyerTotalMinor,
+                c: orderContribution({
+                    buyerGoodsMinor: o.buyerTotalMinor,
+                    factoryGoodsMinor: o.manufacturerTotalMinor,
+                    commissionMinor: o.commissionMinor,
+                    logisticsChargedMinor: logisticsCharged,
+                    logisticsCostMinor: logisticsCost,
+                    feesChargedMinor: paid(FEE_PURPOSES),
+                    feesCostMinor: 0n,
+                }, settings, merchandising),
+            };
+        });
+    }
+    async onTime(from, to) {
+        const orders = await this.prisma.order.findMany({
+            where: {
+                requestedShipDate: { not: null },
+                OR: [
+                    { hubReceipts: { some: {} } },
+                    { logisticsShipments: { some: { shipment: { historical: true } } } },
+                ],
+            },
+            select: {
+                requestedShipDate: true,
+                hubReceipts: { select: { receivedAt: true }, take: 1, orderBy: { receivedAt: 'asc' } },
+                logisticsShipments: {
+                    where: { shipment: { historical: true } },
+                    select: { shipment: { select: { departedAt: true } } },
+                    take: 1,
+                },
+            },
+        });
+        let shipped = 0;
+        let onTime = 0;
+        for (const o of orders) {
+            const at = o.hubReceipts[0]?.receivedAt ?? o.logisticsShipments[0]?.shipment.departedAt;
+            if (!at || at < from || at >= to || !o.requestedShipDate)
+                continue;
+            shipped += 1;
+            if (at.getTime() <= o.requestedShipDate.getTime() + DAY)
+                onTime += 1;
+        }
+        return { shipped, onTime };
+    }
+    async firstPass(from, to) {
+        const finals = await this.prisma.inspection.findMany({
+            where: {
+                type: 'PRE_SHIPMENT',
+                result: { in: ['PASS', 'FAIL'] },
+                inspectedAt: { lt: to },
+            },
+            orderBy: { inspectedAt: 'asc' },
+            select: { orderId: true, result: true, inspectedAt: true },
+        });
+        const first = new Map();
+        for (const f of finals)
+            if (!first.has(f.orderId))
+                first.set(f.orderId, { result: f.result, at: f.inspectedAt });
+        const inPeriod = [...first.values()].filter((f) => f.at && f.at >= from);
+        return {
+            total: inPeriod.length,
+            passed: inPeriod.filter((f) => f.result === 'PASS').length,
+        };
+    }
+    async repeatBuyers(from, to) {
+        const orders = await this.prisma.order.findMany({
+            where: {
+                confirmedAt: { gte: new Date(from.getTime() - REPEAT_WINDOW), lt: to },
+                status: { not: 'CANCELLED' },
+            },
+            orderBy: { confirmedAt: 'asc' },
+            select: { buyerCompanyId: true, confirmedAt: true },
+        });
+        const byBuyer = new Map();
+        for (const o of orders) {
+            if (!o.confirmedAt)
+                continue;
+            byBuyer.set(o.buyerCompanyId, [...(byBuyer.get(o.buyerCompanyId) ?? []), o.confirmedAt]);
+        }
+        let buyers = 0;
+        let repeat = 0;
+        for (const dates of byBuyer.values()) {
+            const inPeriod = dates.filter((d) => d >= from);
+            if (inPeriod.length === 0)
+                continue;
+            buyers += 1;
+            if (inPeriod.some((d) => dates.some((e) => e < d && d.getTime() - e.getTime() <= REPEAT_WINDOW)))
+                repeat += 1;
+        }
+        return { buyers, repeat };
+    }
+    async quoteConversion(from, to) {
+        const [offered, accepted] = await Promise.all([
+            this.prisma.quote.count({ where: { offeredAt: { gte: from, lt: to } } }),
+            this.prisma.quote.count({
+                where: { offeredAt: { gte: from, lt: to }, status: 'ACCEPTED' },
+            }),
+        ]);
+        return { offered, accepted };
+    }
+    async capacity(from, to) {
+        const sums = await this.prisma.capacitySlot.aggregate({
+            where: { startDate: { gte: from, lt: to } },
+            _sum: { totalMinutes: true, bookedMinutes: true },
+        });
+        return { total: sums._sum.totalMinutes ?? 0, booked: sums._sum.bookedMinutes ?? 0 };
+    }
+    async claimRate(from, to) {
+        const delivered = await this.prisma.order.findMany({
+            where: { events: { some: { toStatus: 'DELIVERED', createdAt: { gte: from, lt: to } } } },
+            select: { _count: { select: { disputes: true, logisticsClaims: true } } },
+        });
+        return {
+            delivered: delivered.length,
+            claimed: delivered.filter((o) => o._count.disputes + o._count.logisticsClaims > 0).length,
+        };
+    }
+    async inspectorAssignHours(from, to) {
+        const rows = await this.prisma.inspection.findMany({
+            where: { assignedAt: { gte: from, lt: to } },
+            select: { createdAt: true, assignedAt: true },
+        });
+        if (rows.length === 0)
+            return null;
+        const total = rows.reduce((a, r) => a + Math.max(0, (r.assignedAt?.getTime() ?? 0) - r.createdAt.getTime()), 0);
+        return Math.round((total / rows.length / 3_600_000) * 10) / 10;
+    }
+};
+KpisService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [PrismaService,
+        FxService,
+        AuditService])
+], KpisService);
+export { KpisService };
+//# sourceMappingURL=kpis.service.js.map
