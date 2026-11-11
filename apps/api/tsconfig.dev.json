@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    // Watch mode compiles here, so `pnpm build` (which empties dist/) never pulls the
+    // running dev server's files out from under it.
+    "outDir": "./dist-dev"
+  }
+}

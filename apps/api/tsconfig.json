@@ -6,5 +6,5 @@
     "types": ["node"]
   },
   "include": ["src", "test", "prisma", "*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "dist-dev"]
 }

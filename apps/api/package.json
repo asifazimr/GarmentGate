@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "prisma generate && nest build",
-    "dev": "nest start --watch --preserveWatchOutput",
+    "dev": "nest start --watch --preserveWatchOutput --path tsconfig.dev.json",
     "start": "node dist/main.js",
     "lint": "eslint .",
     "typecheck": "prisma generate && tsc --noEmit",

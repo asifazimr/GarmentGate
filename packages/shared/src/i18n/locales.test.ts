@@ -8,9 +8,10 @@ describe('locales', () => {
     expect(localeDir('bn')).toBe('ltr');
   });
 
-  it('only offers enabled locales outside development', () => {
+  it('only offers enabled locales outside development, and never hidden ones', () => {
     expect(availableLocales(false)).toEqual(['en']);
-    expect(availableLocales(true)).toEqual(['en', 'bn', 'es', 'fr', 'ar']);
+    // Arabic is hidden for now.
+    expect(availableLocales(true)).toEqual(['en', 'bn', 'es', 'fr']);
   });
 
   it('rejects unknown locale codes', () => {

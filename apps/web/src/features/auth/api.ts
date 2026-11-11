@@ -9,7 +9,7 @@ import {
   type RegisterInput,
 } from '@garmentgate/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiJson, apiSend } from '@/lib/api';
+import { ApiError, apiJson, apiSend } from '@/lib/api';
 
 export const meQueryKey = ['auth', 'me'] as const;
 
@@ -17,6 +17,8 @@ export function useMe(options: { refetchInterval?: number } = {}) {
   return useQuery({
     queryKey: meQueryKey,
     queryFn: async () => (await apiJson('/auth/me', AuthResponseSchema)).user,
+    // Signed out (e.g. a website visitor): asking again won't change that.
+    retry: (count, error) => !(error instanceof ApiError && error.status === 401) && count < 3,
     ...options,
   });
 }

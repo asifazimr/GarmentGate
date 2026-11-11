@@ -11,3 +11,5 @@ A locale is offered to users once it's marked `enabled` in
 `packages/shared/src/i18n/locales.ts`; until then it only appears in development. Arabic
 is right to left: the layout sets `dir="rtl"`, and styles use logical properties
 (`ms-*`, `pe-*`, `start-*`, `text-start`) so they flip on their own.
+
+Arabic (`ar.json`) is translated but **hidden** for now (`hidden: true` in `locales.ts`): it isn't offered anywhere, even in development. Set `hidden: false` to bring it back.

@@ -1,21 +1,21 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiCookieAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { type FxRates, FxRatesSchema } from '@garmentgate/shared';
-import { Roles } from '../auth/auth.decorators.js';
+import { Public } from '../auth/auth.decorators.js';
 import { FxService } from './fx.service.js';
 
 /**
- * Exchange rates (units per USD) for showing approximate amounts in a user's display currency.
- * Market-style reference rates only: nothing here identifies anyone or reveals a margin.
+ * Exchange rates (units per USD) for showing approximate amounts in a display currency, for
+ * signed-in users and website visitors alike. Market-style reference rates only: nothing here
+ * identifies anyone or reveals a margin.
  */
 @ApiTags('payments')
-@ApiCookieAuth()
-@Roles('BUYER', 'MANUFACTURER', 'ADMIN')
 @Controller('fx')
 export class FxController {
   constructor(private readonly fx: FxService) {}
 
   @Get('rates')
+  @Public()
   @ApiOperation({ summary: 'Reference exchange rates for display conversions' })
   @ApiOkResponse({ standardSchema: FxRatesSchema })
   async rates(): Promise<FxRates> {

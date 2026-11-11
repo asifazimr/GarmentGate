@@ -235,11 +235,13 @@ describe('Auth (e2e)', () => {
       await http().patch('/auth/me/preferences').send({ locale: 'en' }).expect(401);
     });
 
-    it('serves reference exchange rates to signed-in users for display conversions', async () => {
+    it('serves reference exchange rates for display conversions, to visitors too', async () => {
       const { agent } = await registerAgent(ctx.app, 'BUYER');
       const rates = (await agent.get('/fx/rates').expect(200)).body as Record<string, string>;
       expect(rates.USD).toBe('1');
-      await http().get('/fx/rates').expect(401);
+      // Public: the website shows visitors approximate prices in their currency.
+      const anonymous = (await http().get('/fx/rates').expect(200)).body as Record<string, string>;
+      expect(anonymous).toEqual(rates);
     });
   });
 });
