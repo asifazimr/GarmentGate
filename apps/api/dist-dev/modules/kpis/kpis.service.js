@@ -16,7 +16,7 @@ const KEY = 'unit_economics';
 const DAY = 86_400_000;
 const REPEAT_WINDOW = 183 * DAY;
 const ACTIVE_WINDOW = 90 * DAY;
-const FEE_PURPOSES = ['SAMPLE_FEE', 'INSPECTION_FEE'];
+const FEE_PURPOSES = ['SAMPLE_FEE', 'INSPECTION_FEE', 'MONITORING_FEE'];
 const n = (v) => Number(v);
 let KpisService = class KpisService {
     prisma;

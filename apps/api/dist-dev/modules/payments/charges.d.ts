@@ -15,4 +15,9 @@ export declare function chargeInspection(tx: Client, order: {
     currency: Currency;
     buyerCompanyId: string;
 }, inspectionId: string): Promise<void>;
+export declare function chargeMonitoring(tx: Client, order: {
+    id: string;
+    currency: Currency;
+}, feeUsdMinor: number): Promise<void>;
+export declare function usdIn(client: Client, usdMinor: number, currency: Currency): Promise<bigint | null>;
 export {};

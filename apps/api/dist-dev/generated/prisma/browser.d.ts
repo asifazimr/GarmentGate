@@ -87,3 +87,5 @@ export type PlanSubscription = Prisma.PlanSubscriptionModel;
 export type PlanInvoice = Prisma.PlanInvoiceModel;
 export type OutboundMessage = Prisma.OutboundMessageModel;
 export type Lead = Prisma.LeadModel;
+export type Camera = Prisma.CameraModel;
+export type OrderCamera = Prisma.OrderCameraModel;

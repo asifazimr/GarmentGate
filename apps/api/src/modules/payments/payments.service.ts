@@ -87,9 +87,15 @@ const PURPOSE_LABEL: Record<Payment['purpose'], string> = {
   LOGISTICS: 'Shipping',
   INSURANCE_RECOVERY: 'Insurance recovery',
   INSPECTION_FEE: 'Inspection fee',
+  MONITORING_FEE: 'Video monitoring',
 };
-const CHARGE_LETTER = { LOGISTICS: 'L', SAMPLE_FEE: 'S', INSPECTION_FEE: 'I' } as const;
-const FEE_PURPOSES: readonly string[] = ['SAMPLE_FEE', 'INSPECTION_FEE'];
+const CHARGE_LETTER = {
+  LOGISTICS: 'L',
+  SAMPLE_FEE: 'S',
+  INSPECTION_FEE: 'I',
+  MONITORING_FEE: 'M',
+} as const;
+const FEE_PURPOSES: readonly string[] = ['SAMPLE_FEE', 'INSPECTION_FEE', 'MONITORING_FEE'];
 const PROOF_MAX_BYTES = 10 * 1024 * 1024;
 
 const n = (v: bigint | number) => Number(v);
@@ -380,7 +386,9 @@ export class PaymentsService implements OnModuleInit {
     const payments = await this.prisma.payment.findMany({
       where: {
         orderId: order.id,
-        purpose: { in: ['DEPOSIT', 'BALANCE', 'REFUND', 'SAMPLE_FEE', 'INSPECTION_FEE'] },
+        purpose: {
+          in: ['DEPOSIT', 'BALANCE', 'REFUND', 'SAMPLE_FEE', 'INSPECTION_FEE', 'MONITORING_FEE'],
+        },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -431,7 +439,8 @@ export class PaymentsService implements OnModuleInit {
           p.purpose === 'REFUND' ||
           p.purpose === 'BALANCE' ||
           p.purpose === 'SAMPLE_FEE' ||
-          p.purpose === 'INSPECTION_FEE'
+          p.purpose === 'INSPECTION_FEE' ||
+          p.purpose === 'MONITORING_FEE'
             ? p.purpose
             : 'DEPOSIT',
         method: p.method,
@@ -468,13 +477,13 @@ export class PaymentsService implements OnModuleInit {
         where: {
           orderId,
           direction: 'INBOUND',
-          purpose: { in: ['SAMPLE_FEE', 'INSPECTION_FEE'] },
+          purpose: { in: ['SAMPLE_FEE', 'INSPECTION_FEE', 'MONITORING_FEE'] },
           status: { in: ['SUCCEEDED', 'PROCESSING'] },
         },
         select: { purpose: true, status: true, amountMinor: true },
       }),
     ]);
-    return (['SAMPLE_FEE', 'INSPECTION_FEE'] as const)
+    return (['SAMPLE_FEE', 'INSPECTION_FEE', 'MONITORING_FEE'] as const)
       .map((purpose) => {
         const items = charges.filter((c) => c.kind === purpose);
         const charged = items.reduce((a, c) => a + (c.waived ? 0n : c.amountMinor), 0n);

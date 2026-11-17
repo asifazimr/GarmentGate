@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { KycStatusSchema } from '../auth/auth.schema.js';
+import { CameraStatusSchema } from '../monitoring/monitoring.js';
 
 // Mirrors of the Prisma enums, so web and api share one vocabulary for every lifecycle.
 
@@ -142,6 +143,7 @@ export const STATUS_DOMAINS = {
   pickup: PickupStatusSchema,
   leg: ShipmentLegStatusSchema,
   claim: LogisticsClaimStatusSchema,
+  camera: CameraStatusSchema,
 } as const;
 export type StatusDomain = keyof typeof STATUS_DOMAINS;
 export type StatusOf<D extends StatusDomain> = z.infer<(typeof STATUS_DOMAINS)[D]>;
@@ -277,6 +279,13 @@ export const STATUS_TONES: { [D in StatusDomain]: Record<StatusOf<D>, StatusTone
     SUBMITTED: 'info',
     SETTLED: 'success',
     REJECTED: 'neutral',
+  },
+  camera: {
+    SETUP: 'neutral',
+    PENDING_REVIEW: 'warning',
+    APPROVED: 'success',
+    REJECTED: 'danger',
+    DISABLED: 'neutral',
   },
 };
 

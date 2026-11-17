@@ -107,3 +107,29 @@ export async function chargeInspection(
     },
   });
 }
+
+/**
+ * Remote video monitoring added to an order (one per order: a partial unique index). The fee
+ * comes from `platform_settings.monitoring`, in the order's currency at the reference rate.
+ */
+export async function chargeMonitoring(
+  tx: Client,
+  order: { id: string; currency: Currency },
+  feeUsdMinor: number,
+): Promise<void> {
+  const amount = await inCurrency(tx, feeUsdMinor, order.currency);
+  await tx.orderCharge.create({
+    data: {
+      orderId: order.id,
+      kind: 'MONITORING_FEE',
+      currency: order.currency,
+      amountMinor: amount ?? 0n,
+      waived: amount === null || amount === 0n,
+    },
+  });
+}
+
+/** A USD amount in another currency at the reference rate (null without a rate). */
+export function usdIn(client: Client, usdMinor: number, currency: Currency) {
+  return inCurrency(client, usdMinor, currency);
+}

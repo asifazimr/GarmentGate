@@ -41,6 +41,11 @@ export const EnvSchema = z.object({
     TWILIO_SMS_FROM: unsetIfEmpty(z.string().regex(/^\+[1-9]\d{7,14}$/)),
     TWILIO_WHATSAPP_FROM: unsetIfEmpty(z.string().regex(/^\+[1-9]\d{7,14}$/)),
     TWILIO_STATUS_CALLBACK_URL: unsetIfEmpty(z.url()),
+    CLOUDFLARE_ACCOUNT_ID: unsetIfEmpty(z.string().regex(/^[0-9a-f]{32}$/i)),
+    CLOUDFLARE_STREAM_API_TOKEN: unsetIfEmpty(z.string().min(20)),
+    CLOUDFLARE_STREAM_CUSTOMER_CODE: unsetIfEmpty(z.string().regex(/^[a-z0-9]+$/i)),
+    CLOUDFLARE_STREAM_SIGNING_KEY_ID: unsetIfEmpty(z.string().min(8)),
+    CLOUDFLARE_STREAM_SIGNING_KEY_PEM: unsetIfEmpty(z.string().min(100)),
     DATABASE_URL: z.url(),
     REDIS_URL: z.url(),
     MEILISEARCH_HOST: z.url(),
@@ -89,6 +94,12 @@ export const ProductionEnvSchema = EnvSchema.superRefine((env, ctx) => {
         fail('TWILIO_SMS_FROM', 'Texts need TWILIO_MESSAGING_SERVICE_SID or TWILIO_SMS_FROM');
     if (env.TWILIO_STATUS_CALLBACK_URL && !env.TWILIO_STATUS_CALLBACK_URL.startsWith('https://'))
         fail('TWILIO_STATUS_CALLBACK_URL', 'In production the Twilio callback must be https://');
+    if (env.CLOUDFLARE_STREAM_API_TOKEN &&
+        !(env.CLOUDFLARE_ACCOUNT_ID &&
+            env.CLOUDFLARE_STREAM_CUSTOMER_CODE &&
+            env.CLOUDFLARE_STREAM_SIGNING_KEY_ID &&
+            env.CLOUDFLARE_STREAM_SIGNING_KEY_PEM))
+        fail('CLOUDFLARE_STREAM_SIGNING_KEY_PEM', 'Video monitoring needs the account id, customer code and a signing key with the API token');
     if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET)
         fail('STRIPE_WEBHOOK_SECRET', 'Card payments need STRIPE_WEBHOOK_SECRET to verify webhooks');
 });

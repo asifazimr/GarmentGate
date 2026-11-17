@@ -53,7 +53,8 @@ export const DEFAULT_RELEASE_SCHEDULE: ReleaseSchedule = [
 
 // ── Service fees (business model: revenue streams 4 and 5) ──────────────────
 
-export const FeePurposeSchema = z.enum(['SAMPLE_FEE', 'INSPECTION_FEE']);
+/** Service fees on an order: samples, inspection days and remote video monitoring. */
+export const FeePurposeSchema = z.enum(['SAMPLE_FEE', 'INSPECTION_FEE', 'MONITORING_FEE']);
 export type FeePurpose = z.infer<typeof FeePurposeSchema>;
 
 export const ServiceFeesSchema = z.object({
@@ -125,7 +126,14 @@ export type PaymentStart = z.infer<typeof PaymentStartSchema>;
 export const BuyerPaymentSchema = z.strictObject({
   id: z.uuid(),
   reference: z.string(),
-  purpose: z.enum(['DEPOSIT', 'BALANCE', 'REFUND', 'SAMPLE_FEE', 'INSPECTION_FEE']),
+  purpose: z.enum([
+    'DEPOSIT',
+    'BALANCE',
+    'REFUND',
+    'SAMPLE_FEE',
+    'INSPECTION_FEE',
+    'MONITORING_FEE',
+  ]),
   method: PaymentMethodSchema,
   amountMinor: z.number().int(),
   status: PaymentStatusSchema,

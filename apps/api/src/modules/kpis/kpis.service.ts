@@ -24,7 +24,7 @@ const DAY = 86_400_000;
 const REPEAT_WINDOW = 183 * DAY;
 const ACTIVE_WINDOW = 90 * DAY;
 /** Fees the buyer pays GarmentGate for services (samples, inspection days). */
-const FEE_PURPOSES = ['SAMPLE_FEE', 'INSPECTION_FEE'] as const;
+const FEE_PURPOSES = ['SAMPLE_FEE', 'INSPECTION_FEE', 'MONITORING_FEE'] as const;
 
 const n = (v: bigint) => Number(v);
 

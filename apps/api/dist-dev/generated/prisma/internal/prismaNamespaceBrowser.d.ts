@@ -96,6 +96,8 @@ export declare const ModelName: {
     readonly PlanInvoice: "PlanInvoice";
     readonly OutboundMessage: "OutboundMessage";
     readonly Lead: "Lead";
+    readonly Camera: "Camera";
+    readonly OrderCamera: "OrderCamera";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
 export declare const TransactionIsolationLevel: {
@@ -1457,6 +1459,29 @@ export declare const LeadScalarFieldEnum: {
     readonly updatedAt: "updatedAt";
 };
 export type LeadScalarFieldEnum = (typeof LeadScalarFieldEnum)[keyof typeof LeadScalarFieldEnum];
+export declare const CameraScalarFieldEnum: {
+    readonly id: "id";
+    readonly manufacturerProfileId: "manufacturerProfileId";
+    readonly label: "label";
+    readonly area: "area";
+    readonly status: "status";
+    readonly providerInputId: "providerInputId";
+    readonly ingestUrl: "ingestUrl";
+    readonly streamKey: "streamKey";
+    readonly reviewNote: "reviewNote";
+    readonly reviewedById: "reviewedById";
+    readonly reviewedAt: "reviewedAt";
+    readonly createdAt: "createdAt";
+    readonly updatedAt: "updatedAt";
+};
+export type CameraScalarFieldEnum = (typeof CameraScalarFieldEnum)[keyof typeof CameraScalarFieldEnum];
+export declare const OrderCameraScalarFieldEnum: {
+    readonly orderId: "orderId";
+    readonly cameraId: "cameraId";
+    readonly position: "position";
+    readonly createdAt: "createdAt";
+};
+export type OrderCameraScalarFieldEnum = (typeof OrderCameraScalarFieldEnum)[keyof typeof OrderCameraScalarFieldEnum];
 export declare const SortOrder: {
     readonly asc: "asc";
     readonly desc: "desc";

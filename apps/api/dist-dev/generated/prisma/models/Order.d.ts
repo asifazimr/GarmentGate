@@ -408,6 +408,7 @@ export type OrderWhereInput = {
     events?: Prisma.OrderEventListRelationFilter;
     reorderOf?: Prisma.XOR<Prisma.OrderNullableScalarRelationFilter, Prisma.OrderWhereInput> | null;
     reorders?: Prisma.OrderListRelationFilter;
+    cameras?: Prisma.OrderCameraListRelationFilter;
 };
 export type OrderOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -471,6 +472,7 @@ export type OrderOrderByWithRelationInput = {
     events?: Prisma.OrderEventOrderByRelationAggregateInput;
     reorderOf?: Prisma.OrderOrderByWithRelationInput;
     reorders?: Prisma.OrderOrderByRelationAggregateInput;
+    cameras?: Prisma.OrderCameraOrderByRelationAggregateInput;
 };
 export type OrderWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -537,6 +539,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
     events?: Prisma.OrderEventListRelationFilter;
     reorderOf?: Prisma.XOR<Prisma.OrderNullableScalarRelationFilter, Prisma.OrderWhereInput> | null;
     reorders?: Prisma.OrderListRelationFilter;
+    cameras?: Prisma.OrderCameraListRelationFilter;
 }, "id" | "code" | "quoteId">;
 export type OrderOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -674,6 +677,7 @@ export type OrderCreateInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateInput = {
     id?: string;
@@ -731,6 +735,7 @@ export type OrderUncheckedCreateInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -788,6 +793,7 @@ export type OrderUpdateInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -845,6 +851,7 @@ export type OrderUncheckedUpdateInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateManyInput = {
     id?: string;
@@ -1592,6 +1599,18 @@ export type OrderUncheckedUpdateManyWithoutContractNestedInput = {
     updateMany?: Prisma.OrderUpdateManyWithWhereWithoutContractInput | Prisma.OrderUpdateManyWithWhereWithoutContractInput[];
     deleteMany?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[];
 };
+export type OrderCreateNestedOneWithoutCamerasInput = {
+    create?: Prisma.XOR<Prisma.OrderCreateWithoutCamerasInput, Prisma.OrderUncheckedCreateWithoutCamerasInput>;
+    connectOrCreate?: Prisma.OrderCreateOrConnectWithoutCamerasInput;
+    connect?: Prisma.OrderWhereUniqueInput;
+};
+export type OrderUpdateOneRequiredWithoutCamerasNestedInput = {
+    create?: Prisma.XOR<Prisma.OrderCreateWithoutCamerasInput, Prisma.OrderUncheckedCreateWithoutCamerasInput>;
+    connectOrCreate?: Prisma.OrderCreateOrConnectWithoutCamerasInput;
+    upsert?: Prisma.OrderUpsertWithoutCamerasInput;
+    connect?: Prisma.OrderWhereUniqueInput;
+    update?: Prisma.XOR<Prisma.XOR<Prisma.OrderUpdateToOneWithWhereWithoutCamerasInput, Prisma.OrderUpdateWithoutCamerasInput>, Prisma.OrderUncheckedUpdateWithoutCamerasInput>;
+};
 export type OrderCreateWithoutBuyerCompanyInput = {
     id?: string;
     code: string;
@@ -1647,6 +1666,7 @@ export type OrderCreateWithoutBuyerCompanyInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutBuyerCompanyInput = {
     id?: string;
@@ -1703,6 +1723,7 @@ export type OrderUncheckedCreateWithoutBuyerCompanyInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutBuyerCompanyInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -1819,6 +1840,7 @@ export type OrderCreateWithoutManufacturerProfileInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutManufacturerProfileInput = {
     id?: string;
@@ -1875,6 +1897,7 @@ export type OrderUncheckedCreateWithoutManufacturerProfileInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutManufacturerProfileInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -1952,6 +1975,7 @@ export type OrderCreateWithoutRfqInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutRfqInput = {
     id?: string;
@@ -2008,6 +2032,7 @@ export type OrderUncheckedCreateWithoutRfqInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutRfqInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -2085,6 +2110,7 @@ export type OrderCreateWithoutQuoteInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutQuoteInput = {
     id?: string;
@@ -2141,6 +2167,7 @@ export type OrderUncheckedCreateWithoutQuoteInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutQuoteInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -2210,6 +2237,7 @@ export type OrderUpdateWithoutQuoteInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutQuoteInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2266,6 +2294,7 @@ export type OrderUncheckedUpdateWithoutQuoteInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutConversationsInput = {
     id?: string;
@@ -2322,6 +2351,7 @@ export type OrderCreateWithoutConversationsInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutConversationsInput = {
     id?: string;
@@ -2378,6 +2408,7 @@ export type OrderUncheckedCreateWithoutConversationsInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutConversationsInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -2447,6 +2478,7 @@ export type OrderUpdateWithoutConversationsInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutConversationsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2503,6 +2535,7 @@ export type OrderUncheckedUpdateWithoutConversationsInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutReordersInput = {
     id?: string;
@@ -2559,6 +2592,7 @@ export type OrderCreateWithoutReordersInput = {
     releases?: Prisma.OrderReleaseCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutReordersInput = {
     id?: string;
@@ -2615,6 +2649,7 @@ export type OrderUncheckedCreateWithoutReordersInput = {
     conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOrderInput;
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutReordersInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -2675,6 +2710,7 @@ export type OrderCreateWithoutReorderOfInput = {
     releases?: Prisma.OrderReleaseCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutReorderOfInput = {
     id?: string;
@@ -2731,6 +2767,7 @@ export type OrderUncheckedCreateWithoutReorderOfInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutReorderOfInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -2804,6 +2841,7 @@ export type OrderUpdateWithoutReordersInput = {
     releases?: Prisma.OrderReleaseUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutReordersInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2860,6 +2898,7 @@ export type OrderUncheckedUpdateWithoutReordersInput = {
     conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOrderNestedInput;
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUpsertWithWhereUniqueWithoutReorderOfInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -2929,6 +2968,7 @@ export type OrderCreateWithoutItemsInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutItemsInput = {
     id?: string;
@@ -2985,6 +3025,7 @@ export type OrderUncheckedCreateWithoutItemsInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutItemsInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -3054,6 +3095,7 @@ export type OrderUpdateWithoutItemsInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutItemsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -3110,6 +3152,7 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutMilestonesInput = {
     id?: string;
@@ -3166,6 +3209,7 @@ export type OrderCreateWithoutMilestonesInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutMilestonesInput = {
     id?: string;
@@ -3222,6 +3266,7 @@ export type OrderUncheckedCreateWithoutMilestonesInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutMilestonesInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -3291,6 +3336,7 @@ export type OrderUpdateWithoutMilestonesInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutMilestonesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -3347,6 +3393,7 @@ export type OrderUncheckedUpdateWithoutMilestonesInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutSamplesInput = {
     id?: string;
@@ -3403,6 +3450,7 @@ export type OrderCreateWithoutSamplesInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutSamplesInput = {
     id?: string;
@@ -3459,6 +3507,7 @@ export type OrderUncheckedCreateWithoutSamplesInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutSamplesInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -3528,6 +3577,7 @@ export type OrderUpdateWithoutSamplesInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutSamplesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -3584,6 +3634,7 @@ export type OrderUncheckedUpdateWithoutSamplesInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutPaymentsInput = {
     id?: string;
@@ -3640,6 +3691,7 @@ export type OrderCreateWithoutPaymentsInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutPaymentsInput = {
     id?: string;
@@ -3696,6 +3748,7 @@ export type OrderUncheckedCreateWithoutPaymentsInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutPaymentsInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -3765,6 +3818,7 @@ export type OrderUpdateWithoutPaymentsInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutPaymentsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -3821,6 +3875,7 @@ export type OrderUncheckedUpdateWithoutPaymentsInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutLedgerTransactionsInput = {
     id?: string;
@@ -3877,6 +3932,7 @@ export type OrderCreateWithoutLedgerTransactionsInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutLedgerTransactionsInput = {
     id?: string;
@@ -3933,6 +3989,7 @@ export type OrderUncheckedCreateWithoutLedgerTransactionsInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutLedgerTransactionsInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -4002,6 +4059,7 @@ export type OrderUpdateWithoutLedgerTransactionsInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutLedgerTransactionsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -4058,6 +4116,7 @@ export type OrderUncheckedUpdateWithoutLedgerTransactionsInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutInspectionsInput = {
     id?: string;
@@ -4114,6 +4173,7 @@ export type OrderCreateWithoutInspectionsInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutInspectionsInput = {
     id?: string;
@@ -4170,6 +4230,7 @@ export type OrderUncheckedCreateWithoutInspectionsInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutInspectionsInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -4239,6 +4300,7 @@ export type OrderUpdateWithoutInspectionsInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutInspectionsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -4295,6 +4357,7 @@ export type OrderUncheckedUpdateWithoutInspectionsInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutReviewsInput = {
     id?: string;
@@ -4351,6 +4414,7 @@ export type OrderCreateWithoutReviewsInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutReviewsInput = {
     id?: string;
@@ -4407,6 +4471,7 @@ export type OrderUncheckedCreateWithoutReviewsInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutReviewsInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -4476,6 +4541,7 @@ export type OrderUpdateWithoutReviewsInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutReviewsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -4532,6 +4598,7 @@ export type OrderUncheckedUpdateWithoutReviewsInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutDisputesInput = {
     id?: string;
@@ -4588,6 +4655,7 @@ export type OrderCreateWithoutDisputesInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutDisputesInput = {
     id?: string;
@@ -4644,6 +4712,7 @@ export type OrderUncheckedCreateWithoutDisputesInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutDisputesInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -4713,6 +4782,7 @@ export type OrderUpdateWithoutDisputesInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutDisputesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -4769,6 +4839,7 @@ export type OrderUncheckedUpdateWithoutDisputesInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutEventsInput = {
     id?: string;
@@ -4825,6 +4896,7 @@ export type OrderCreateWithoutEventsInput = {
     releases?: Prisma.OrderReleaseCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutEventsInput = {
     id?: string;
@@ -4881,6 +4953,7 @@ export type OrderUncheckedCreateWithoutEventsInput = {
     conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOrderInput;
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutEventsInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -4950,6 +5023,7 @@ export type OrderUpdateWithoutEventsInput = {
     releases?: Prisma.OrderReleaseUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutEventsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -5006,6 +5080,7 @@ export type OrderUncheckedUpdateWithoutEventsInput = {
     conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOrderNestedInput;
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutReleasesInput = {
     id?: string;
@@ -5062,6 +5137,7 @@ export type OrderCreateWithoutReleasesInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutReleasesInput = {
     id?: string;
@@ -5118,6 +5194,7 @@ export type OrderUncheckedCreateWithoutReleasesInput = {
     conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutReleasesInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -5187,6 +5264,7 @@ export type OrderUpdateWithoutReleasesInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutReleasesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -5243,6 +5321,7 @@ export type OrderUncheckedUpdateWithoutReleasesInput = {
     conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutCapacityBookingInput = {
     id?: string;
@@ -5299,6 +5378,7 @@ export type OrderCreateWithoutCapacityBookingInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutCapacityBookingInput = {
     id?: string;
@@ -5355,6 +5435,7 @@ export type OrderUncheckedCreateWithoutCapacityBookingInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutCapacityBookingInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -5424,6 +5505,7 @@ export type OrderUpdateWithoutCapacityBookingInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutCapacityBookingInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -5480,6 +5562,7 @@ export type OrderUncheckedUpdateWithoutCapacityBookingInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutLogisticsQuotesInput = {
     id?: string;
@@ -5536,6 +5619,7 @@ export type OrderCreateWithoutLogisticsQuotesInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutLogisticsQuotesInput = {
     id?: string;
@@ -5592,6 +5676,7 @@ export type OrderUncheckedCreateWithoutLogisticsQuotesInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutLogisticsQuotesInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -5661,6 +5746,7 @@ export type OrderUpdateWithoutLogisticsQuotesInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutLogisticsQuotesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -5717,6 +5803,7 @@ export type OrderUncheckedUpdateWithoutLogisticsQuotesInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutPackingInput = {
     id?: string;
@@ -5773,6 +5860,7 @@ export type OrderCreateWithoutPackingInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutPackingInput = {
     id?: string;
@@ -5829,6 +5917,7 @@ export type OrderUncheckedCreateWithoutPackingInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutPackingInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -5898,6 +5987,7 @@ export type OrderUpdateWithoutPackingInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutPackingInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -5954,6 +6044,7 @@ export type OrderUncheckedUpdateWithoutPackingInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutPickupsInput = {
     id?: string;
@@ -6010,6 +6101,7 @@ export type OrderCreateWithoutPickupsInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutPickupsInput = {
     id?: string;
@@ -6066,6 +6158,7 @@ export type OrderUncheckedCreateWithoutPickupsInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutPickupsInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -6135,6 +6228,7 @@ export type OrderUpdateWithoutPickupsInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutPickupsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -6191,6 +6285,7 @@ export type OrderUncheckedUpdateWithoutPickupsInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutHubReceiptsInput = {
     id?: string;
@@ -6247,6 +6342,7 @@ export type OrderCreateWithoutHubReceiptsInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutHubReceiptsInput = {
     id?: string;
@@ -6303,6 +6399,7 @@ export type OrderUncheckedCreateWithoutHubReceiptsInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutHubReceiptsInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -6372,6 +6469,7 @@ export type OrderUpdateWithoutHubReceiptsInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutHubReceiptsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -6428,6 +6526,7 @@ export type OrderUncheckedUpdateWithoutHubReceiptsInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutLogisticsShipmentsInput = {
     id?: string;
@@ -6484,6 +6583,7 @@ export type OrderCreateWithoutLogisticsShipmentsInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutLogisticsShipmentsInput = {
     id?: string;
@@ -6540,6 +6640,7 @@ export type OrderUncheckedCreateWithoutLogisticsShipmentsInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutLogisticsShipmentsInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -6609,6 +6710,7 @@ export type OrderUpdateWithoutLogisticsShipmentsInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutLogisticsShipmentsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -6665,6 +6767,7 @@ export type OrderUncheckedUpdateWithoutLogisticsShipmentsInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutLogisticsClaimsInput = {
     id?: string;
@@ -6721,6 +6824,7 @@ export type OrderCreateWithoutLogisticsClaimsInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutLogisticsClaimsInput = {
     id?: string;
@@ -6777,6 +6881,7 @@ export type OrderUncheckedCreateWithoutLogisticsClaimsInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutLogisticsClaimsInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -6846,6 +6951,7 @@ export type OrderUpdateWithoutLogisticsClaimsInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutLogisticsClaimsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -6902,6 +7008,7 @@ export type OrderUncheckedUpdateWithoutLogisticsClaimsInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutChargesInput = {
     id?: string;
@@ -6958,6 +7065,7 @@ export type OrderCreateWithoutChargesInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutChargesInput = {
     id?: string;
@@ -7014,6 +7122,7 @@ export type OrderUncheckedCreateWithoutChargesInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutChargesInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -7083,6 +7192,7 @@ export type OrderUpdateWithoutChargesInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutChargesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -7139,6 +7249,7 @@ export type OrderUncheckedUpdateWithoutChargesInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutFactoryChangesInput = {
     id?: string;
@@ -7195,6 +7306,7 @@ export type OrderCreateWithoutFactoryChangesInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutFactoryChangesInput = {
     id?: string;
@@ -7251,6 +7363,7 @@ export type OrderUncheckedCreateWithoutFactoryChangesInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutFactoryChangesInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -7320,6 +7433,7 @@ export type OrderUpdateWithoutFactoryChangesInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutFactoryChangesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -7376,6 +7490,7 @@ export type OrderUncheckedUpdateWithoutFactoryChangesInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderCreateWithoutContractInput = {
     id?: string;
@@ -7432,6 +7547,7 @@ export type OrderCreateWithoutContractInput = {
     events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
     reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
     reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraCreateNestedManyWithoutOrderInput;
 };
 export type OrderUncheckedCreateWithoutContractInput = {
     id?: string;
@@ -7488,6 +7604,7 @@ export type OrderUncheckedCreateWithoutContractInput = {
     releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
     reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+    cameras?: Prisma.OrderCameraUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type OrderCreateOrConnectWithoutContractInput = {
     where: Prisma.OrderWhereUniqueInput;
@@ -7509,6 +7626,247 @@ export type OrderUpdateWithWhereUniqueWithoutContractInput = {
 export type OrderUpdateManyWithWhereWithoutContractInput = {
     where: Prisma.OrderScalarWhereInput;
     data: Prisma.XOR<Prisma.OrderUpdateManyMutationInput, Prisma.OrderUncheckedUpdateManyWithoutContractInput>;
+};
+export type OrderCreateWithoutCamerasInput = {
+    id?: string;
+    code: string;
+    hsCode?: string | null;
+    title: string;
+    specification?: string | null;
+    quantity: number;
+    buyerUnitPriceMinor: number;
+    manufacturerUnitPriceMinor: number;
+    buyerTotalMinor: bigint | number;
+    manufacturerTotalMinor: bigint | number;
+    currency: $Enums.Currency;
+    incoterm: $Enums.Incoterm;
+    destinationCountry: string;
+    destinationPort?: string | null;
+    depositBps?: number;
+    requestedShipDate?: Date | string | null;
+    status?: $Enums.OrderStatus;
+    disputedFrom?: $Enums.OrderStatus | null;
+    commissionBps?: number;
+    commissionMinor?: bigint | number;
+    repeatOrder?: boolean;
+    confirmedAt?: Date | string | null;
+    completedAt?: Date | string | null;
+    cancelledAt?: Date | string | null;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    sampleCreditMinor?: bigint | number;
+    delayAlertedAt?: Date | string | null;
+    buyerCompany: Prisma.CompanyCreateNestedOneWithoutOrdersAsBuyerInput;
+    manufacturerProfile: Prisma.ManufacturerProfileCreateNestedOneWithoutOrdersInput;
+    rfq?: Prisma.RfqCreateNestedOneWithoutOrdersInput;
+    capacityBooking?: Prisma.CapacityBookingCreateNestedOneWithoutOrderInput;
+    logisticsQuotes?: Prisma.LogisticsQuoteCreateNestedManyWithoutOrderInput;
+    packing?: Prisma.OrderPackingCreateNestedOneWithoutOrderInput;
+    pickups?: Prisma.PickupRequestCreateNestedManyWithoutOrderInput;
+    hubReceipts?: Prisma.HubReceiptCreateNestedManyWithoutOrderInput;
+    logisticsShipments?: Prisma.LogisticsShipmentOrderCreateNestedManyWithoutOrderInput;
+    quote?: Prisma.QuoteCreateNestedOneWithoutOrderInput;
+    items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput;
+    milestones?: Prisma.OrderMilestoneCreateNestedManyWithoutOrderInput;
+    samples?: Prisma.SampleCreateNestedManyWithoutOrderInput;
+    payments?: Prisma.PaymentCreateNestedManyWithoutOrderInput;
+    ledgerTransactions?: Prisma.LedgerTransactionCreateNestedManyWithoutOrderInput;
+    inspections?: Prisma.InspectionCreateNestedManyWithoutOrderInput;
+    reviews?: Prisma.ReviewCreateNestedManyWithoutOrderInput;
+    disputes?: Prisma.DisputeCreateNestedManyWithoutOrderInput;
+    charges?: Prisma.OrderChargeCreateNestedManyWithoutOrderInput;
+    contract?: Prisma.SupplyContractCreateNestedOneWithoutOrdersInput;
+    factoryChanges?: Prisma.OrderFactoryChangeCreateNestedManyWithoutOrderInput;
+    logisticsClaims?: Prisma.LogisticsClaimCreateNestedManyWithoutOrderInput;
+    conversations?: Prisma.ConversationCreateNestedManyWithoutOrderInput;
+    releases?: Prisma.OrderReleaseCreateNestedManyWithoutOrderInput;
+    events?: Prisma.OrderEventCreateNestedManyWithoutOrderInput;
+    reorderOf?: Prisma.OrderCreateNestedOneWithoutReordersInput;
+    reorders?: Prisma.OrderCreateNestedManyWithoutReorderOfInput;
+};
+export type OrderUncheckedCreateWithoutCamerasInput = {
+    id?: string;
+    code: string;
+    buyerCompanyId: string;
+    manufacturerProfileId: string;
+    rfqId?: string | null;
+    quoteId?: string | null;
+    hsCode?: string | null;
+    title: string;
+    specification?: string | null;
+    quantity: number;
+    buyerUnitPriceMinor: number;
+    manufacturerUnitPriceMinor: number;
+    buyerTotalMinor: bigint | number;
+    manufacturerTotalMinor: bigint | number;
+    currency: $Enums.Currency;
+    incoterm: $Enums.Incoterm;
+    destinationCountry: string;
+    destinationPort?: string | null;
+    depositBps?: number;
+    requestedShipDate?: Date | string | null;
+    status?: $Enums.OrderStatus;
+    disputedFrom?: $Enums.OrderStatus | null;
+    reorderOfId?: string | null;
+    commissionBps?: number;
+    commissionMinor?: bigint | number;
+    repeatOrder?: boolean;
+    confirmedAt?: Date | string | null;
+    completedAt?: Date | string | null;
+    cancelledAt?: Date | string | null;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    sampleCreditMinor?: bigint | number;
+    contractId?: string | null;
+    delayAlertedAt?: Date | string | null;
+    capacityBooking?: Prisma.CapacityBookingUncheckedCreateNestedOneWithoutOrderInput;
+    logisticsQuotes?: Prisma.LogisticsQuoteUncheckedCreateNestedManyWithoutOrderInput;
+    packing?: Prisma.OrderPackingUncheckedCreateNestedOneWithoutOrderInput;
+    pickups?: Prisma.PickupRequestUncheckedCreateNestedManyWithoutOrderInput;
+    hubReceipts?: Prisma.HubReceiptUncheckedCreateNestedManyWithoutOrderInput;
+    logisticsShipments?: Prisma.LogisticsShipmentOrderUncheckedCreateNestedManyWithoutOrderInput;
+    items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    milestones?: Prisma.OrderMilestoneUncheckedCreateNestedManyWithoutOrderInput;
+    samples?: Prisma.SampleUncheckedCreateNestedManyWithoutOrderInput;
+    payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutOrderInput;
+    ledgerTransactions?: Prisma.LedgerTransactionUncheckedCreateNestedManyWithoutOrderInput;
+    inspections?: Prisma.InspectionUncheckedCreateNestedManyWithoutOrderInput;
+    reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutOrderInput;
+    disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutOrderInput;
+    charges?: Prisma.OrderChargeUncheckedCreateNestedManyWithoutOrderInput;
+    factoryChanges?: Prisma.OrderFactoryChangeUncheckedCreateNestedManyWithoutOrderInput;
+    logisticsClaims?: Prisma.LogisticsClaimUncheckedCreateNestedManyWithoutOrderInput;
+    conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOrderInput;
+    releases?: Prisma.OrderReleaseUncheckedCreateNestedManyWithoutOrderInput;
+    events?: Prisma.OrderEventUncheckedCreateNestedManyWithoutOrderInput;
+    reorders?: Prisma.OrderUncheckedCreateNestedManyWithoutReorderOfInput;
+};
+export type OrderCreateOrConnectWithoutCamerasInput = {
+    where: Prisma.OrderWhereUniqueInput;
+    create: Prisma.XOR<Prisma.OrderCreateWithoutCamerasInput, Prisma.OrderUncheckedCreateWithoutCamerasInput>;
+};
+export type OrderUpsertWithoutCamerasInput = {
+    update: Prisma.XOR<Prisma.OrderUpdateWithoutCamerasInput, Prisma.OrderUncheckedUpdateWithoutCamerasInput>;
+    create: Prisma.XOR<Prisma.OrderCreateWithoutCamerasInput, Prisma.OrderUncheckedCreateWithoutCamerasInput>;
+    where?: Prisma.OrderWhereInput;
+};
+export type OrderUpdateToOneWithWhereWithoutCamerasInput = {
+    where?: Prisma.OrderWhereInput;
+    data: Prisma.XOR<Prisma.OrderUpdateWithoutCamerasInput, Prisma.OrderUncheckedUpdateWithoutCamerasInput>;
+};
+export type OrderUpdateWithoutCamerasInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    code?: Prisma.StringFieldUpdateOperationsInput | string;
+    hsCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    title?: Prisma.StringFieldUpdateOperationsInput | string;
+    specification?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    quantity?: Prisma.IntFieldUpdateOperationsInput | number;
+    buyerUnitPriceMinor?: Prisma.IntFieldUpdateOperationsInput | number;
+    manufacturerUnitPriceMinor?: Prisma.IntFieldUpdateOperationsInput | number;
+    buyerTotalMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
+    manufacturerTotalMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
+    currency?: Prisma.EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency;
+    incoterm?: Prisma.EnumIncotermFieldUpdateOperationsInput | $Enums.Incoterm;
+    destinationCountry?: Prisma.StringFieldUpdateOperationsInput | string;
+    destinationPort?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    depositBps?: Prisma.IntFieldUpdateOperationsInput | number;
+    requestedShipDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    status?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus;
+    disputedFrom?: Prisma.NullableEnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus | null;
+    commissionBps?: Prisma.IntFieldUpdateOperationsInput | number;
+    commissionMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
+    repeatOrder?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    sampleCreditMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
+    delayAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    buyerCompany?: Prisma.CompanyUpdateOneRequiredWithoutOrdersAsBuyerNestedInput;
+    manufacturerProfile?: Prisma.ManufacturerProfileUpdateOneRequiredWithoutOrdersNestedInput;
+    rfq?: Prisma.RfqUpdateOneWithoutOrdersNestedInput;
+    capacityBooking?: Prisma.CapacityBookingUpdateOneWithoutOrderNestedInput;
+    logisticsQuotes?: Prisma.LogisticsQuoteUpdateManyWithoutOrderNestedInput;
+    packing?: Prisma.OrderPackingUpdateOneWithoutOrderNestedInput;
+    pickups?: Prisma.PickupRequestUpdateManyWithoutOrderNestedInput;
+    hubReceipts?: Prisma.HubReceiptUpdateManyWithoutOrderNestedInput;
+    logisticsShipments?: Prisma.LogisticsShipmentOrderUpdateManyWithoutOrderNestedInput;
+    quote?: Prisma.QuoteUpdateOneWithoutOrderNestedInput;
+    items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput;
+    milestones?: Prisma.OrderMilestoneUpdateManyWithoutOrderNestedInput;
+    samples?: Prisma.SampleUpdateManyWithoutOrderNestedInput;
+    payments?: Prisma.PaymentUpdateManyWithoutOrderNestedInput;
+    ledgerTransactions?: Prisma.LedgerTransactionUpdateManyWithoutOrderNestedInput;
+    inspections?: Prisma.InspectionUpdateManyWithoutOrderNestedInput;
+    reviews?: Prisma.ReviewUpdateManyWithoutOrderNestedInput;
+    disputes?: Prisma.DisputeUpdateManyWithoutOrderNestedInput;
+    charges?: Prisma.OrderChargeUpdateManyWithoutOrderNestedInput;
+    contract?: Prisma.SupplyContractUpdateOneWithoutOrdersNestedInput;
+    factoryChanges?: Prisma.OrderFactoryChangeUpdateManyWithoutOrderNestedInput;
+    logisticsClaims?: Prisma.LogisticsClaimUpdateManyWithoutOrderNestedInput;
+    conversations?: Prisma.ConversationUpdateManyWithoutOrderNestedInput;
+    releases?: Prisma.OrderReleaseUpdateManyWithoutOrderNestedInput;
+    events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
+    reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
+    reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+};
+export type OrderUncheckedUpdateWithoutCamerasInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    code?: Prisma.StringFieldUpdateOperationsInput | string;
+    buyerCompanyId?: Prisma.StringFieldUpdateOperationsInput | string;
+    manufacturerProfileId?: Prisma.StringFieldUpdateOperationsInput | string;
+    rfqId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    quoteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    hsCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    title?: Prisma.StringFieldUpdateOperationsInput | string;
+    specification?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    quantity?: Prisma.IntFieldUpdateOperationsInput | number;
+    buyerUnitPriceMinor?: Prisma.IntFieldUpdateOperationsInput | number;
+    manufacturerUnitPriceMinor?: Prisma.IntFieldUpdateOperationsInput | number;
+    buyerTotalMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
+    manufacturerTotalMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
+    currency?: Prisma.EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency;
+    incoterm?: Prisma.EnumIncotermFieldUpdateOperationsInput | $Enums.Incoterm;
+    destinationCountry?: Prisma.StringFieldUpdateOperationsInput | string;
+    destinationPort?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    depositBps?: Prisma.IntFieldUpdateOperationsInput | number;
+    requestedShipDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    status?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus;
+    disputedFrom?: Prisma.NullableEnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus | null;
+    reorderOfId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    commissionBps?: Prisma.IntFieldUpdateOperationsInput | number;
+    commissionMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
+    repeatOrder?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    sampleCreditMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
+    contractId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    delayAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    capacityBooking?: Prisma.CapacityBookingUncheckedUpdateOneWithoutOrderNestedInput;
+    logisticsQuotes?: Prisma.LogisticsQuoteUncheckedUpdateManyWithoutOrderNestedInput;
+    packing?: Prisma.OrderPackingUncheckedUpdateOneWithoutOrderNestedInput;
+    pickups?: Prisma.PickupRequestUncheckedUpdateManyWithoutOrderNestedInput;
+    hubReceipts?: Prisma.HubReceiptUncheckedUpdateManyWithoutOrderNestedInput;
+    logisticsShipments?: Prisma.LogisticsShipmentOrderUncheckedUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    milestones?: Prisma.OrderMilestoneUncheckedUpdateManyWithoutOrderNestedInput;
+    samples?: Prisma.SampleUncheckedUpdateManyWithoutOrderNestedInput;
+    payments?: Prisma.PaymentUncheckedUpdateManyWithoutOrderNestedInput;
+    ledgerTransactions?: Prisma.LedgerTransactionUncheckedUpdateManyWithoutOrderNestedInput;
+    inspections?: Prisma.InspectionUncheckedUpdateManyWithoutOrderNestedInput;
+    reviews?: Prisma.ReviewUncheckedUpdateManyWithoutOrderNestedInput;
+    disputes?: Prisma.DisputeUncheckedUpdateManyWithoutOrderNestedInput;
+    charges?: Prisma.OrderChargeUncheckedUpdateManyWithoutOrderNestedInput;
+    factoryChanges?: Prisma.OrderFactoryChangeUncheckedUpdateManyWithoutOrderNestedInput;
+    logisticsClaims?: Prisma.LogisticsClaimUncheckedUpdateManyWithoutOrderNestedInput;
+    conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOrderNestedInput;
+    releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
+    events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
+    reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
 };
 export type OrderCreateManyBuyerCompanyInput = {
     id?: string;
@@ -7600,6 +7958,7 @@ export type OrderUpdateWithoutBuyerCompanyInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutBuyerCompanyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -7656,6 +8015,7 @@ export type OrderUncheckedUpdateWithoutBuyerCompanyInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateManyWithoutBuyerCompanyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -7782,6 +8142,7 @@ export type OrderUpdateWithoutManufacturerProfileInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutManufacturerProfileInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -7838,6 +8199,7 @@ export type OrderUncheckedUpdateWithoutManufacturerProfileInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateManyWithoutManufacturerProfileInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -7964,6 +8326,7 @@ export type OrderUpdateWithoutRfqInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutRfqInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -8020,6 +8383,7 @@ export type OrderUncheckedUpdateWithoutRfqInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateManyWithoutRfqInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -8146,6 +8510,7 @@ export type OrderUpdateWithoutReorderOfInput = {
     releases?: Prisma.OrderReleaseUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutReorderOfInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -8202,6 +8567,7 @@ export type OrderUncheckedUpdateWithoutReorderOfInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateManyWithoutReorderOfInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -8328,6 +8694,7 @@ export type OrderUpdateWithoutContractInput = {
     events?: Prisma.OrderEventUpdateManyWithoutOrderNestedInput;
     reorderOf?: Prisma.OrderUpdateOneWithoutReordersNestedInput;
     reorders?: Prisma.OrderUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateWithoutContractInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -8384,6 +8751,7 @@ export type OrderUncheckedUpdateWithoutContractInput = {
     releases?: Prisma.OrderReleaseUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.OrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     reorders?: Prisma.OrderUncheckedUpdateManyWithoutReorderOfNestedInput;
+    cameras?: Prisma.OrderCameraUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type OrderUncheckedUpdateManyWithoutContractInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -8440,6 +8808,7 @@ export type OrderCountOutputType = {
     releases: number;
     events: number;
     reorders: number;
+    cameras: number;
 };
 export type OrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     logisticsQuotes?: boolean | OrderCountOutputTypeCountLogisticsQuotesArgs;
@@ -8461,6 +8830,7 @@ export type OrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
     releases?: boolean | OrderCountOutputTypeCountReleasesArgs;
     events?: boolean | OrderCountOutputTypeCountEventsArgs;
     reorders?: boolean | OrderCountOutputTypeCountReordersArgs;
+    cameras?: boolean | OrderCountOutputTypeCountCamerasArgs;
 };
 export type OrderCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.OrderCountOutputTypeSelect<ExtArgs> | null;
@@ -8521,6 +8891,9 @@ export type OrderCountOutputTypeCountEventsArgs<ExtArgs extends runtime.Types.Ex
 };
 export type OrderCountOutputTypeCountReordersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.OrderWhereInput;
+};
+export type OrderCountOutputTypeCountCamerasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.OrderCameraWhereInput;
 };
 export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -8584,6 +8957,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
     events?: boolean | Prisma.Order$eventsArgs<ExtArgs>;
     reorderOf?: boolean | Prisma.Order$reorderOfArgs<ExtArgs>;
     reorders?: boolean | Prisma.Order$reordersArgs<ExtArgs>;
+    cameras?: boolean | Prisma.Order$camerasArgs<ExtArgs>;
     _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["order"]>;
 export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -8735,6 +9109,7 @@ export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     events?: boolean | Prisma.Order$eventsArgs<ExtArgs>;
     reorderOf?: boolean | Prisma.Order$reorderOfArgs<ExtArgs>;
     reorders?: boolean | Prisma.Order$reordersArgs<ExtArgs>;
+    cameras?: boolean | Prisma.Order$camerasArgs<ExtArgs>;
     _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type OrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -8783,6 +9158,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
         events: Prisma.$OrderEventPayload<ExtArgs>[];
         reorderOf: Prisma.$OrderPayload<ExtArgs> | null;
         reorders: Prisma.$OrderPayload<ExtArgs>[];
+        cameras: Prisma.$OrderCameraPayload<ExtArgs>[];
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
@@ -8898,6 +9274,7 @@ export interface Prisma__OrderClient<T, Null = never, ExtArgs extends runtime.Ty
     events<T extends Prisma.Order$eventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     reorderOf<T extends Prisma.Order$reorderOfArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$reorderOfArgs<ExtArgs>>): Prisma.Prisma__OrderClient<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
     reorders<T extends Prisma.Order$reordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$reordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    cameras<T extends Prisma.Order$camerasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$camerasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderCameraPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): runtime.Types.Utils.JsPromise<TResult1 | TResult2>;
     catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): runtime.Types.Utils.JsPromise<T | TResult>;
     finally(onfinally?: (() => void) | undefined | null): runtime.Types.Utils.JsPromise<T>;
@@ -9282,6 +9659,17 @@ export type Order$reordersArgs<ExtArgs extends runtime.Types.Extensions.Internal
     take?: number;
     skip?: number;
     distinct?: Prisma.OrderScalarFieldEnum | Prisma.OrderScalarFieldEnum[];
+};
+export type Order$camerasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    select?: Prisma.OrderCameraSelect<ExtArgs> | null;
+    omit?: Prisma.OrderCameraOmit<ExtArgs> | null;
+    include?: Prisma.OrderCameraInclude<ExtArgs> | null;
+    where?: Prisma.OrderCameraWhereInput;
+    orderBy?: Prisma.OrderCameraOrderByWithRelationInput | Prisma.OrderCameraOrderByWithRelationInput[];
+    cursor?: Prisma.OrderCameraWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.OrderCameraScalarFieldEnum | Prisma.OrderCameraScalarFieldEnum[];
 };
 export type OrderDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.OrderSelect<ExtArgs> | null;

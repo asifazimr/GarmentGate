@@ -421,7 +421,9 @@
     "plans": "Factory plans",
     "plus": "GarmentGate Plus",
     "texts": "Texts",
-    "leads": "Leads"
+    "leads": "Leads",
+    "cameras": "Cameras",
+    "monitoring": "Video monitoring"
   },
   "shell": {
     "search": "Search…",
@@ -636,6 +638,13 @@
       "SUBMITTED": "With insurer",
       "SETTLED": "Settled",
       "REJECTED": "Rejected"
+    },
+    "camera": {
+      "SETUP": "Setting up",
+      "PENDING_REVIEW": "In review",
+      "APPROVED": "Approved",
+      "REJECTED": "Needs changes",
+      "DISABLED": "Switched off"
     }
   },
   "marketing": {
@@ -4298,7 +4307,8 @@
         "LOGISTICS": "Shipping",
         "INSURANCE_RECOVERY": "Insurance recovery",
         "INSPECTION_FEE": "Inspection fee",
-        "SAMPLE_FEE": "Sample fee"
+        "SAMPLE_FEE": "Sample fee",
+        "MONITORING_FEE": "Monitoring fee"
       },
       "method": {
         "BANK_TRANSFER": "Bank transfer",
@@ -5780,10 +5790,11 @@
   },
   "fees": {
     "title": "Service fees",
-    "description": "Samples and inspection days are paid to GarmentGate. Your goods leave the hub once these are paid.",
+    "description": "Samples, inspection days and video monitoring are paid to GarmentGate. Your goods leave the hub once these are paid.",
     "kinds": {
       "SAMPLE_FEE": "Sample fees",
-      "INSPECTION_FEE": "Inspection days"
+      "INSPECTION_FEE": "Inspection days",
+      "MONITORING_FEE": "Video monitoring"
     },
     "paid": "Paid",
     "checking": "Transfer being checked",
@@ -6409,5 +6420,148 @@
     "emptyBody": "Messages sent from the website’s contact forms appear here.",
     "saved": "Status updated",
     "failed": "Couldn’t update the status"
+  },
+  "monitoring": {
+    "area": {
+      "CUTTING": "Cutting",
+      "SEWING": "Sewing",
+      "FINISHING": "Finishing",
+      "PACKING": "Packing",
+      "QC": "Quality check",
+      "WAREHOUSE": "Warehouse",
+      "OTHER": "Other"
+    },
+    "player": {
+      "live": "Live",
+      "offline": "Offline",
+      "error": "This video isn’t playing. Check your connection and try again.",
+      "retry": "Try again"
+    },
+    "buyer": {
+      "title": "Video monitoring",
+      "offer": "Watch your order being made on the factory’s production cameras, live and recorded, for the whole production run.",
+      "description": "Live and recorded video of your order’s production lines.",
+      "add": "Add video monitoring",
+      "addFor": "Add video monitoring · {amount}",
+      "addedToast": "Video monitoring added. Pay the fee below to start watching.",
+      "addFailed": "We couldn’t add monitoring. Try again.",
+      "active": "Active",
+      "unpaid": "Fee due",
+      "payFirst": "Pay the video monitoring fee under Service fees below to start watching.",
+      "notWatchable": "Cameras show while your order is in production, quality control and ready to ship.",
+      "noCameras": "The factory is choosing which cameras show your order. They’ll appear here.",
+      "cameras": "Cameras",
+      "camera": "Camera {number}",
+      "offline": "{camera} is offline right now. Check back soon, or watch a recording.",
+      "recordings": "Recordings from this order",
+      "backToLive": "Back to live",
+      "minutes": "{count, plural, one {# min} other {# min}}",
+      "privacy": "Cameras show production lines only. GarmentGate checks every view before you see it."
+    },
+    "factory": {
+      "title": "Cameras",
+      "description": "Let buyers watch their orders being made. Connect cameras over your production lines; GarmentGate checks each view, then you choose which cameras show each order.",
+      "add": "Connect a camera",
+      "addHint": "Point it at a production area only: no signs, logos, faces or views outside.",
+      "label": "Name (only you and GarmentGate see it)",
+      "labelHint": "For example “Line 3 sewing”.",
+      "area": "Area",
+      "create": "Connect",
+      "created": "Camera connected. Start streaming to it, then submit it for review.",
+      "empty": {
+        "title": "No cameras yet",
+        "description": "Connect your first camera above. Buyers pay GarmentGate for monitoring: it costs you nothing."
+      },
+      "status": {
+        "SETUP": "Start streaming with the details below, then submit it for review.",
+        "PENDING_REVIEW": "GarmentGate is checking the picture. We’ll let you know.",
+        "APPROVED": "Approved: you can show it on orders with video monitoring.",
+        "REJECTED": "Fix what GarmentGate asked, keep streaming, then submit again.",
+        "DISABLED": "GarmentGate switched this camera off. Contact us to set it up again."
+      },
+      "submit": "Submit for review",
+      "submitted": "Submitted. GarmentGate will check the picture.",
+      "startFirst": "We can’t see a picture yet: start the stream first.",
+      "remove": "Remove",
+      "removeConfirm": "Remove camera",
+      "keep": "Keep",
+      "removed": "Camera removed",
+      "failed": "Something went wrong. Try again.",
+      "setup": {
+        "title": "Connection details",
+        "step1": "In your camera, NVR or encoder, choose RTMPS streaming (H.264 video, AAC audio).",
+        "step2": "Paste the server and the stream key below.",
+        "step3": "Start the stream: this camera shows “Live” within a minute.",
+        "server": "Server (RTMPS)",
+        "key": "Stream key",
+        "show": "Show",
+        "hide": "Hide",
+        "copy": "Copy {what}",
+        "ffmpeg": "Camera only speaks RTSP?",
+        "ffmpegHint": "Run this on a computer in the factory, with your camera’s address and login.",
+        "command": "Command",
+        "keySecret": "Keep the stream key private: anyone with it can send video to this camera."
+      }
+    },
+    "factoryOrder": {
+      "title": "Video monitoring",
+      "description": "The buyer added video monitoring. Choose the approved cameras that show this order being made.",
+      "none": "You have no approved cameras yet. Connect one and submit it for review.",
+      "manage": "Set up cameras",
+      "hint": "The buyer sees them as Camera 1, 2… with the area only, never your camera names.",
+      "save": "Save cameras",
+      "saved": "Cameras saved"
+    },
+    "admin": {
+      "title": "Video monitoring",
+      "description": "Check every camera before buyers can watch it, switch any off at once, and set the add-on’s terms.",
+      "tabs": {
+        "queue": "To review",
+        "all": "All cameras",
+        "settings": "Settings"
+      },
+      "emptyQueue": "Nothing to review",
+      "emptyQueueBody": "Cameras factories submit appear here.",
+      "reviewHint": "Watch the live picture. Approve only if nothing could identify the factory.",
+      "offline": "The stream stopped. Ask the factory to restart it before reviewing.",
+      "checklistTitle": "Privacy checklist",
+      "checklist": {
+        "productionOnly": "Shows production only",
+        "noSignage": "No signs, logos, labels or brand names readable",
+        "noFaces": "No recognisable faces",
+        "noOutsideView": "No windows, doors or views outside"
+      },
+      "note": "Note to the factory",
+      "notePlaceholder": "What needs to change",
+      "noteHint": "Needed to ask for changes.",
+      "approve": "Approve",
+      "reject": "Ask for changes",
+      "approved": "Camera approved",
+      "rejected": "Changes requested",
+      "cols": {
+        "factory": "Factory",
+        "camera": "Camera",
+        "status": "Status",
+        "live": "Stream",
+        "created": "Connected"
+      },
+      "watch": "Watch",
+      "close": "Close",
+      "disable": "Switch off",
+      "disabled": "Camera switched off",
+      "empty": "No cameras yet",
+      "emptyBody": "Factories connect cameras from their Cameras page.",
+      "settings": {
+        "title": "Add-on terms",
+        "description": "What buyers pay to add video monitoring to an order. Factories pay nothing.",
+        "enabled": "Offer video monitoring to buyers",
+        "fee": "Fee per order (US cents)",
+        "feeHint": "4900 = USD 49. Charged in the order’s currency at the reference rate.",
+        "playback": "Link lifetime (minutes)",
+        "playbackHint": "How long a signed video link works. The page refreshes links on its own.",
+        "save": "Save",
+        "saved": "Terms saved"
+      }
+    }
   }
 }

@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Award,
   BadgeCheck,
+  Cctv,
   CalendarClock,
   CalendarRange,
   ClipboardCheck,
@@ -36,6 +37,8 @@ export type NavLabel =
   | 'dashboard'
   | 'tasks'
   | 'plan'
+  | 'cameras'
+  | 'monitoring'
   | 'texts'
   | 'leads'
   | 'plus'
@@ -110,6 +113,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/manufacturer/contracts', label: 'contracts', icon: FileSignature, built: true },
     { href: '/manufacturer/profile', label: 'profile', icon: Factory, built: true },
     { href: '/manufacturer/plan', label: 'plan', icon: Sparkles, built: true },
+    { href: '/manufacturer/cameras', label: 'cameras', icon: Cctv, built: true },
     { href: '/manufacturer/messages', label: 'messages', icon: MessageSquare, built: true },
     { href: '/manufacturer/quotes', label: 'quotes', icon: Receipt },
     { href: '/manufacturer/settings', label: 'settings', icon: Settings, built: true },
@@ -126,6 +130,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: '/admin/capacity', label: 'capacityBooking', icon: CalendarClock, built: true },
     { href: '/admin/contracts', label: 'contracts', icon: FileSignature, built: true },
     { href: '/admin/plans', label: 'plans', icon: Sparkles, built: true },
+    { href: '/admin/monitoring', label: 'monitoring', icon: Cctv, built: true },
     { href: '/admin/messaging', label: 'texts', icon: MessageSquare, built: true },
     { href: '/admin/leads', label: 'leads', icon: Inbox, built: true },
     {

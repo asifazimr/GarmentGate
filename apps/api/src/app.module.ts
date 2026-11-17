@@ -24,6 +24,7 @@ import { CapacityBookingModule } from './modules/capacity-booking/capacity-booki
 import { ContractsModule } from './modules/contracts/contracts.module.js';
 import { ExceptionsModule } from './modules/exceptions/exceptions.module.js';
 import { MessagingModule } from './modules/messaging/messaging.module.js';
+import { MonitoringModule } from './modules/monitoring/monitoring.module.js';
 import { PublicSiteModule } from './modules/public-site/public-site.module.js';
 import { PlansModule } from './modules/plans/plans.module.js';
 import { KpisModule } from './modules/kpis/kpis.module.js';
@@ -69,6 +70,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     ExceptionsModule,
     PlansModule,
     MessagingModule,
+    MonitoringModule,
     PublicSiteModule,
     KpisModule,
     LogisticsModule,

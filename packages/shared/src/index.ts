@@ -43,6 +43,7 @@ export * from './messaging/messaging.js';
 export * from './public-site/public-site.js';
 export * from './public-site/directory.js';
 export * from './public-site/estimate.js';
+export * from './monitoring/monitoring.js';
 export * from './logistics/references.js';
 export * from './logistics/freight.js';
 export * from './logistics/landed-cost.js';

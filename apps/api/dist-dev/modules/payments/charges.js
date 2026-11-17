@@ -63,4 +63,19 @@ export async function chargeInspection(tx, order, inspectionId) {
         },
     });
 }
+export async function chargeMonitoring(tx, order, feeUsdMinor) {
+    const amount = await inCurrency(tx, feeUsdMinor, order.currency);
+    await tx.orderCharge.create({
+        data: {
+            orderId: order.id,
+            kind: 'MONITORING_FEE',
+            currency: order.currency,
+            amountMinor: amount ?? 0n,
+            waived: amount === null || amount === 0n,
+        },
+    });
+}
+export function usdIn(client, usdMinor, currency) {
+    return inCurrency(client, usdMinor, currency);
+}
 //# sourceMappingURL=charges.js.map

@@ -211,7 +211,8 @@ export const PaymentPurpose = {
     REFUND: 'REFUND',
     LOGISTICS: 'LOGISTICS',
     INSURANCE_RECOVERY: 'INSURANCE_RECOVERY',
-    INSPECTION_FEE: 'INSPECTION_FEE'
+    INSPECTION_FEE: 'INSPECTION_FEE',
+    MONITORING_FEE: 'MONITORING_FEE'
 };
 export const PaymentMethod = {
     BANK_TRANSFER: 'BANK_TRANSFER',
@@ -544,7 +545,8 @@ export const LogisticsClaimStatus = {
 };
 export const OrderChargeKind = {
     SAMPLE_FEE: 'SAMPLE_FEE',
-    INSPECTION_FEE: 'INSPECTION_FEE'
+    INSPECTION_FEE: 'INSPECTION_FEE',
+    MONITORING_FEE: 'MONITORING_FEE'
 };
 export const BankAccountStatus = {
     PENDING_REVIEW: 'PENDING_REVIEW',
@@ -613,5 +615,21 @@ export const LeadStatus = {
     NEW: 'NEW',
     CONTACTED: 'CONTACTED',
     CLOSED: 'CLOSED'
+};
+export const CameraArea = {
+    CUTTING: 'CUTTING',
+    SEWING: 'SEWING',
+    FINISHING: 'FINISHING',
+    PACKING: 'PACKING',
+    QC: 'QC',
+    WAREHOUSE: 'WAREHOUSE',
+    OTHER: 'OTHER'
+};
+export const CameraStatus = {
+    SETUP: 'SETUP',
+    PENDING_REVIEW: 'PENDING_REVIEW',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
+    DISABLED: 'DISABLED'
 };
 //# sourceMappingURL=enums.js.map

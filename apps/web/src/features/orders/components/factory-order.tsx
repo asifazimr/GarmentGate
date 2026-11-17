@@ -35,6 +35,7 @@ import { FactoryShippingCard } from '@/features/logistics/components/factory-shi
 import { useFactoryLogistics } from '@/features/logistics/order-api';
 import { FactoryDisputePanel } from '@/features/trust/components/dispute-panel';
 import { OrderReviewsCard } from '@/features/trust/components/reviews';
+import { FactoryOrderCameras } from '@/features/monitoring/components/factory-order-cameras';
 import {
   OrderError,
   OrderHeader,
@@ -115,6 +116,7 @@ export function FactoryOrderPage({ code }: { code: string }) {
       {logistics.data ? <FactoryShippingCard code={o.code} logistics={logistics.data} /> : null}
 
       <FactoryDisputePanel code={o.code} />
+      <FactoryOrderCameras code={o.code} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section aria-labelledby="timeline-heading">

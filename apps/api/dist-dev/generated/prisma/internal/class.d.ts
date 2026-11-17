@@ -285,5 +285,11 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
     get lead(): Prisma.LeadDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
+    get camera(): Prisma.CameraDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    get orderCamera(): Prisma.OrderCameraDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
 }
 export declare function getPrismaClientClass(): PrismaClientConstructor;

@@ -30,6 +30,7 @@ import { OrderTimeline } from './order-timeline';
 import { MerchandiserPicker } from '@/features/contracts/components/admin-contracts';
 import { ReplaceFactoryButton } from '@/features/exceptions/components/replace-factory-dialog';
 import { HsCodeCard } from '@/features/logistics/components/hs-code-card';
+import { MonitoringCard } from '@/features/monitoring/components/monitoring-card';
 
 export function AdminOrderPage({ code }: { code: string }) {
   const t = useTranslations('orders');
@@ -121,6 +122,7 @@ export function AdminOrderPage({ code }: { code: string }) {
       </NextAction>
 
       <AdminDisputePanel code={o.code} />
+      <MonitoringCard code={o.code} staff />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section aria-labelledby="timeline-heading">

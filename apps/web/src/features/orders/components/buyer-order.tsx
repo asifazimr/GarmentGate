@@ -18,6 +18,7 @@ import { TrackingCard } from '@/features/logistics/components/tracking-card';
 import { useOrderLogistics } from '@/features/logistics/order-api';
 import { MerchandiserNote } from '@/features/contracts/components/contracts-pages';
 import { FeesCard } from '@/features/payments/components/fees-card';
+import { MonitoringCard } from '@/features/monitoring/components/monitoring-card';
 import { OrderReviewsCard } from '@/features/trust/components/reviews';
 import { purchaseOrderUrl, useBuyerOrder } from '../api';
 import { NextAction } from './next-action';
@@ -156,6 +157,7 @@ export function BuyerOrderPage({ code }: { code: string }) {
 
       <TrackingCard code={o.code} />
       <ShippingCard code={o.code} />
+      <MonitoringCard code={o.code} />
       <FeesCard code={o.code} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">

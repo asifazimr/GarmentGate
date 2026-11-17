@@ -393,6 +393,7 @@ export type ManufacturerProfileWhereInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipListRelationFilter;
     supplierClaims?: Prisma.SupplierClaimListRelationFilter;
     subscriptions?: Prisma.PlanSubscriptionListRelationFilter;
+    cameras?: Prisma.CameraListRelationFilter;
 };
 export type ManufacturerProfileOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -441,6 +442,7 @@ export type ManufacturerProfileOrderByWithRelationInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipOrderByRelationAggregateInput;
     supplierClaims?: Prisma.SupplierClaimOrderByRelationAggregateInput;
     subscriptions?: Prisma.PlanSubscriptionOrderByRelationAggregateInput;
+    cameras?: Prisma.CameraOrderByRelationAggregateInput;
 };
 export type ManufacturerProfileWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -492,6 +494,7 @@ export type ManufacturerProfileWhereUniqueInput = Prisma.AtLeast<{
     capacityPartnerships?: Prisma.CapacityPartnershipListRelationFilter;
     supplierClaims?: Prisma.SupplierClaimListRelationFilter;
     subscriptions?: Prisma.PlanSubscriptionListRelationFilter;
+    cameras?: Prisma.CameraListRelationFilter;
 }, "id" | "companyId" | "publicCode">;
 export type ManufacturerProfileOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -611,6 +614,7 @@ export type ManufacturerProfileCreateInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateInput = {
     id?: string;
@@ -658,6 +662,7 @@ export type ManufacturerProfileUncheckedCreateInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -705,6 +710,7 @@ export type ManufacturerProfileUpdateInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -752,6 +758,7 @@ export type ManufacturerProfileUncheckedUpdateInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateManyInput = {
     id?: string;
@@ -1247,6 +1254,18 @@ export type ManufacturerProfileUpdateOneWithoutSubscriptionsNestedInput = {
     connect?: Prisma.ManufacturerProfileWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.ManufacturerProfileUpdateToOneWithWhereWithoutSubscriptionsInput, Prisma.ManufacturerProfileUpdateWithoutSubscriptionsInput>, Prisma.ManufacturerProfileUncheckedUpdateWithoutSubscriptionsInput>;
 };
+export type ManufacturerProfileCreateNestedOneWithoutCamerasInput = {
+    create?: Prisma.XOR<Prisma.ManufacturerProfileCreateWithoutCamerasInput, Prisma.ManufacturerProfileUncheckedCreateWithoutCamerasInput>;
+    connectOrCreate?: Prisma.ManufacturerProfileCreateOrConnectWithoutCamerasInput;
+    connect?: Prisma.ManufacturerProfileWhereUniqueInput;
+};
+export type ManufacturerProfileUpdateOneRequiredWithoutCamerasNestedInput = {
+    create?: Prisma.XOR<Prisma.ManufacturerProfileCreateWithoutCamerasInput, Prisma.ManufacturerProfileUncheckedCreateWithoutCamerasInput>;
+    connectOrCreate?: Prisma.ManufacturerProfileCreateOrConnectWithoutCamerasInput;
+    upsert?: Prisma.ManufacturerProfileUpsertWithoutCamerasInput;
+    connect?: Prisma.ManufacturerProfileWhereUniqueInput;
+    update?: Prisma.XOR<Prisma.XOR<Prisma.ManufacturerProfileUpdateToOneWithWhereWithoutCamerasInput, Prisma.ManufacturerProfileUpdateWithoutCamerasInput>, Prisma.ManufacturerProfileUncheckedUpdateWithoutCamerasInput>;
+};
 export type ManufacturerProfileCreateWithoutCompanyInput = {
     id?: string;
     publicCode: string;
@@ -1292,6 +1311,7 @@ export type ManufacturerProfileCreateWithoutCompanyInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutCompanyInput = {
     id?: string;
@@ -1338,6 +1358,7 @@ export type ManufacturerProfileUncheckedCreateWithoutCompanyInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutCompanyInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -1397,6 +1418,7 @@ export type ManufacturerProfileUpdateWithoutCompanyInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutCompanyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1443,6 +1465,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutCompanyInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutCategoriesInput = {
     id?: string;
@@ -1489,6 +1512,7 @@ export type ManufacturerProfileCreateWithoutCategoriesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutCategoriesInput = {
     id?: string;
@@ -1535,6 +1559,7 @@ export type ManufacturerProfileUncheckedCreateWithoutCategoriesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutCategoriesInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -1633,6 +1658,7 @@ export type ManufacturerProfileCreateWithoutCertificationsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutCertificationsInput = {
     id?: string;
@@ -1679,6 +1705,7 @@ export type ManufacturerProfileUncheckedCreateWithoutCertificationsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutCertificationsInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -1738,6 +1765,7 @@ export type ManufacturerProfileUpdateWithoutCertificationsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutCertificationsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1784,6 +1812,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutCertificationsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutProductsInput = {
     id?: string;
@@ -1830,6 +1859,7 @@ export type ManufacturerProfileCreateWithoutProductsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutProductsInput = {
     id?: string;
@@ -1876,6 +1906,7 @@ export type ManufacturerProfileUncheckedCreateWithoutProductsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutProductsInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -1935,6 +1966,7 @@ export type ManufacturerProfileUpdateWithoutProductsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutProductsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1981,6 +2013,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutProductsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutPhotosInput = {
     id?: string;
@@ -2027,6 +2060,7 @@ export type ManufacturerProfileCreateWithoutPhotosInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutPhotosInput = {
     id?: string;
@@ -2073,6 +2107,7 @@ export type ManufacturerProfileUncheckedCreateWithoutPhotosInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutPhotosInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -2132,6 +2167,7 @@ export type ManufacturerProfileUpdateWithoutPhotosInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutPhotosInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2178,6 +2214,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutPhotosInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutCapacityMonthsInput = {
     id?: string;
@@ -2224,6 +2261,7 @@ export type ManufacturerProfileCreateWithoutCapacityMonthsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutCapacityMonthsInput = {
     id?: string;
@@ -2270,6 +2308,7 @@ export type ManufacturerProfileUncheckedCreateWithoutCapacityMonthsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutCapacityMonthsInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -2329,6 +2368,7 @@ export type ManufacturerProfileUpdateWithoutCapacityMonthsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutCapacityMonthsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2375,6 +2415,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutCapacityMonthsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutRfqInvitationsInput = {
     id?: string;
@@ -2421,6 +2462,7 @@ export type ManufacturerProfileCreateWithoutRfqInvitationsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutRfqInvitationsInput = {
     id?: string;
@@ -2467,6 +2509,7 @@ export type ManufacturerProfileUncheckedCreateWithoutRfqInvitationsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutRfqInvitationsInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -2526,6 +2569,7 @@ export type ManufacturerProfileUpdateWithoutRfqInvitationsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutRfqInvitationsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2572,6 +2616,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutRfqInvitationsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutQuotesInput = {
     id?: string;
@@ -2618,6 +2663,7 @@ export type ManufacturerProfileCreateWithoutQuotesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutQuotesInput = {
     id?: string;
@@ -2664,6 +2710,7 @@ export type ManufacturerProfileUncheckedCreateWithoutQuotesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutQuotesInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -2723,6 +2770,7 @@ export type ManufacturerProfileUpdateWithoutQuotesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutQuotesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2769,6 +2817,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutQuotesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutOrdersInput = {
     id?: string;
@@ -2815,6 +2864,7 @@ export type ManufacturerProfileCreateWithoutOrdersInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutOrdersInput = {
     id?: string;
@@ -2861,6 +2911,7 @@ export type ManufacturerProfileUncheckedCreateWithoutOrdersInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutOrdersInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -2920,6 +2971,7 @@ export type ManufacturerProfileUpdateWithoutOrdersInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutOrdersInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2966,6 +3018,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutOrdersInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutReviewsReceivedInput = {
     id?: string;
@@ -3012,6 +3065,7 @@ export type ManufacturerProfileCreateWithoutReviewsReceivedInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutReviewsReceivedInput = {
     id?: string;
@@ -3058,6 +3112,7 @@ export type ManufacturerProfileUncheckedCreateWithoutReviewsReceivedInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutReviewsReceivedInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -3117,6 +3172,7 @@ export type ManufacturerProfileUpdateWithoutReviewsReceivedInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutReviewsReceivedInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -3163,6 +3219,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutReviewsReceivedInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutShortlistItemsInput = {
     id?: string;
@@ -3209,6 +3266,7 @@ export type ManufacturerProfileCreateWithoutShortlistItemsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutShortlistItemsInput = {
     id?: string;
@@ -3255,6 +3313,7 @@ export type ManufacturerProfileUncheckedCreateWithoutShortlistItemsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutShortlistItemsInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -3314,6 +3373,7 @@ export type ManufacturerProfileUpdateWithoutShortlistItemsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutShortlistItemsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -3360,6 +3420,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutShortlistItemsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutProductionLinesInput = {
     id?: string;
@@ -3406,6 +3467,7 @@ export type ManufacturerProfileCreateWithoutProductionLinesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutProductionLinesInput = {
     id?: string;
@@ -3452,6 +3514,7 @@ export type ManufacturerProfileUncheckedCreateWithoutProductionLinesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutProductionLinesInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -3511,6 +3574,7 @@ export type ManufacturerProfileUpdateWithoutProductionLinesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutProductionLinesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -3557,6 +3621,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutProductionLinesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutSupplierClaimsInput = {
     id?: string;
@@ -3603,6 +3668,7 @@ export type ManufacturerProfileCreateWithoutSupplierClaimsInput = {
     capacityBookings?: Prisma.CapacityBookingCreateNestedManyWithoutManufacturerProfileInput;
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutSupplierClaimsInput = {
     id?: string;
@@ -3649,6 +3715,7 @@ export type ManufacturerProfileUncheckedCreateWithoutSupplierClaimsInput = {
     capacityBookings?: Prisma.CapacityBookingUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutSupplierClaimsInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -3708,6 +3775,7 @@ export type ManufacturerProfileUpdateWithoutSupplierClaimsInput = {
     capacityBookings?: Prisma.CapacityBookingUpdateManyWithoutManufacturerProfileNestedInput;
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutSupplierClaimsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -3754,6 +3822,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutSupplierClaimsInput = {
     capacityBookings?: Prisma.CapacityBookingUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutCapacityBookingsInput = {
     id?: string;
@@ -3800,6 +3869,7 @@ export type ManufacturerProfileCreateWithoutCapacityBookingsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutCapacityBookingsInput = {
     id?: string;
@@ -3846,6 +3916,7 @@ export type ManufacturerProfileUncheckedCreateWithoutCapacityBookingsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutCapacityBookingsInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -3905,6 +3976,7 @@ export type ManufacturerProfileUpdateWithoutCapacityBookingsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutCapacityBookingsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -3951,6 +4023,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutCapacityBookingsInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutCapacityPartnershipsInput = {
     id?: string;
@@ -3997,6 +4070,7 @@ export type ManufacturerProfileCreateWithoutCapacityPartnershipsInput = {
     capacityBookings?: Prisma.CapacityBookingCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutCapacityPartnershipsInput = {
     id?: string;
@@ -4043,6 +4117,7 @@ export type ManufacturerProfileUncheckedCreateWithoutCapacityPartnershipsInput =
     capacityBookings?: Prisma.CapacityBookingUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutCapacityPartnershipsInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -4102,6 +4177,7 @@ export type ManufacturerProfileUpdateWithoutCapacityPartnershipsInput = {
     capacityBookings?: Prisma.CapacityBookingUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutCapacityPartnershipsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -4148,6 +4224,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutCapacityPartnershipsInput =
     capacityBookings?: Prisma.CapacityBookingUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileCreateWithoutSubscriptionsInput = {
     id?: string;
@@ -4194,6 +4271,7 @@ export type ManufacturerProfileCreateWithoutSubscriptionsInput = {
     capacityBookings?: Prisma.CapacityBookingCreateNestedManyWithoutManufacturerProfileInput;
     capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileUncheckedCreateWithoutSubscriptionsInput = {
     id?: string;
@@ -4240,6 +4318,7 @@ export type ManufacturerProfileUncheckedCreateWithoutSubscriptionsInput = {
     capacityBookings?: Prisma.CapacityBookingUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    cameras?: Prisma.CameraUncheckedCreateNestedManyWithoutManufacturerProfileInput;
 };
 export type ManufacturerProfileCreateOrConnectWithoutSubscriptionsInput = {
     where: Prisma.ManufacturerProfileWhereUniqueInput;
@@ -4299,6 +4378,7 @@ export type ManufacturerProfileUpdateWithoutSubscriptionsInput = {
     capacityBookings?: Prisma.CapacityBookingUpdateManyWithoutManufacturerProfileNestedInput;
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutSubscriptionsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -4345,6 +4425,208 @@ export type ManufacturerProfileUncheckedUpdateWithoutSubscriptionsInput = {
     capacityBookings?: Prisma.CapacityBookingUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+};
+export type ManufacturerProfileCreateWithoutCamerasInput = {
+    id?: string;
+    publicCode: string;
+    latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null;
+    longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null;
+    planTier?: $Enums.PlanTier;
+    searchBoost?: number;
+    headline?: string | null;
+    about?: string | null;
+    aboutFiltered?: string | null;
+    monthlyCapacityPcs?: number | null;
+    moqPcs?: number | null;
+    sampleLeadTimeDays?: number | null;
+    productionLeadTimeMinDays?: number | null;
+    productionLeadTimeMaxDays?: number | null;
+    machinery?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    workforceSize?: number | null;
+    factorySizeSqm?: number | null;
+    exportMarkets?: Prisma.ManufacturerProfileCreateexportMarketsInput | string[];
+    performanceScore?: number;
+    onTimeDeliveryBps?: number | null;
+    qcPassBps?: number | null;
+    reviewCount?: number;
+    ratingAvgX100?: number | null;
+    qualityAvgX100?: number | null;
+    communicationAvgX100?: number | null;
+    onTimeAvgX100?: number | null;
+    isListed?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    company: Prisma.CompanyCreateNestedOneWithoutManufacturerProfileInput;
+    categories?: Prisma.CategoryCreateNestedManyWithoutManufacturersInput;
+    certifications?: Prisma.CertificationCreateNestedManyWithoutManufacturerProfileInput;
+    products?: Prisma.ProductCreateNestedManyWithoutManufacturerProfileInput;
+    rfqInvitations?: Prisma.RfqInvitationCreateNestedManyWithoutManufacturerProfileInput;
+    photos?: Prisma.FactoryPhotoCreateNestedManyWithoutManufacturerProfileInput;
+    capacityMonths?: Prisma.CapacityMonthCreateNestedManyWithoutManufacturerProfileInput;
+    shortlistItems?: Prisma.ShortlistItemCreateNestedManyWithoutManufacturerProfileInput;
+    quotes?: Prisma.QuoteCreateNestedManyWithoutManufacturerProfileInput;
+    orders?: Prisma.OrderCreateNestedManyWithoutManufacturerProfileInput;
+    reviewsReceived?: Prisma.ReviewCreateNestedManyWithoutManufacturerProfileInput;
+    productionLines?: Prisma.ProductionLineCreateNestedManyWithoutManufacturerProfileInput;
+    capacityBookings?: Prisma.CapacityBookingCreateNestedManyWithoutManufacturerProfileInput;
+    capacityPartnerships?: Prisma.CapacityPartnershipCreateNestedManyWithoutManufacturerProfileInput;
+    supplierClaims?: Prisma.SupplierClaimCreateNestedManyWithoutManufacturerProfileInput;
+    subscriptions?: Prisma.PlanSubscriptionCreateNestedManyWithoutManufacturerProfileInput;
+};
+export type ManufacturerProfileUncheckedCreateWithoutCamerasInput = {
+    id?: string;
+    companyId: string;
+    publicCode: string;
+    latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null;
+    longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null;
+    planTier?: $Enums.PlanTier;
+    searchBoost?: number;
+    headline?: string | null;
+    about?: string | null;
+    aboutFiltered?: string | null;
+    monthlyCapacityPcs?: number | null;
+    moqPcs?: number | null;
+    sampleLeadTimeDays?: number | null;
+    productionLeadTimeMinDays?: number | null;
+    productionLeadTimeMaxDays?: number | null;
+    machinery?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    workforceSize?: number | null;
+    factorySizeSqm?: number | null;
+    exportMarkets?: Prisma.ManufacturerProfileCreateexportMarketsInput | string[];
+    performanceScore?: number;
+    onTimeDeliveryBps?: number | null;
+    qcPassBps?: number | null;
+    reviewCount?: number;
+    ratingAvgX100?: number | null;
+    qualityAvgX100?: number | null;
+    communicationAvgX100?: number | null;
+    onTimeAvgX100?: number | null;
+    isListed?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutManufacturersInput;
+    certifications?: Prisma.CertificationUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    products?: Prisma.ProductUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    rfqInvitations?: Prisma.RfqInvitationUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    photos?: Prisma.FactoryPhotoUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    capacityMonths?: Prisma.CapacityMonthUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    shortlistItems?: Prisma.ShortlistItemUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    orders?: Prisma.OrderUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    reviewsReceived?: Prisma.ReviewUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    productionLines?: Prisma.ProductionLineUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    capacityBookings?: Prisma.CapacityBookingUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    capacityPartnerships?: Prisma.CapacityPartnershipUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    supplierClaims?: Prisma.SupplierClaimUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+    subscriptions?: Prisma.PlanSubscriptionUncheckedCreateNestedManyWithoutManufacturerProfileInput;
+};
+export type ManufacturerProfileCreateOrConnectWithoutCamerasInput = {
+    where: Prisma.ManufacturerProfileWhereUniqueInput;
+    create: Prisma.XOR<Prisma.ManufacturerProfileCreateWithoutCamerasInput, Prisma.ManufacturerProfileUncheckedCreateWithoutCamerasInput>;
+};
+export type ManufacturerProfileUpsertWithoutCamerasInput = {
+    update: Prisma.XOR<Prisma.ManufacturerProfileUpdateWithoutCamerasInput, Prisma.ManufacturerProfileUncheckedUpdateWithoutCamerasInput>;
+    create: Prisma.XOR<Prisma.ManufacturerProfileCreateWithoutCamerasInput, Prisma.ManufacturerProfileUncheckedCreateWithoutCamerasInput>;
+    where?: Prisma.ManufacturerProfileWhereInput;
+};
+export type ManufacturerProfileUpdateToOneWithWhereWithoutCamerasInput = {
+    where?: Prisma.ManufacturerProfileWhereInput;
+    data: Prisma.XOR<Prisma.ManufacturerProfileUpdateWithoutCamerasInput, Prisma.ManufacturerProfileUncheckedUpdateWithoutCamerasInput>;
+};
+export type ManufacturerProfileUpdateWithoutCamerasInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    publicCode?: Prisma.StringFieldUpdateOperationsInput | string;
+    latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null;
+    longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null;
+    planTier?: Prisma.EnumPlanTierFieldUpdateOperationsInput | $Enums.PlanTier;
+    searchBoost?: Prisma.IntFieldUpdateOperationsInput | number;
+    headline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    about?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    aboutFiltered?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    monthlyCapacityPcs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    moqPcs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    sampleLeadTimeDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    productionLeadTimeMinDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    productionLeadTimeMaxDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    machinery?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    workforceSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    factorySizeSqm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    exportMarkets?: Prisma.ManufacturerProfileUpdateexportMarketsInput | string[];
+    performanceScore?: Prisma.IntFieldUpdateOperationsInput | number;
+    onTimeDeliveryBps?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    qcPassBps?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    reviewCount?: Prisma.IntFieldUpdateOperationsInput | number;
+    ratingAvgX100?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    qualityAvgX100?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    communicationAvgX100?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    onTimeAvgX100?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    isListed?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    company?: Prisma.CompanyUpdateOneRequiredWithoutManufacturerProfileNestedInput;
+    categories?: Prisma.CategoryUpdateManyWithoutManufacturersNestedInput;
+    certifications?: Prisma.CertificationUpdateManyWithoutManufacturerProfileNestedInput;
+    products?: Prisma.ProductUpdateManyWithoutManufacturerProfileNestedInput;
+    rfqInvitations?: Prisma.RfqInvitationUpdateManyWithoutManufacturerProfileNestedInput;
+    photos?: Prisma.FactoryPhotoUpdateManyWithoutManufacturerProfileNestedInput;
+    capacityMonths?: Prisma.CapacityMonthUpdateManyWithoutManufacturerProfileNestedInput;
+    shortlistItems?: Prisma.ShortlistItemUpdateManyWithoutManufacturerProfileNestedInput;
+    quotes?: Prisma.QuoteUpdateManyWithoutManufacturerProfileNestedInput;
+    orders?: Prisma.OrderUpdateManyWithoutManufacturerProfileNestedInput;
+    reviewsReceived?: Prisma.ReviewUpdateManyWithoutManufacturerProfileNestedInput;
+    productionLines?: Prisma.ProductionLineUpdateManyWithoutManufacturerProfileNestedInput;
+    capacityBookings?: Prisma.CapacityBookingUpdateManyWithoutManufacturerProfileNestedInput;
+    capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
+    supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
+    subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+};
+export type ManufacturerProfileUncheckedUpdateWithoutCamerasInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    companyId?: Prisma.StringFieldUpdateOperationsInput | string;
+    publicCode?: Prisma.StringFieldUpdateOperationsInput | string;
+    latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null;
+    longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null;
+    planTier?: Prisma.EnumPlanTierFieldUpdateOperationsInput | $Enums.PlanTier;
+    searchBoost?: Prisma.IntFieldUpdateOperationsInput | number;
+    headline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    about?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    aboutFiltered?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    monthlyCapacityPcs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    moqPcs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    sampleLeadTimeDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    productionLeadTimeMinDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    productionLeadTimeMaxDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    machinery?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    workforceSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    factorySizeSqm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    exportMarkets?: Prisma.ManufacturerProfileUpdateexportMarketsInput | string[];
+    performanceScore?: Prisma.IntFieldUpdateOperationsInput | number;
+    onTimeDeliveryBps?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    qcPassBps?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    reviewCount?: Prisma.IntFieldUpdateOperationsInput | number;
+    ratingAvgX100?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    qualityAvgX100?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    communicationAvgX100?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    onTimeAvgX100?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+    isListed?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    categories?: Prisma.CategoryUncheckedUpdateManyWithoutManufacturersNestedInput;
+    certifications?: Prisma.CertificationUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    products?: Prisma.ProductUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    rfqInvitations?: Prisma.RfqInvitationUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    photos?: Prisma.FactoryPhotoUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    capacityMonths?: Prisma.CapacityMonthUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    shortlistItems?: Prisma.ShortlistItemUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    quotes?: Prisma.QuoteUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    orders?: Prisma.OrderUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    reviewsReceived?: Prisma.ReviewUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    productionLines?: Prisma.ProductionLineUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    capacityBookings?: Prisma.CapacityBookingUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUpdateWithoutCategoriesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -4391,6 +4673,7 @@ export type ManufacturerProfileUpdateWithoutCategoriesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateWithoutCategoriesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -4437,6 +4720,7 @@ export type ManufacturerProfileUncheckedUpdateWithoutCategoriesInput = {
     capacityPartnerships?: Prisma.CapacityPartnershipUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     supplierClaims?: Prisma.SupplierClaimUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
     subscriptions?: Prisma.PlanSubscriptionUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
+    cameras?: Prisma.CameraUncheckedUpdateManyWithoutManufacturerProfileNestedInput;
 };
 export type ManufacturerProfileUncheckedUpdateManyWithoutCategoriesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -4486,6 +4770,7 @@ export type ManufacturerProfileCountOutputType = {
     capacityPartnerships: number;
     supplierClaims: number;
     subscriptions: number;
+    cameras: number;
 };
 export type ManufacturerProfileCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     categories?: boolean | ManufacturerProfileCountOutputTypeCountCategoriesArgs;
@@ -4503,6 +4788,7 @@ export type ManufacturerProfileCountOutputTypeSelect<ExtArgs extends runtime.Typ
     capacityPartnerships?: boolean | ManufacturerProfileCountOutputTypeCountCapacityPartnershipsArgs;
     supplierClaims?: boolean | ManufacturerProfileCountOutputTypeCountSupplierClaimsArgs;
     subscriptions?: boolean | ManufacturerProfileCountOutputTypeCountSubscriptionsArgs;
+    cameras?: boolean | ManufacturerProfileCountOutputTypeCountCamerasArgs;
 };
 export type ManufacturerProfileCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.ManufacturerProfileCountOutputTypeSelect<ExtArgs> | null;
@@ -4552,6 +4838,9 @@ export type ManufacturerProfileCountOutputTypeCountSupplierClaimsArgs<ExtArgs ex
 export type ManufacturerProfileCountOutputTypeCountSubscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.PlanSubscriptionWhereInput;
 };
+export type ManufacturerProfileCountOutputTypeCountCamerasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.CameraWhereInput;
+};
 export type ManufacturerProfileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     companyId?: boolean;
@@ -4599,6 +4888,7 @@ export type ManufacturerProfileSelect<ExtArgs extends runtime.Types.Extensions.I
     capacityPartnerships?: boolean | Prisma.ManufacturerProfile$capacityPartnershipsArgs<ExtArgs>;
     supplierClaims?: boolean | Prisma.ManufacturerProfile$supplierClaimsArgs<ExtArgs>;
     subscriptions?: boolean | Prisma.ManufacturerProfile$subscriptionsArgs<ExtArgs>;
+    cameras?: boolean | Prisma.ManufacturerProfile$camerasArgs<ExtArgs>;
     _count?: boolean | Prisma.ManufacturerProfileCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["manufacturerProfile"]>;
 export type ManufacturerProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -4717,6 +5007,7 @@ export type ManufacturerProfileInclude<ExtArgs extends runtime.Types.Extensions.
     capacityPartnerships?: boolean | Prisma.ManufacturerProfile$capacityPartnershipsArgs<ExtArgs>;
     supplierClaims?: boolean | Prisma.ManufacturerProfile$supplierClaimsArgs<ExtArgs>;
     subscriptions?: boolean | Prisma.ManufacturerProfile$subscriptionsArgs<ExtArgs>;
+    cameras?: boolean | Prisma.ManufacturerProfile$camerasArgs<ExtArgs>;
     _count?: boolean | Prisma.ManufacturerProfileCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type ManufacturerProfileIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4744,6 +5035,7 @@ export type $ManufacturerProfilePayload<ExtArgs extends runtime.Types.Extensions
         capacityPartnerships: Prisma.$CapacityPartnershipPayload<ExtArgs>[];
         supplierClaims: Prisma.$SupplierClaimPayload<ExtArgs>[];
         subscriptions: Prisma.$PlanSubscriptionPayload<ExtArgs>[];
+        cameras: Prisma.$CameraPayload<ExtArgs>[];
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
@@ -4844,6 +5136,7 @@ export interface Prisma__ManufacturerProfileClient<T, Null = never, ExtArgs exte
     capacityPartnerships<T extends Prisma.ManufacturerProfile$capacityPartnershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ManufacturerProfile$capacityPartnershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CapacityPartnershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     supplierClaims<T extends Prisma.ManufacturerProfile$supplierClaimsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ManufacturerProfile$supplierClaimsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SupplierClaimPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     subscriptions<T extends Prisma.ManufacturerProfile$subscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ManufacturerProfile$subscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanSubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    cameras<T extends Prisma.ManufacturerProfile$camerasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ManufacturerProfile$camerasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CameraPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): runtime.Types.Utils.JsPromise<TResult1 | TResult2>;
     catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): runtime.Types.Utils.JsPromise<T | TResult>;
     finally(onfinally?: (() => void) | undefined | null): runtime.Types.Utils.JsPromise<T>;
@@ -5144,6 +5437,17 @@ export type ManufacturerProfile$subscriptionsArgs<ExtArgs extends runtime.Types.
     take?: number;
     skip?: number;
     distinct?: Prisma.PlanSubscriptionScalarFieldEnum | Prisma.PlanSubscriptionScalarFieldEnum[];
+};
+export type ManufacturerProfile$camerasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    select?: Prisma.CameraSelect<ExtArgs> | null;
+    omit?: Prisma.CameraOmit<ExtArgs> | null;
+    include?: Prisma.CameraInclude<ExtArgs> | null;
+    where?: Prisma.CameraWhereInput;
+    orderBy?: Prisma.CameraOrderByWithRelationInput | Prisma.CameraOrderByWithRelationInput[];
+    cursor?: Prisma.CameraWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.CameraScalarFieldEnum | Prisma.CameraScalarFieldEnum[];
 };
 export type ManufacturerProfileDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.ManufacturerProfileSelect<ExtArgs> | null;

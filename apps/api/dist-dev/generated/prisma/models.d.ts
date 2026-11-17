@@ -83,4 +83,6 @@ export type * from './models/PlanSubscription.js';
 export type * from './models/PlanInvoice.js';
 export type * from './models/OutboundMessage.js';
 export type * from './models/Lead.js';
+export type * from './models/Camera.js';
+export type * from './models/OrderCamera.js';
 export type * from './commonInputTypes.js';

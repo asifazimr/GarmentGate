@@ -240,6 +240,7 @@ export declare const PaymentPurpose: {
     readonly LOGISTICS: "LOGISTICS";
     readonly INSURANCE_RECOVERY: "INSURANCE_RECOVERY";
     readonly INSPECTION_FEE: "INSPECTION_FEE";
+    readonly MONITORING_FEE: "MONITORING_FEE";
 };
 export type PaymentPurpose = (typeof PaymentPurpose)[keyof typeof PaymentPurpose];
 export declare const PaymentMethod: {
@@ -622,6 +623,7 @@ export type LogisticsClaimStatus = (typeof LogisticsClaimStatus)[keyof typeof Lo
 export declare const OrderChargeKind: {
     readonly SAMPLE_FEE: "SAMPLE_FEE";
     readonly INSPECTION_FEE: "INSPECTION_FEE";
+    readonly MONITORING_FEE: "MONITORING_FEE";
 };
 export type OrderChargeKind = (typeof OrderChargeKind)[keyof typeof OrderChargeKind];
 export declare const BankAccountStatus: {
@@ -705,3 +707,21 @@ export declare const LeadStatus: {
     readonly CLOSED: "CLOSED";
 };
 export type LeadStatus = (typeof LeadStatus)[keyof typeof LeadStatus];
+export declare const CameraArea: {
+    readonly CUTTING: "CUTTING";
+    readonly SEWING: "SEWING";
+    readonly FINISHING: "FINISHING";
+    readonly PACKING: "PACKING";
+    readonly QC: "QC";
+    readonly WAREHOUSE: "WAREHOUSE";
+    readonly OTHER: "OTHER";
+};
+export type CameraArea = (typeof CameraArea)[keyof typeof CameraArea];
+export declare const CameraStatus: {
+    readonly SETUP: "SETUP";
+    readonly PENDING_REVIEW: "PENDING_REVIEW";
+    readonly APPROVED: "APPROVED";
+    readonly REJECTED: "REJECTED";
+    readonly DISABLED: "DISABLED";
+};
+export type CameraStatus = (typeof CameraStatus)[keyof typeof CameraStatus];

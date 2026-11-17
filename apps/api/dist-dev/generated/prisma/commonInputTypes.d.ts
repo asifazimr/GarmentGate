@@ -1823,6 +1823,36 @@ export type EnumLeadStatusWithAggregatesFilter<$PrismaModel = never> = {
     _min?: Prisma.NestedEnumLeadStatusFilter<$PrismaModel>;
     _max?: Prisma.NestedEnumLeadStatusFilter<$PrismaModel>;
 };
+export type EnumCameraAreaFilter<$PrismaModel = never> = {
+    equals?: $Enums.CameraArea | Prisma.EnumCameraAreaFieldRefInput<$PrismaModel>;
+    in?: $Enums.CameraArea[] | Prisma.ListEnumCameraAreaFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.CameraArea[] | Prisma.ListEnumCameraAreaFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumCameraAreaFilter<$PrismaModel> | $Enums.CameraArea;
+};
+export type EnumCameraStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.CameraStatus | Prisma.EnumCameraStatusFieldRefInput<$PrismaModel>;
+    in?: $Enums.CameraStatus[] | Prisma.ListEnumCameraStatusFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.CameraStatus[] | Prisma.ListEnumCameraStatusFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumCameraStatusFilter<$PrismaModel> | $Enums.CameraStatus;
+};
+export type EnumCameraAreaWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CameraArea | Prisma.EnumCameraAreaFieldRefInput<$PrismaModel>;
+    in?: $Enums.CameraArea[] | Prisma.ListEnumCameraAreaFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.CameraArea[] | Prisma.ListEnumCameraAreaFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumCameraAreaWithAggregatesFilter<$PrismaModel> | $Enums.CameraArea;
+    _count?: Prisma.NestedIntFilter<$PrismaModel>;
+    _min?: Prisma.NestedEnumCameraAreaFilter<$PrismaModel>;
+    _max?: Prisma.NestedEnumCameraAreaFilter<$PrismaModel>;
+};
+export type EnumCameraStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CameraStatus | Prisma.EnumCameraStatusFieldRefInput<$PrismaModel>;
+    in?: $Enums.CameraStatus[] | Prisma.ListEnumCameraStatusFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.CameraStatus[] | Prisma.ListEnumCameraStatusFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumCameraStatusWithAggregatesFilter<$PrismaModel> | $Enums.CameraStatus;
+    _count?: Prisma.NestedIntFilter<$PrismaModel>;
+    _min?: Prisma.NestedEnumCameraStatusFilter<$PrismaModel>;
+    _max?: Prisma.NestedEnumCameraStatusFilter<$PrismaModel>;
+};
 export type NestedUuidFilter<$PrismaModel = never> = {
     equals?: string | Prisma.StringFieldRefInput<$PrismaModel>;
     in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>;
@@ -3612,4 +3642,34 @@ export type NestedEnumLeadStatusWithAggregatesFilter<$PrismaModel = never> = {
     _count?: Prisma.NestedIntFilter<$PrismaModel>;
     _min?: Prisma.NestedEnumLeadStatusFilter<$PrismaModel>;
     _max?: Prisma.NestedEnumLeadStatusFilter<$PrismaModel>;
+};
+export type NestedEnumCameraAreaFilter<$PrismaModel = never> = {
+    equals?: $Enums.CameraArea | Prisma.EnumCameraAreaFieldRefInput<$PrismaModel>;
+    in?: $Enums.CameraArea[] | Prisma.ListEnumCameraAreaFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.CameraArea[] | Prisma.ListEnumCameraAreaFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumCameraAreaFilter<$PrismaModel> | $Enums.CameraArea;
+};
+export type NestedEnumCameraStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.CameraStatus | Prisma.EnumCameraStatusFieldRefInput<$PrismaModel>;
+    in?: $Enums.CameraStatus[] | Prisma.ListEnumCameraStatusFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.CameraStatus[] | Prisma.ListEnumCameraStatusFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumCameraStatusFilter<$PrismaModel> | $Enums.CameraStatus;
+};
+export type NestedEnumCameraAreaWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CameraArea | Prisma.EnumCameraAreaFieldRefInput<$PrismaModel>;
+    in?: $Enums.CameraArea[] | Prisma.ListEnumCameraAreaFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.CameraArea[] | Prisma.ListEnumCameraAreaFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumCameraAreaWithAggregatesFilter<$PrismaModel> | $Enums.CameraArea;
+    _count?: Prisma.NestedIntFilter<$PrismaModel>;
+    _min?: Prisma.NestedEnumCameraAreaFilter<$PrismaModel>;
+    _max?: Prisma.NestedEnumCameraAreaFilter<$PrismaModel>;
+};
+export type NestedEnumCameraStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CameraStatus | Prisma.EnumCameraStatusFieldRefInput<$PrismaModel>;
+    in?: $Enums.CameraStatus[] | Prisma.ListEnumCameraStatusFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.CameraStatus[] | Prisma.ListEnumCameraStatusFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumCameraStatusWithAggregatesFilter<$PrismaModel> | $Enums.CameraStatus;
+    _count?: Prisma.NestedIntFilter<$PrismaModel>;
+    _min?: Prisma.NestedEnumCameraStatusFilter<$PrismaModel>;
+    _max?: Prisma.NestedEnumCameraStatusFilter<$PrismaModel>;
 };

@@ -50,6 +50,11 @@ export declare const EnvSchema: z.ZodObject<{
     TWILIO_SMS_FROM: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
     TWILIO_WHATSAPP_FROM: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
     TWILIO_STATUS_CALLBACK_URL: z.ZodPreprocess<z.ZodOptional<z.ZodURL>, unknown>;
+    CLOUDFLARE_ACCOUNT_ID: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
+    CLOUDFLARE_STREAM_API_TOKEN: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
+    CLOUDFLARE_STREAM_CUSTOMER_CODE: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
+    CLOUDFLARE_STREAM_SIGNING_KEY_ID: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
+    CLOUDFLARE_STREAM_SIGNING_KEY_PEM: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
     DATABASE_URL: z.ZodURL;
     REDIS_URL: z.ZodURL;
     MEILISEARCH_HOST: z.ZodURL;
@@ -122,6 +127,11 @@ export declare const ProductionEnvSchema: z.ZodObject<{
     TWILIO_SMS_FROM: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
     TWILIO_WHATSAPP_FROM: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
     TWILIO_STATUS_CALLBACK_URL: z.ZodPreprocess<z.ZodOptional<z.ZodURL>, unknown>;
+    CLOUDFLARE_ACCOUNT_ID: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
+    CLOUDFLARE_STREAM_API_TOKEN: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
+    CLOUDFLARE_STREAM_CUSTOMER_CODE: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
+    CLOUDFLARE_STREAM_SIGNING_KEY_ID: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
+    CLOUDFLARE_STREAM_SIGNING_KEY_PEM: z.ZodPreprocess<z.ZodOptional<z.ZodString>, unknown>;
     DATABASE_URL: z.ZodURL;
     REDIS_URL: z.ZodURL;
     MEILISEARCH_HOST: z.ZodURL;

@@ -93,7 +93,9 @@ export const ModelName = {
     PlanSubscription: 'PlanSubscription',
     PlanInvoice: 'PlanInvoice',
     OutboundMessage: 'OutboundMessage',
-    Lead: 'Lead'
+    Lead: 'Lead',
+    Camera: 'Camera',
+    OrderCamera: 'OrderCamera'
 };
 export const TransactionIsolationLevel = runtime.makeStrictEnum({
     ReadUncommitted: 'ReadUncommitted',
@@ -1367,6 +1369,27 @@ export const LeadScalarFieldEnum = {
     handledById: 'handledById',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
+};
+export const CameraScalarFieldEnum = {
+    id: 'id',
+    manufacturerProfileId: 'manufacturerProfileId',
+    label: 'label',
+    area: 'area',
+    status: 'status',
+    providerInputId: 'providerInputId',
+    ingestUrl: 'ingestUrl',
+    streamKey: 'streamKey',
+    reviewNote: 'reviewNote',
+    reviewedById: 'reviewedById',
+    reviewedAt: 'reviewedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+export const OrderCameraScalarFieldEnum = {
+    orderId: 'orderId',
+    cameraId: 'cameraId',
+    position: 'position',
+    createdAt: 'createdAt'
 };
 export const SortOrder = {
     asc: 'asc',

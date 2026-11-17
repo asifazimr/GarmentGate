@@ -245,6 +245,8 @@ export declare const ModelName: {
     readonly PlanInvoice: "PlanInvoice";
     readonly OutboundMessage: "OutboundMessage";
     readonly Lead: "Lead";
+    readonly Camera: "Camera";
+    readonly OrderCamera: "OrderCamera";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
 export interface TypeMapCb<GlobalOmitOptions = {}> extends runtime.Types.Utils.Fn<{
@@ -257,7 +259,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         omit: GlobalOmitOptions;
     };
     meta: {
-        modelProps: "user" | "session" | "userToken" | "codeSequence" | "company" | "companyDocument" | "buyerProfile" | "manufacturerProfile" | "category" | "certification" | "product" | "productPriceTier" | "productImage" | "factoryPhoto" | "capacityMonth" | "rfq" | "rfqInvitation" | "rfqAttachment" | "quote" | "marginRule" | "conversation" | "conversationParticipant" | "message" | "messageAttachment" | "order" | "orderItem" | "orderMilestone" | "milestonePhoto" | "sample" | "payment" | "ledgerAccount" | "ledgerTransaction" | "escrowLedgerEntry" | "inspection" | "inspectionPhoto" | "review" | "dispute" | "disputeEvidence" | "notification" | "notificationPreference" | "auditLog" | "fileAsset" | "imageRendition" | "shortlist" | "shortlistItem" | "accountWarning" | "orderEvent" | "samplePhoto" | "orderRelease" | "exchangeRate" | "platformSetting" | "productionLine" | "capacitySlot" | "supplierClaim" | "capacityBooking" | "capacityBookingAllocation" | "capacityPartnership" | "logisticsPartner" | "hub" | "rateCard" | "logisticsMarginRule" | "dutyRate" | "logisticsQuote" | "orderPacking" | "pickupRequest" | "hubReceipt" | "hubReceiptPhoto" | "consolidation" | "logisticsShipment" | "logisticsShipmentOrder" | "shipmentLeg" | "shipmentEvent" | "logisticsDocument" | "shipmentUpload" | "logisticsClaim" | "orderCharge" | "orderFactoryChange" | "factoryBankAccount" | "supplyContract" | "inspectorApplication" | "inspectorProfile" | "planSubscription" | "planInvoice" | "outboundMessage" | "lead";
+        modelProps: "user" | "session" | "userToken" | "codeSequence" | "company" | "companyDocument" | "buyerProfile" | "manufacturerProfile" | "category" | "certification" | "product" | "productPriceTier" | "productImage" | "factoryPhoto" | "capacityMonth" | "rfq" | "rfqInvitation" | "rfqAttachment" | "quote" | "marginRule" | "conversation" | "conversationParticipant" | "message" | "messageAttachment" | "order" | "orderItem" | "orderMilestone" | "milestonePhoto" | "sample" | "payment" | "ledgerAccount" | "ledgerTransaction" | "escrowLedgerEntry" | "inspection" | "inspectionPhoto" | "review" | "dispute" | "disputeEvidence" | "notification" | "notificationPreference" | "auditLog" | "fileAsset" | "imageRendition" | "shortlist" | "shortlistItem" | "accountWarning" | "orderEvent" | "samplePhoto" | "orderRelease" | "exchangeRate" | "platformSetting" | "productionLine" | "capacitySlot" | "supplierClaim" | "capacityBooking" | "capacityBookingAllocation" | "capacityPartnership" | "logisticsPartner" | "hub" | "rateCard" | "logisticsMarginRule" | "dutyRate" | "logisticsQuote" | "orderPacking" | "pickupRequest" | "hubReceipt" | "hubReceiptPhoto" | "consolidation" | "logisticsShipment" | "logisticsShipmentOrder" | "shipmentLeg" | "shipmentEvent" | "logisticsDocument" | "shipmentUpload" | "logisticsClaim" | "orderCharge" | "orderFactoryChange" | "factoryBankAccount" | "supplyContract" | "inspectorApplication" | "inspectorProfile" | "planSubscription" | "planInvoice" | "outboundMessage" | "lead" | "camera" | "orderCamera";
         txIsolationLevel: TransactionIsolationLevel;
     };
     model: {
@@ -6551,6 +6553,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
                 };
             };
         };
+        Camera: {
+            payload: Prisma.$CameraPayload<ExtArgs>;
+            fields: Prisma.CameraFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.CameraFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$CameraPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.CameraFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$CameraPayload>;
+                };
+                findFirst: {
+                    args: Prisma.CameraFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$CameraPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.CameraFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$CameraPayload>;
+                };
+                findMany: {
+                    args: Prisma.CameraFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$CameraPayload>[];
+                };
+                create: {
+                    args: Prisma.CameraCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$CameraPayload>;
+                };
+                createMany: {
+                    args: Prisma.CameraCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.CameraCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$CameraPayload>[];
+                };
+                delete: {
+                    args: Prisma.CameraDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$CameraPayload>;
+                };
+                update: {
+                    args: Prisma.CameraUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$CameraPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.CameraDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.CameraUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.CameraUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$CameraPayload>[];
+                };
+                upsert: {
+                    args: Prisma.CameraUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$CameraPayload>;
+                };
+                aggregate: {
+                    args: Prisma.CameraAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateCamera>;
+                };
+                groupBy: {
+                    args: Prisma.CameraGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.CameraGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.CameraCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.CameraCountAggregateOutputType> | number;
+                };
+            };
+        };
+        OrderCamera: {
+            payload: Prisma.$OrderCameraPayload<ExtArgs>;
+            fields: Prisma.OrderCameraFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.OrderCameraFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCameraPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.OrderCameraFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCameraPayload>;
+                };
+                findFirst: {
+                    args: Prisma.OrderCameraFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCameraPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.OrderCameraFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCameraPayload>;
+                };
+                findMany: {
+                    args: Prisma.OrderCameraFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCameraPayload>[];
+                };
+                create: {
+                    args: Prisma.OrderCameraCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCameraPayload>;
+                };
+                createMany: {
+                    args: Prisma.OrderCameraCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.OrderCameraCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCameraPayload>[];
+                };
+                delete: {
+                    args: Prisma.OrderCameraDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCameraPayload>;
+                };
+                update: {
+                    args: Prisma.OrderCameraUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCameraPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.OrderCameraDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.OrderCameraUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.OrderCameraUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCameraPayload>[];
+                };
+                upsert: {
+                    args: Prisma.OrderCameraUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCameraPayload>;
+                };
+                aggregate: {
+                    args: Prisma.OrderCameraAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateOrderCamera>;
+                };
+                groupBy: {
+                    args: Prisma.OrderCameraGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.OrderCameraGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.OrderCameraCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.OrderCameraCountAggregateOutputType> | number;
+                };
+            };
+        };
     };
 } & {
     other: {
@@ -7934,6 +8084,29 @@ export declare const LeadScalarFieldEnum: {
     readonly updatedAt: "updatedAt";
 };
 export type LeadScalarFieldEnum = (typeof LeadScalarFieldEnum)[keyof typeof LeadScalarFieldEnum];
+export declare const CameraScalarFieldEnum: {
+    readonly id: "id";
+    readonly manufacturerProfileId: "manufacturerProfileId";
+    readonly label: "label";
+    readonly area: "area";
+    readonly status: "status";
+    readonly providerInputId: "providerInputId";
+    readonly ingestUrl: "ingestUrl";
+    readonly streamKey: "streamKey";
+    readonly reviewNote: "reviewNote";
+    readonly reviewedById: "reviewedById";
+    readonly reviewedAt: "reviewedAt";
+    readonly createdAt: "createdAt";
+    readonly updatedAt: "updatedAt";
+};
+export type CameraScalarFieldEnum = (typeof CameraScalarFieldEnum)[keyof typeof CameraScalarFieldEnum];
+export declare const OrderCameraScalarFieldEnum: {
+    readonly orderId: "orderId";
+    readonly cameraId: "cameraId";
+    readonly position: "position";
+    readonly createdAt: "createdAt";
+};
+export type OrderCameraScalarFieldEnum = (typeof OrderCameraScalarFieldEnum)[keyof typeof OrderCameraScalarFieldEnum];
 export declare const SortOrder: {
     readonly asc: "asc";
     readonly desc: "desc";
@@ -8159,6 +8332,10 @@ export type EnumLeadKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 export type ListEnumLeadKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadKind[]'>;
 export type EnumLeadStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadStatus'>;
 export type ListEnumLeadStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadStatus[]'>;
+export type EnumCameraAreaFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CameraArea'>;
+export type ListEnumCameraAreaFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CameraArea[]'>;
+export type EnumCameraStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CameraStatus'>;
+export type ListEnumCameraStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CameraStatus[]'>;
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>;
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>;
 export type BatchPayload = {
@@ -8274,6 +8451,8 @@ export type GlobalOmitConfig = {
     planInvoice?: Prisma.PlanInvoiceOmit;
     outboundMessage?: Prisma.OutboundMessageOmit;
     lead?: Prisma.LeadOmit;
+    camera?: Prisma.CameraOmit;
+    orderCamera?: Prisma.OrderCameraOmit;
 };
 export type LogLevel = 'info' | 'query' | 'warn' | 'error';
 export type LogDefinition = {

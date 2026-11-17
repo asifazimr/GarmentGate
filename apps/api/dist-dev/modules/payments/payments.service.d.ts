@@ -44,7 +44,7 @@ export declare class PaymentsService implements OnModuleInit {
     private paid;
     buyerView(actor: ChatActor, code: string): Promise<BuyerPayments>;
     fees(orderId: string): Promise<{
-        purpose: "SAMPLE_FEE" | "INSPECTION_FEE";
+        purpose: "SAMPLE_FEE" | "INSPECTION_FEE" | "MONITORING_FEE";
         items: {
             id: string;
             createdAt: Date;

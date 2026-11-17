@@ -276,6 +276,8 @@ enum PaymentPurpose {
   INSURANCE_RECOVERY
   /// The buyer's inspection-day fees (QC).
   INSPECTION_FEE
+  /// Remote video monitoring added to an order.
+  MONITORING_FEE
 }
 
 enum PaymentMethod {
@@ -733,6 +735,7 @@ model ManufacturerProfile {
   @@index([isListed, performanceScore])
   subscriptions PlanSubscription[]
 
+  cameras       Camera[]
   @@map("manufacturer_profiles")
 }
 
@@ -1229,6 +1232,7 @@ model Order {
   @@index([buyerCompanyId, manufacturerProfileId, status])
   /// Admin overview: GMV by confirmation month.
   @@index([confirmedAt])
+  cameras       OrderCamera[]
   @@map("orders")
 }
 
@@ -2804,6 +2808,7 @@ model LogisticsClaim {
 enum OrderChargeKind {
   SAMPLE_FEE
   INSPECTION_FEE
+  MONITORING_FEE
 }
 
 /**
@@ -3156,4 +3161,65 @@ model Lead {
 
   @@index([status, createdAt])
   @@map("leads")
+}
+
+// ── Remote video monitoring ────────────────────────────────────────────────
+
+enum CameraArea {
+  CUTTING
+  SEWING
+  FINISHING
+  PACKING
+  QC
+  WAREHOUSE
+  OTHER
+}
+
+enum CameraStatus {
+  /// Created: the factory is connecting it.
+  SETUP
+  PENDING_REVIEW
+  /// Staff checked the picture: buyers may see it.
+  APPROVED
+  REJECTED
+  DISABLED
+}
+
+/// A factory's IP camera, streamed to the video provider (one live input each).
+model Camera {
+  id                    String       @id @default(uuid(7)) @db.Uuid
+  manufacturerProfileId String       @db.Uuid
+  /// The factory's own name for it: factory and staff only.
+  label                 String
+  area                  CameraArea
+  status                CameraStatus @default(SETUP)
+  providerInputId       String       @unique
+  /// Ingest details: factory and staff only.
+  ingestUrl             String
+  streamKey             String
+  reviewNote            String?
+  reviewedById          String?      @db.Uuid
+  reviewedAt            DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  manufacturerProfile ManufacturerProfile @relation(fields: [manufacturerProfileId], references: [id], onDelete: Cascade)
+  orders              OrderCamera[]
+
+  @@index([manufacturerProfileId, status])
+  @@map("cameras")
+}
+
+/// Which of the factory's cameras show an order's production (shown to the buyer as Camera 1, 2…).
+model OrderCamera {
+  orderId   String   @db.Uuid
+  cameraId  String   @db.Uuid
+  position  Int
+  createdAt DateTime @default(now())
+
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  camera Camera @relation(fields: [cameraId], references: [id], onDelete: Cascade)
+
+  @@id([orderId, cameraId])
+  @@map("order_cameras")
 }
