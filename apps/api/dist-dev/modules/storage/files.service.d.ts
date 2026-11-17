@@ -25,15 +25,15 @@ export declare class FilesService {
         userId: string;
     }, purpose: FilePurpose, maxBytes: number): Promise<{
         id: string;
-        status: import("../../generated/prisma/enums.js").FileStatus;
         createdAt: Date;
+        status: import("../../generated/prisma/enums.js").FileStatus;
+        sizeBytes: number;
         width: number | null;
         bucket: string;
         storageKey: string;
         sanitizedKey: string | null;
         originalFilename: string;
         mimeType: string;
-        sizeBytes: number;
         checksumSha256: string | null;
         purpose: FilePurpose;
         scanStatus: import("../../generated/prisma/enums.js").ScanStatus;

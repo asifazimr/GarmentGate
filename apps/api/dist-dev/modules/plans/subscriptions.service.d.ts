@@ -42,8 +42,8 @@ export declare class SubscriptionsService implements OnModuleInit {
     cardEnabled(): boolean;
     live(owner: PlanOwner, client?: Prisma.TransactionClient): Prisma.Prisma__PlanSubscriptionClient<{
         id: string;
-        status: import("../../generated/prisma/enums.js").SubscriptionStatus;
         createdAt: Date;
+        status: import("../../generated/prisma/enums.js").SubscriptionStatus;
         updatedAt: Date;
         manufacturerProfileId: string | null;
         tier: import("../../generated/prisma/enums.js").SubscriptionPlan;
@@ -65,8 +65,8 @@ export declare class SubscriptionsService implements OnModuleInit {
     }>;
     liveAll(owner: PlanOwner): Prisma.PrismaPromise<{
         id: string;
-        status: import("../../generated/prisma/enums.js").SubscriptionStatus;
         createdAt: Date;
+        status: import("../../generated/prisma/enums.js").SubscriptionStatus;
         updatedAt: Date;
         manufacturerProfileId: string | null;
         tier: import("../../generated/prisma/enums.js").SubscriptionPlan;

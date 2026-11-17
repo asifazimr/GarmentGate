@@ -22,7 +22,7 @@ export declare class ManufacturerController {
         publicCode: string;
         photos: {
             id: string;
-            processing: "PENDING" | "PROCESSING" | "READY" | "FAILED";
+            processing: "FAILED" | "PENDING" | "PROCESSING" | "READY";
             review: "REJECTED" | "PENDING" | "APPROVED";
             reviewNote: string | null;
             urls: {
