@@ -40,6 +40,7 @@ export function CostCalculator({ terms }: { terms: EstimateTerms }) {
     duty: '12',
     firstOrder: true,
     plus: false,
+    monitoring: false,
   });
   const input: EstimateInput = {
     quantity: int(form.quantity, 1, 10_000_000),
@@ -50,7 +51,10 @@ export function CostCalculator({ terms }: { terms: EstimateTerms }) {
     plus: form.plus,
     freightMinor: cents(form.freight, 1_000_000_000),
     dutyBps: Math.round(Math.min(100, Math.max(0, Number(form.duty) || 0)) * 100),
+    monitoring: form.monitoring,
   };
+  const monitoringOffered =
+    terms.monitoringFeeUsdMinor !== null && terms.monitoringFeeUsdMinor !== undefined;
   const e = estimateOrder(input, terms);
   const usd = (minor: number) => formatMoney(minor, 'USD', locale);
   const approx = useApproxMoney();
@@ -81,6 +85,7 @@ export function CostCalculator({ terms }: { terms: EstimateTerms }) {
     { label: t('rows.samples'), value: e.sampleFees },
     { label: t('rows.sampleCredit'), value: -e.sampleCredit, show: e.sampleCredit > 0 },
     { label: t('rows.inspections'), value: e.inspectionFees },
+    { label: t('rows.monitoring'), value: e.monitoringFee, show: e.monitoringFee > 0 },
     { label: t('rows.freight'), value: e.freight },
     { label: t('rows.toGarmentGate'), value: e.payableToGarmentGate, strong: true },
     { label: t('rows.duty'), value: e.duty },
@@ -89,6 +94,7 @@ export function CostCalculator({ terms }: { terms: EstimateTerms }) {
     [t('timeline.samples'), e.sampleFees],
     [t('timeline.deposit', { percent }), e.deposit],
     [t('timeline.inspections'), e.inspectionFees],
+    [t('timeline.monitoring'), e.monitoringFee],
     [t('timeline.balance'), e.balance],
     [t('timeline.freight'), e.freight],
     [t('timeline.duty'), e.duty],
@@ -110,13 +116,18 @@ export function CostCalculator({ terms }: { terms: EstimateTerms }) {
           {field('freight', t('fields.freight'), t('fields.freightHint'), '0.01')}
           {field('duty', t('fields.duty'), t('fields.dutyHint'), '0.1')}
         </div>
-        {(['firstOrder', 'plus'] as const).map((key) => (
+        {(monitoringOffered
+          ? (['firstOrder', 'plus', 'monitoring'] as const)
+          : (['firstOrder', 'plus'] as const)
+        ).map((key) => (
           <label key={key} className="flex min-h-11 items-center gap-2.5 text-sm">
             <Checkbox
               checked={form[key]}
               onCheckedChange={(v) => setForm((f) => ({ ...f, [key]: v }))}
             />
-            {t(`fields.${key}`)}
+            {key === 'monitoring'
+              ? t('fields.monitoring', { price: usd(terms.monitoringFeeUsdMinor ?? 0) })
+              : t(`fields.${key}`)}
           </label>
         ))}
       </form>

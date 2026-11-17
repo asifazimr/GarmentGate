@@ -71,6 +71,15 @@ export declare const publicManufacturerInclude: {
             status: true;
         };
     };
+    cameras: {
+        where: {
+            status: "APPROVED";
+        };
+        select: {
+            id: true;
+        };
+        take: number;
+    };
 };
 export declare const publicProductInclude: {
     category: {

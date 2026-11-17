@@ -5,6 +5,7 @@ import { BadgeCheck, Factory, Gauge } from 'lucide-react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
+import { LiveCamerasBadge } from '@/features/monitoring/components/live-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { countryName } from '@/lib/countries';
 import { FavoriteButton } from './save-controls';
@@ -46,6 +47,7 @@ export function FactoryCard({
           <div className="flex flex-wrap items-center gap-2 pe-10">
             <Badge variant="code">{m.publicCode}</Badge>
             <span className="text-muted-foreground text-xs">{countryName(m.country, locale)}</span>
+            {m.liveCameras ? <LiveCamerasBadge /> : null}
           </div>
           {m.headline ? (
             <h3 className="line-clamp-2 font-semibold tracking-[-0.01em]">{m.headline}</h3>

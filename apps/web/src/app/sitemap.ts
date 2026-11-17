@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ['/buyers/plus', 0.7],
     ['/buyers/enterprise', 0.7],
     ['/buyers/capacity', 0.7],
+    ['/buyers/live-view', 0.7],
     ['/inspectors', 0.7],
     ['/inspectors/apply', 0.5],
     ['/logistics', 0.7],

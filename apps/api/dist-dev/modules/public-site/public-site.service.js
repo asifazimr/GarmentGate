@@ -12,6 +12,7 @@ import { DEFAULT_GIG_SETTINGS, GigSettingsSchema, } from '@garmentgate/shared';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { listedManufacturer } from '../catalog/catalog.queries.js';
+import { MonitoringService } from '../monitoring/monitoring.service.js';
 import { Notifier } from '../notifications/notifier.service.js';
 import { serviceFees } from '../payments/charges.js';
 import { PaymentsService } from '../payments/payments.service.js';
@@ -30,15 +31,17 @@ let PublicSiteService = class PublicSiteService {
     prisma;
     payments;
     plans;
+    monitoring;
     plus;
     notifier;
     audit;
     stats = null;
     directoryCache = null;
-    constructor(prisma, payments, plans, plus, notifier, audit) {
+    constructor(prisma, payments, plans, monitoring, plus, notifier, audit) {
         this.prisma = prisma;
         this.payments = payments;
         this.plans = plans;
+        this.monitoring = monitoring;
         this.plus = plus;
         this.notifier = notifier;
         this.audit = audit;
@@ -77,12 +80,13 @@ let PublicSiteService = class PublicSiteService {
         return value;
     }
     async publicPricing() {
-        const [fees, schedule, factoryPlans, buyerPlus, gigRow] = await Promise.all([
+        const [fees, schedule, factoryPlans, buyerPlus, gigRow, monitoring] = await Promise.all([
             serviceFees(this.prisma),
             this.payments.releaseSchedule(),
             this.plans.settings(),
             this.plus.settings(),
             this.prisma.platformSetting.findUnique({ where: { key: 'gig' } }),
+            this.monitoring.settings(),
         ]);
         const gig = GigSettingsSchema.safeParse(gigRow?.value);
         return {
@@ -97,6 +101,7 @@ let PublicSiteService = class PublicSiteService {
             factoryPlans,
             buyerPlus,
             inspectorDayRateUsdMinor: (gig.success ? gig.data : DEFAULT_GIG_SETTINGS).dayRateUsdMinor,
+            monitoring: { enabled: monitoring.enabled, feeUsdMinor: monitoring.feeUsdMinor },
         };
     }
     async directory() {
@@ -250,6 +255,7 @@ PublicSiteService = __decorate([
     __metadata("design:paramtypes", [PrismaService,
         PaymentsService,
         PlansService,
+        MonitoringService,
         BuyerPlusService,
         Notifier,
         AuditService])

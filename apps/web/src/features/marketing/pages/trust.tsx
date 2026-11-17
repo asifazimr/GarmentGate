@@ -1,5 +1,6 @@
 import {
   BadgeCheck,
+  Cctv,
   Check,
   ClipboardCheck,
   FileLock2,
@@ -17,6 +18,7 @@ const PILLARS = [
   { key: 'verification', Icon: BadgeCheck },
   { key: 'money', Icon: Landmark },
   { key: 'quality', Icon: ClipboardCheck },
+  { key: 'liveView', Icon: Cctv },
   { key: 'delivery', Icon: Truck },
   { key: 'privacy', Icon: FileLock2 },
   { key: 'conduct', Icon: MessageSquareLock },

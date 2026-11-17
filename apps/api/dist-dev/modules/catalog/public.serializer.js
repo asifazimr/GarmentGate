@@ -172,6 +172,7 @@ export function toPublicManufacturer(source, urls) {
             validUntil: c.expiresAt ? c.expiresAt.toISOString().slice(0, 7) : null,
         })),
         brandBadges: brandBadges(source.supplierClaims ?? []),
+        liveCameras: (source.cameras?.length ?? 0) > 0,
         scores: {
             performanceScore: source.performanceScore,
             onTimeDeliveryBps: source.onTimeDeliveryBps,

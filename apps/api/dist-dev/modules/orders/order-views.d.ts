@@ -199,26 +199,26 @@ export declare function finalInspection(order: Pick<OrderRow, 'inspections'>): (
     photos: ({
         file: {
             renditions: {
-                format: string;
                 id: string;
                 createdAt: Date;
-                sizeBytes: number;
+                format: string;
                 width: number;
                 storageKey: string;
+                sizeBytes: number;
                 height: number;
                 fileId: string;
             }[];
         } & {
             id: string;
-            createdAt: Date;
             status: import("../../generated/prisma/enums.js").FileStatus;
-            sizeBytes: number;
+            createdAt: Date;
             width: number | null;
             bucket: string;
             storageKey: string;
             sanitizedKey: string | null;
             originalFilename: string;
             mimeType: string;
+            sizeBytes: number;
             checksumSha256: string | null;
             purpose: import("../../generated/prisma/enums.js").FilePurpose;
             scanStatus: import("../../generated/prisma/enums.js").ScanStatus;
@@ -253,11 +253,11 @@ export declare function finalInspection(order: Pick<OrderRow, 'inspections'>): (
         lastName: string;
     } | null;
 } & {
-    type: import("../../generated/prisma/enums.js").InspectionType;
+    result: import("../../generated/prisma/enums.js").InspectionResult;
     id: string;
     createdAt: Date;
-    result: import("../../generated/prisma/enums.js").InspectionResult;
     updatedAt: Date;
+    type: import("../../generated/prisma/enums.js").InspectionType;
     summary: string | null;
     rating: number | null;
     orderId: string;

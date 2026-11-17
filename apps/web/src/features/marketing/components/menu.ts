@@ -1,10 +1,10 @@
 import {
+  Cctv,
   ClipboardCheck,
   Factory,
   Handshake,
   LifeBuoy,
   type LucideIcon,
-  ShieldCheck,
   ShoppingBag,
   Truck,
   Users,
@@ -47,6 +47,7 @@ export const MENU: MenuPanel[] = [
         key: 'manage',
         links: [
           { key: 'tracker', href: '/login?next=/buyer/orders' },
+          { key: 'liveView', href: '/buyers/live-view' },
           { key: 'qc', href: '/trust#quality' },
           { key: 'escrow', href: '/how-it-works#money' },
           { key: 'shipping', href: '/help/shipping' },
@@ -62,7 +63,7 @@ export const MENU: MenuPanel[] = [
         ],
       },
     ],
-    promo: { Icon: ShieldCheck, href: '/register?as=buyer' },
+    promo: { Icon: Cctv, href: '/buyers/live-view' },
   },
   {
     key: 'manufacturers',

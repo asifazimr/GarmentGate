@@ -46,6 +46,7 @@ export interface ManufacturerDocument {
   monthlyCapacityPcs: number | null;
   performanceScore: number;
   searchBoost: number;
+  liveCameras: boolean;
 }
 
 export const PRODUCT_DOCUMENT_KEYS: readonly (keyof ProductDocument)[] = [
@@ -84,6 +85,7 @@ export const MANUFACTURER_DOCUMENT_KEYS: readonly (keyof ManufacturerDocument)[]
   'monthlyCapacityPcs',
   'performanceScore',
   'searchBoost',
+  'liveCameras',
 ];
 
 export function productDocument(
@@ -140,6 +142,7 @@ export function manufacturerDocument(
     monthlyCapacityPcs: m.capabilities.monthlyCapacityPcs,
     performanceScore: m.scores.performanceScore,
     searchBoost,
+    liveCameras: m.liveCameras,
   };
 }
 
@@ -184,7 +187,14 @@ export const PRODUCT_INDEX_SETTINGS = {
 export const MANUFACTURER_INDEX_SETTINGS = {
   rankingRules: RANKING_RULES,
   searchableAttributes: ['publicCode', 'headline', 'categoryNames', 'machinery', 'about'],
-  filterableAttributes: ['categories', 'country', 'certifications', 'moqPcs', 'monthlyCapacityPcs'],
+  filterableAttributes: [
+    'categories',
+    'country',
+    'certifications',
+    'moqPcs',
+    'monthlyCapacityPcs',
+    'liveCameras',
+  ],
   sortableAttributes: ['performanceScore', 'monthlyCapacityPcs', 'moqPcs'],
   typoTolerance: { enabled: true, minWordSizeForTypos: { oneTypo: 4, twoTypos: 8 } },
   pagination: { maxTotalHits: 2000 },

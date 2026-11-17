@@ -1,5 +1,5 @@
 import { PlanTierSchema, type PublicPricing } from '@garmentgate/shared';
-import { Check, Crown } from 'lucide-react';
+import { Cctv, Check, Crown } from 'lucide-react';
 import Link from 'next/link';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import { Badge } from '@/components/ui/badge';
@@ -118,6 +118,24 @@ async function BuyerPricing({ pricing }: { pricing: PublicPricing }) {
       <p className="text-muted-foreground mt-4 text-sm">
         {t('buyers.claim', { days: fees.claimWindowDays })}
       </p>
+      {pricing.monitoring.enabled ? (
+        <Reveal className="bg-card mt-6 flex flex-col gap-4 rounded-2xl border p-6 shadow-xs sm:flex-row sm:items-center">
+          <span className="bg-brand-deep text-brand-gold flex size-11 shrink-0 items-center justify-center rounded-xl">
+            <Cctv className="size-5" aria-hidden="true" />
+          </span>
+          <div className="flex-1">
+            <h3 className="font-semibold">{t('buyers.liveView.title')}</h3>
+            <p className="text-muted-foreground text-sm">{t('buyers.liveView.body')}</p>
+          </div>
+          <div className="sm:text-end">
+            <p className="font-display tabular text-3xl">{usd(pricing.monitoring.feeUsdMinor)}</p>
+            <p className="text-muted-foreground text-xs">{t('buyers.liveView.per')}</p>
+          </div>
+          <Button variant="outline" render={<Link href="/buyers/live-view" />}>
+            {t('buyers.liveView.cta')}
+          </Button>
+        </Reveal>
+      ) : null}
 
       <div id="plus" className="mt-10 scroll-mt-24 lg:scroll-mt-36">
         <Reveal className="bg-brand-deep grid gap-8 overflow-hidden rounded-3xl p-8 text-white shadow-lg sm:p-10 lg:grid-cols-[1fr_1.2fr]">

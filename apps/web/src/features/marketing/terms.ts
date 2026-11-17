@@ -12,6 +12,7 @@ export function estimateTerms(pricing: PublicPricing): EstimateTerms {
       freeInspections: pricing.buyerPlus.freeInspections,
       sampleDiscountBps: pricing.buyerPlus.sampleDiscountBps,
     },
+    monitoringFeeUsdMinor: pricing.monitoring.enabled ? pricing.monitoring.feeUsdMinor : null,
   };
 }
 

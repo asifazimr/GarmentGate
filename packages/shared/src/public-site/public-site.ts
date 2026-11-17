@@ -40,6 +40,8 @@ export const PublicPricingSchema = z.strictObject({
   buyerPlus: BuyerPlusSettingsSchema,
   /** What GarmentGate pays a gig QC inspector per inspection day. */
   inspectorDayRateUsdMinor: z.number().int(),
+  /** Live factory view: offered to buyers, and its fee per order. */
+  monitoring: z.strictObject({ enabled: z.boolean(), feeUsdMinor: z.number().int() }),
 });
 export type PublicPricing = z.infer<typeof PublicPricingSchema>;
 

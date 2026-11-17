@@ -21,6 +21,8 @@ export const EstimateInputSchema = z.object({
   freightMinor: z.number().int().min(0).max(1_000_000_000),
   /** Import duty on the goods and freight (CIF), basis points. */
   dutyBps: z.number().int().min(0).max(10_000),
+  /** Live factory view added to the order. */
+  monitoring: z.boolean().optional(),
 });
 export type EstimateInput = z.infer<typeof EstimateInputSchema>;
 
@@ -31,6 +33,8 @@ export interface EstimateTerms {
   creditSampleFees: boolean;
   depositBps: number;
   plus: { freeInspections: boolean; sampleDiscountBps: number } | null;
+  /** The live factory view's fee per order; null when it isn't offered. */
+  monitoringFeeUsdMinor?: number | null;
 }
 
 export interface Estimate {
@@ -41,6 +45,8 @@ export interface Estimate {
   /** Sample fees credited back against the balance when bulk is confirmed. */
   sampleCredit: number;
   inspectionFees: number;
+  /** Live factory view, when added (paid with the other service fees). */
+  monitoringFee: number;
   freight: number;
   duty: number;
   /** Everything paid to GarmentGate (goods, fees, freight), after the sample credit. */
@@ -68,8 +74,9 @@ export function estimateOrder(input: EstimateInput, terms: EstimateTerms): Estim
   const inspectionFees = (input.inspections - freeInspections) * terms.inspectionFeeUsdMinor;
   const balance = goods - deposit - sampleCredit;
   const duty = bps(goods + input.freightMinor, input.dutyBps);
+  const monitoringFee = input.monitoring ? (terms.monitoringFeeUsdMinor ?? 0) : 0;
   const payableToGarmentGate =
-    goods - sampleCredit + sampleFees + inspectionFees + input.freightMinor;
+    goods - sampleCredit + sampleFees + inspectionFees + monitoringFee + input.freightMinor;
   const landed = payableToGarmentGate + duty;
   return {
     goods,
@@ -78,6 +85,7 @@ export function estimateOrder(input: EstimateInput, terms: EstimateTerms): Estim
     sampleFees,
     sampleCredit,
     inspectionFees,
+    monitoringFee,
     freight: input.freightMinor,
     duty,
     payableToGarmentGate,

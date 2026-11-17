@@ -17,6 +17,7 @@ export const publicManufacturerInclude = {
         where: { status: 'VERIFIED' },
         select: { region: true, tier: true, brandNames: true, status: true },
     },
+    cameras: { where: { status: 'APPROVED' }, select: { id: true }, take: 1 },
 };
 export const publicProductInclude = {
     category: { select: { slug: true, name: true } },

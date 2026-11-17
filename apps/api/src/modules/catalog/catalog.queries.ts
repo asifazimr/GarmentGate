@@ -25,6 +25,8 @@ export const publicManufacturerInclude = {
     where: { status: 'VERIFIED' },
     select: { region: true, tier: true, brandNames: true, status: true },
   },
+  // Only whether one exists: labels and stream details never leave the monitoring module.
+  cameras: { where: { status: 'APPROVED' }, select: { id: true }, take: 1 },
 } satisfies Prisma.ManufacturerProfileInclude;
 
 export const publicProductInclude = {

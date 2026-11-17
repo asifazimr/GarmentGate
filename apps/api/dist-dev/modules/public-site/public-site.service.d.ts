@@ -1,6 +1,7 @@
 import { type AdminLead, type LeadDto, type PublicDirectory, type PublicPricing, type PublicStats, type UpdateLeadDto } from '@garmentgate/shared';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { MonitoringService } from '../monitoring/monitoring.service.js';
 import { Notifier } from '../notifications/notifier.service.js';
 import { PaymentsService } from '../payments/payments.service.js';
 import { BuyerPlusService } from '../plans/buyer-plus.service.js';
@@ -9,12 +10,13 @@ export declare class PublicSiteService {
     private readonly prisma;
     private readonly payments;
     private readonly plans;
+    private readonly monitoring;
     private readonly plus;
     private readonly notifier;
     private readonly audit;
     private stats;
     private directoryCache;
-    constructor(prisma: PrismaService, payments: PaymentsService, plans: PlansService, plus: BuyerPlusService, notifier: Notifier, audit: AuditService);
+    constructor(prisma: PrismaService, payments: PaymentsService, plans: PlansService, monitoring: MonitoringService, plus: BuyerPlusService, notifier: Notifier, audit: AuditService);
     publicStats(): Promise<PublicStats>;
     publicPricing(): Promise<PublicPricing>;
     directory(): Promise<PublicDirectory>;

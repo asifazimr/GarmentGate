@@ -28,6 +28,7 @@ import { Notifier } from '../notifications/notifier.service.js';
 import { actorOf, OrdersService } from '../orders/orders.service.js';
 import { chargeMonitoring, usdIn } from '../payments/charges.js';
 import { PaymentsService } from '../payments/payments.service.js';
+import { SearchService } from '../search/search.service.js';
 import { VIDEO_PROVIDER, type VideoProvider } from './video-provider.js';
 
 const KEY = 'monitoring';
@@ -57,6 +58,7 @@ export class MonitoringService {
     private readonly payments: PaymentsService,
     private readonly notifier: Notifier,
     private readonly audit: AuditService,
+    private readonly search: SearchService,
     @Inject(VIDEO_PROVIDER) private readonly video: VideoProvider,
   ) {}
 
@@ -146,6 +148,8 @@ export class MonitoringService {
     const camera = await this.ownCamera(ctx, id);
     await this.video.deleteInput(camera.providerInputId);
     await this.prisma.camera.delete({ where: { id } });
+    // The "Live cameras" badge buyers search by may have changed.
+    await this.search.syncManufacturer(camera.manufacturerProfileId);
     await this.audit.log({
       actorUserId: ctx.userId,
       action: 'monitoring.camera_removed',
@@ -204,8 +208,13 @@ export class MonitoringService {
     }
     const camera = await this.prisma.camera.findUniqueOrThrow({
       where: { id },
-      select: { label: true, manufacturerProfile: { select: { companyId: true } } },
+      select: {
+        label: true,
+        manufacturerProfileId: true,
+        manufacturerProfile: { select: { companyId: true } },
+      },
     });
+    if (status === 'APPROVED') await this.search.syncManufacturer(camera.manufacturerProfileId);
     await this.audit.log({
       actorUserId: adminId,
       action: status === 'APPROVED' ? 'monitoring.camera_approved' : 'monitoring.camera_rejected',
@@ -226,11 +235,16 @@ export class MonitoringService {
 
   /** Staff switch a camera off at once (e.g. something identifying came into view). */
   async disableCamera(adminId: string, id: string): Promise<void> {
+    const camera = await this.prisma.camera.findUnique({
+      where: { id },
+      select: { manufacturerProfileId: true },
+    });
     const { count } = await this.prisma.camera.updateMany({
       where: { id, status: { not: 'DISABLED' } },
       data: { status: 'DISABLED', reviewedById: adminId, reviewedAt: new Date() },
     });
-    if (count !== 1) throw new NotFoundException('Camera not found or already disabled');
+    if (count !== 1 || !camera) throw new NotFoundException('Camera not found or already disabled');
+    await this.search.syncManufacturer(camera.manufacturerProfileId);
     await this.audit.log({
       actorUserId: adminId,
       action: 'monitoring.camera_disabled',
@@ -360,12 +374,22 @@ export class MonitoringService {
     });
     if (cameras.length !== ids.length)
       throw new ConflictException('Only your own approved cameras can be shown on an order');
+    const before = await this.prisma.orderCamera.count({ where: { orderId: order.id } });
     await this.prisma.$transaction([
       this.prisma.orderCamera.deleteMany({ where: { orderId: order.id } }),
       this.prisma.orderCamera.createMany({
         data: ids.map((cameraId, i) => ({ orderId: order.id, cameraId, position: i + 1 })),
       }),
     ]);
+    // First cameras on the order: tell the buyer there's something to watch.
+    if (before === 0 && ids.length > 0)
+      await this.notifier.notify({
+        to: { companyId: order.buyerCompanyId },
+        type: 'ORDER_UPDATE',
+        title: `${order.code}: your live factory view is ready`,
+        body: `${String(ids.length)} production camera${ids.length === 1 ? '' : 's'} now show your order.`,
+        link: { orderCode: order.code },
+      });
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

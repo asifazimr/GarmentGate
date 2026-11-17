@@ -878,6 +878,17 @@
         "body": "Create a free account. You only pay when you order.",
         "primary": "Create a free account",
         "secondary": "Talk to our sourcing team"
+      },
+      "liveView": {
+        "eyebrow": "Live factory view",
+        "title": "Watch your order being made",
+        "body": "Follow your bulk order on the factory’s production cameras, live and recorded, from anywhere. Every camera is checked by GarmentGate first.",
+        "points": [
+          "Live video of cutting, sewing and packing for your order",
+          "Recordings from your order’s own production run",
+          "Production lines only: no signs, logos or faces"
+        ],
+        "cta": "See how it works"
       }
     },
     "journey": {
@@ -1178,6 +1189,10 @@
           "capacity": {
             "title": "Fill empty lines",
             "body": "Publish free production windows and let buyers book minutes on your lines."
+          },
+          "cameras": {
+            "title": "Show your lines",
+            "body": "Connect production cameras for free. Buyers can filter for factories with live cameras."
           }
         }
       },
@@ -1281,7 +1296,13 @@
           "value": "Quoted per shipment",
           "body": "Sea, air or door to door, with insurance and an estimate of landed cost before you choose."
         },
-        "claim": "Claim window after delivery: {days} days."
+        "claim": "Claim window after delivery: {days} days.",
+        "liveView": {
+          "title": "Live factory view",
+          "body": "Watch your order on the factory’s approved production cameras, live and recorded. Factories pay nothing.",
+          "per": "per order",
+          "cta": "Learn more"
+        }
       },
       "plus": {
         "title": "GarmentGate Plus",
@@ -1402,6 +1423,15 @@
             "Every conversation relayed by our team",
             "Contact details hidden automatically",
             "Clear rules in the acceptable use policy"
+          ]
+        },
+        "liveView": {
+          "title": "Live factory view",
+          "body": "Buyers can watch their orders on production cameras that our team reviews before anyone sees them.",
+          "points": [
+            "Production lines only, never signs, logos or faces",
+            "Short-lived links, and every view logged",
+            "Cameras switched off at once if anything changes"
           ]
         }
       },
@@ -1833,6 +1863,10 @@
             [
               "What is a supply contract?",
               "A yearly frame agreement at fixed prices. You call off orders against it when you need them, within the contracted volume."
+            ],
+            [
+              "Can I watch my order being made?",
+              "Yes, with factories that show the “Live cameras” badge. Add the live factory view to your order, pay the fee with your other service fees, and watch live and recorded video from the order page while it’s in production."
             ]
           ]
         },
@@ -2339,7 +2373,8 @@
         "duty": "Import duty (%)",
         "dutyHint": "Depends on the product and destination. Leave 0 to skip.",
         "firstOrder": "This is my first order (first inspection free)",
-        "plus": "I’m a GarmentGate Plus member"
+        "plus": "I’m a GarmentGate Plus member",
+        "monitoring": "Add live factory view ({price})"
       },
       "results": "Estimate",
       "rows": {
@@ -2351,7 +2386,8 @@
         "toGarmentGate": "Paid to GarmentGate",
         "duty": "Import duty (to customs)",
         "landed": "Landed cost",
-        "perPiece": "per piece"
+        "perPiece": "per piece",
+        "monitoring": "Live factory view"
       },
       "timeline": {
         "title": "When you pay",
@@ -2360,7 +2396,8 @@
         "inspections": "When inspections are booked",
         "balance": "Balance once the final inspection passes",
         "freight": "Freight when you choose shipping",
-        "duty": "Duty to customs at import"
+        "duty": "Duty to customs at import",
+        "monitoring": "Live factory view"
       },
       "escrow": "Everything you pay GarmentGate is held in escrow and released to the factory in stages.",
       "disclaimer": "An estimate using current fees and a typical {percent} deposit. Your quote, order and shipping step show the exact amounts.",
@@ -2474,11 +2511,12 @@
           "categories": "Garment categories",
           "sourcing": "Sourcing countries",
           "corporate": "Corporate uniforms",
-          "plus": "GarmentGate Plus"
+          "plus": "GarmentGate Plus",
+          "liveView": "Live factory view"
         },
         "promo": {
-          "title": "Pay the balance only after your goods pass inspection",
-          "cta": "Start a project"
+          "title": "Watch your order being made, live, from anywhere",
+          "cta": "See live factory view"
         }
       },
       "manufacturers": {
@@ -2611,6 +2649,142 @@
           "title": "Already a customer? Message us from your order for the fastest answer",
           "cta": "Contact support"
         }
+      }
+    },
+    "liveView": {
+      "meta": {
+        "title": "Live factory view",
+        "description": "Watch your garments being made on production cameras GarmentGate has checked: live while your order is in production, with recordings to replay."
+      },
+      "hero": {
+        "eyebrow": "Live factory view",
+        "title": "Watch your order being made.",
+        "body": "See your garments on the production line, live, from wherever you are. Every camera is checked by GarmentGate first, and you can replay what you missed."
+      },
+      "cta": "Start a project",
+      "seePrice": "See the price",
+      "visual": {
+        "label": "Illustration of a buyer watching a sewing line live",
+        "overlay": "ORD-2026-00042 · Camera 2",
+        "live": "Live",
+        "illustration": "Illustration",
+        "camera": "Camera {number}",
+        "areas": {
+          "cutting": "Cutting",
+          "sewing": "Sewing",
+          "packing": "Packing"
+        }
+      },
+      "why": {
+        "eyebrow": "Why buyers add it",
+        "title": "The factory visit, without the flight",
+        "travel": {
+          "title": "No travel needed",
+          "body": "See cutting, sewing and packing for your order from your desk, instead of flying out for a visit."
+        },
+        "progress": {
+          "title": "Progress you can see",
+          "body": "Watch live while your order is being made, and replay recordings from your order’s own production run."
+        },
+        "trust": {
+          "title": "Checked by GarmentGate",
+          "body": "Every camera is reviewed by our team before you see it. It adds to independent inspections and doesn’t replace them."
+        }
+      },
+      "how": {
+        "title": "How it works",
+        "items": [
+          "Add the live factory view to your order, with factories that show the “Live cameras” badge.",
+          "The factory chooses the approved cameras over your production lines. We tell you when they’re ready.",
+          "Watch live from your order page while it’s being made, and replay recordings any time."
+        ]
+      },
+      "checked": {
+        "eyebrow": "Every camera checked",
+        "title": "Production only. Nothing else.",
+        "body": "Before any buyer can watch, a GarmentGate reviewer looks at the live picture and approves it only if it passes every check.",
+        "productionOnly": {
+          "title": "Production only",
+          "body": "Cameras point at cutting, sewing, finishing, packing or quality control."
+        },
+        "noSignage": {
+          "title": "No signs or logos",
+          "body": "No company names, signs, labels or brand names you could read."
+        },
+        "noFaces": {
+          "title": "No recognisable faces",
+          "body": "Workers’ privacy comes first: cameras are placed so nobody can be identified."
+        },
+        "noOutsideView": {
+          "title": "No views outside",
+          "body": "No windows, doors or anything that shows where the factory is."
+        },
+        "switchOff": "If anything changes, our team switches the camera off at once."
+      },
+      "fits": {
+        "title": "Where it fits in your order",
+        "body": "Live factory view covers the weeks between your approved sample and the final inspection.",
+        "sampling": {
+          "title": "Sampling",
+          "body": "Approve the sample first."
+        },
+        "production": {
+          "title": "Live factory view",
+          "body": "Watch your bulk order being made."
+        },
+        "inline": {
+          "title": "Inline inspection",
+          "body": "An inspector checks during production."
+        },
+        "final": {
+          "title": "Final inspection",
+          "body": "An AQL random inspection before shipping."
+        },
+        "shipping": {
+          "title": "Shipping",
+          "body": "From the GarmentGate hub to your door."
+        }
+      },
+      "price": {
+        "title": "One price per order",
+        "body": "Add it to any order before the goods leave the factory. You pay GarmentGate with your other service fees. Factories pay nothing.",
+        "label": "Per order",
+        "ask": "Ask us about adding live factory view to your order.",
+        "includes": [
+          "Live video from every camera on your order",
+          "Recordings from your order’s production run",
+          "Every camera reviewed by GarmentGate"
+        ]
+      },
+      "faq": {
+        "q1": {
+          "q": "Which factories offer it?",
+          "a": "Factories with the “Live cameras” badge on their profile. You can filter for them when you search for factories."
+        },
+        "q2": {
+          "q": "When can I watch?",
+          "a": "While your order is in production, in quality control and ready to ship. Cameras depend on the factory’s shifts, so a camera can be offline at times: recordings cover what you missed."
+        },
+        "q3": {
+          "q": "Will I find out which factory it is?",
+          "a": "No. You see your order code and numbered cameras with their area. Cameras never show signs, logos, faces or the outside, and every one is checked by our team."
+        },
+        "q4": {
+          "q": "Can I see other buyers’ orders?",
+          "a": "No. Recordings start when your production starts and stop when your goods leave, and the factory chooses cameras for your order’s lines."
+        },
+        "q5": {
+          "q": "Does it replace inspections?",
+          "a": "No. It lets you follow progress. Independent inline and final AQL inspections still decide whether your goods pass."
+        },
+        "q6": {
+          "q": "Can I download the video?",
+          "a": "Video plays on your order page through short-lived links, for you and your team. It can’t be downloaded or shared outside GarmentGate."
+        }
+      },
+      "band": {
+        "title": "See your next order being made",
+        "body": "Start a project, choose a factory with live cameras and add the live factory view to your order."
       }
     }
   },
@@ -2916,7 +3090,8 @@
       "reset": "Reset search",
       "score": "Score {score}",
       "certs": "{count, plural, one {# certificate} other {# certificates}}",
-      "moq": "MOQ {count, number}"
+      "moq": "MOQ {count, number}",
+      "liveOnly": "Live cameras only"
     },
     "factory": {
       "back": "All factories",
@@ -5790,11 +5965,11 @@
   },
   "fees": {
     "title": "Service fees",
-    "description": "Samples, inspection days and video monitoring are paid to GarmentGate. Your goods leave the hub once these are paid.",
+    "description": "Samples, inspection days and the live factory view are paid to GarmentGate. Your goods leave the hub once these are paid.",
     "kinds": {
       "SAMPLE_FEE": "Sample fees",
       "INSPECTION_FEE": "Inspection days",
-      "MONITORING_FEE": "Video monitoring"
+      "MONITORING_FEE": "Live factory view"
     },
     "paid": "Paid",
     "checking": "Transfer being checked",
@@ -6438,16 +6613,16 @@
       "retry": "Try again"
     },
     "buyer": {
-      "title": "Video monitoring",
+      "title": "Live factory view",
       "offer": "Watch your order being made on the factory’s production cameras, live and recorded, for the whole production run.",
       "description": "Live and recorded video of your order’s production lines.",
-      "add": "Add video monitoring",
-      "addFor": "Add video monitoring · {amount}",
-      "addedToast": "Video monitoring added. Pay the fee below to start watching.",
+      "add": "Add live factory view",
+      "addFor": "Add live factory view · {amount}",
+      "addedToast": "Live factory view added. Pay the fee below to start watching.",
       "addFailed": "We couldn’t add monitoring. Try again.",
       "active": "Active",
       "unpaid": "Fee due",
-      "payFirst": "Pay the video monitoring fee under Service fees below to start watching.",
+      "payFirst": "Pay the live factory view fee under Service fees below to start watching.",
       "notWatchable": "Cameras show while your order is in production, quality control and ready to ship.",
       "noCameras": "The factory is choosing which cameras show your order. They’ll appear here.",
       "cameras": "Cameras",
@@ -6562,6 +6737,8 @@
         "save": "Save",
         "saved": "Terms saved"
       }
-    }
+    },
+    "badge": "Live cameras",
+    "badgeHint": "This factory has production cameras checked by GarmentGate. Add a live factory view to your order to watch it being made."
   }
 }

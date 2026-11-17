@@ -46,7 +46,10 @@ export function VideoPlayer({
     } else {
       void import('hls.js').then(({ default: Hls }) => {
         if (destroyed) return;
-        if (!Hls.isSupported()) return fail();
+        if (!Hls.isSupported()) {
+          fail();
+          return;
+        }
         const hls = new Hls({ lowLatencyMode: live });
         hls.on(Hls.Events.ERROR, (_event, data) => {
           if (data.fatal) fail();

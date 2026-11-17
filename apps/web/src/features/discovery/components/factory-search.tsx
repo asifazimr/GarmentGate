@@ -3,11 +3,18 @@
 import { ManufacturerSortSchema } from '@garmentgate/shared';
 import { Factory, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { parseAsInteger, parseAsString, parseAsStringLiteral, useQueryStates } from 'nuqs';
+import {
+  parseAsBoolean,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryStates,
+} from 'nuqs';
 import { useEffect, useEffectEvent, useState } from 'react';
 import { EmptyState } from '@/components/patterns/empty-state';
 import { ErrorState } from '@/components/patterns/error-state';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
   Select,
@@ -25,6 +32,7 @@ const parsers = {
   q: parseAsString.withDefault(''),
   sort: parseAsStringLiteral(SORTS).withDefault('relevance'),
   page: parseAsInteger.withDefault(1),
+  live: parseAsBoolean.withDefault(false),
 };
 
 export function FactorySearch() {
@@ -47,6 +55,7 @@ export function FactorySearch() {
     q: params.q || undefined,
     sort: params.sort,
     page: params.page,
+    ...(params.live ? { live: '1' as const } : {}),
   });
   const data = search.data;
 
@@ -86,9 +95,18 @@ export function FactorySearch() {
           </SelectContent>
         </Select>
       </div>
-      <p className="text-muted-foreground text-sm" aria-live="polite">
-        {data ? t('results', { count: data.total }) : ' '}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-muted-foreground text-sm" aria-live="polite">
+          {data ? t('results', { count: data.total }) : ' '}
+        </p>
+        <label className="flex min-h-11 items-center gap-2 text-sm md:min-h-9">
+          <Checkbox
+            checked={params.live}
+            onCheckedChange={(on) => void setParams({ live: on ? true : null, page: 1 })}
+          />
+          {t('liveOnly')}
+        </label>
+      </div>
       {search.isPending ? (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, i) => (
@@ -103,7 +121,10 @@ export function FactorySearch() {
           title={t('empty')}
           description={t('emptyBody')}
           action={
-            <Button variant="outline" onClick={() => void setParams({ q: null, page: 1 })}>
+            <Button
+              variant="outline"
+              onClick={() => void setParams({ q: null, live: null, page: 1 })}
+            >
               {t('reset')}
             </Button>
           }

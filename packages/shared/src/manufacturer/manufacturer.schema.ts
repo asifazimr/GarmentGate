@@ -57,6 +57,8 @@ export const PublicManufacturerSchema = z.strictObject({
   certifications: z.array(PublicCertificationSchema),
   /** Verified supplier claims as badges ("Supplies to 3 major EU brands"): never brand names. */
   brandBadges: z.array(PublicBrandBadgeSchema),
+  /** Has GarmentGate-approved production cameras: buyers can add a live factory view. */
+  liveCameras: z.boolean(),
   scores: z.strictObject({
     performanceScore: z.number().int().min(0).max(100),
     onTimeDeliveryBps: z.number().int().nullable(),

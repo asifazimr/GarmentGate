@@ -67,6 +67,7 @@ describe('public website data and enquiries (e2e)', () => {
     expect(pricing.factoryPlans.tiers.PRO.monthlyUsdMinor).toBe(12_300);
     expect(pricing.releaseSchedule.reduce((s, r) => s + r.bps, 0)).toBe(10_000);
     expect(pricing.inspectorDayRateUsdMinor).toBeGreaterThan(0);
+    expect(pricing.monitoring.feeUsdMinor).toBeGreaterThan(0);
     await admin.put('/admin/plans/settings').send(DEFAULT_PLAN_SETTINGS).expect(200);
   });
 

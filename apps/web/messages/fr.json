@@ -1188,6 +1188,10 @@
             [
               "Qu’est-ce qu’un contrat d’approvisionnement ?",
               "Un accord-cadre annuel à prix fixes. Vous passez des appels de commande quand vous en avez besoin, dans la limite du volume contractuel."
+            ],
+            [
+              "Puis-je regarder ma commande être fabriquée ?",
+              "Oui, avec les usines qui affichent le badge « Caméras en direct ». Ajoutez l’usine en direct à votre commande, réglez les frais avec vos autres frais de service et regardez la vidéo en direct et enregistrée depuis la page de la commande pendant la production."
             ]
           ]
         },

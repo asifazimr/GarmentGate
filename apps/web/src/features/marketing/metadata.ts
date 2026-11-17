@@ -15,7 +15,8 @@ type PageKey =
   | 'about'
   | 'plus'
   | 'enterprise'
-  | 'capacity';
+  | 'capacity'
+  | 'liveView';
 
 /** Title, description and social cards for a marketing page, from its `meta` copy. */
 export async function marketingMetadata(page: PageKey, path: string): Promise<Metadata> {

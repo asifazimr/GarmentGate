@@ -204,6 +204,7 @@ describe('toPublicManufacturer', () => {
         'certifications',
         'country',
         'headline',
+        'liveCameras',
         'photos',
         'publicCode',
         'scores',

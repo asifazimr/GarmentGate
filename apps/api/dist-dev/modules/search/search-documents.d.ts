@@ -36,6 +36,7 @@ export interface ManufacturerDocument {
     monthlyCapacityPcs: number | null;
     performanceScore: number;
     searchBoost: number;
+    liveCameras: boolean;
 }
 export declare const PRODUCT_DOCUMENT_KEYS: readonly (keyof ProductDocument)[];
 export declare const MANUFACTURER_DOCUMENT_KEYS: readonly (keyof ManufacturerDocument)[];

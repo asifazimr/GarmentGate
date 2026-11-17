@@ -39,6 +39,9 @@ export interface PublicManufacturerSource {
     communicationAvgX100: number | null;
     onTimeAvgX100: number | null;
     categories: CategorySource[];
+    cameras?: {
+        id: string;
+    }[];
     supplierClaims?: {
         region: SupplierClaimRegion;
         tier: SupplierClaimTier;

@@ -35,6 +35,7 @@ export const MANUFACTURER_DOCUMENT_KEYS = [
     'monthlyCapacityPcs',
     'performanceScore',
     'searchBoost',
+    'liveCameras',
 ];
 export function productDocument(product, extra) {
     const prices = product.priceTiers.map((t) => t.unitPriceMinor);
@@ -75,6 +76,7 @@ export function manufacturerDocument(m, parentSlugs, searchBoost = 0) {
         monthlyCapacityPcs: m.capabilities.monthlyCapacityPcs,
         performanceScore: m.scores.performanceScore,
         searchBoost,
+        liveCameras: m.liveCameras,
     };
 }
 const RANKING_RULES = [
@@ -115,7 +117,14 @@ export const PRODUCT_INDEX_SETTINGS = {
 export const MANUFACTURER_INDEX_SETTINGS = {
     rankingRules: RANKING_RULES,
     searchableAttributes: ['publicCode', 'headline', 'categoryNames', 'machinery', 'about'],
-    filterableAttributes: ['categories', 'country', 'certifications', 'moqPcs', 'monthlyCapacityPcs'],
+    filterableAttributes: [
+        'categories',
+        'country',
+        'certifications',
+        'moqPcs',
+        'monthlyCapacityPcs',
+        'liveCameras',
+    ],
     sortableAttributes: ['performanceScore', 'monthlyCapacityPcs', 'moqPcs'],
     typoTolerance: { enabled: true, minWordSizeForTypos: { oneTypo: 4, twoTypos: 8 } },
     pagination: { maxTotalHits: 2000 },

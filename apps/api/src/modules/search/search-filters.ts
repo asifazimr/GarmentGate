@@ -53,6 +53,7 @@ export function manufacturerFilter(query: ManufacturerSearchQuery): string[] {
     anyOf('country', query.country),
     ...(query.cert ?? []).map((c) => `certifications = ${q(c)}`),
     query.moqMax !== undefined ? `moqPcs <= ${String(query.moqMax)}` : null,
+    query.live ? 'liveCameras = true' : null,
   ].filter((f): f is string => f !== null);
 }
 

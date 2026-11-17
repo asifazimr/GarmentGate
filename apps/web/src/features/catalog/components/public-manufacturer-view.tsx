@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { countryName } from '@/lib/countries';
 import { Rendition } from '@/components/patterns/rendition';
+import { LiveCamerasBadge } from '@/features/monitoring/components/live-badge';
 
 /**
  * Renders the anonymised, buyer-facing factory profile. Takes only `PublicManufacturer`, so it
@@ -89,6 +90,7 @@ export function PublicManufacturerView({ manufacturer: m }: { manufacturer: Publ
               <Globe2 aria-hidden="true" />
               {countryName(m.country, locale)}
             </Badge>
+            {m.liveCameras ? <LiveCamerasBadge /> : null}
           </div>
           {m.headline ? (
             <p className="text-lg font-semibold tracking-[-0.015em]">{m.headline}</p>

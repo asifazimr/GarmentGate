@@ -108,13 +108,13 @@ export declare class OrdersController {
                 } | null;
                 videoUrl: string | null;
                 caption: string | null;
-                processing: "FAILED" | "PENDING" | "PROCESSING" | "READY";
+                processing: "PENDING" | "PROCESSING" | "READY" | "FAILED";
                 review: "REJECTED" | "PENDING" | "APPROVED";
             }[];
         }[];
         milestones: {
             stage: "SHIPPED" | "ORDER_CONFIRMED" | "FABRIC_SOURCING" | "CUTTING" | "SEWING" | "FINISHING" | "PACKING" | "READY_FOR_INSPECTION";
-            status: "COMPLETED" | "PENDING" | "IN_PROGRESS" | "DELAYED";
+            status: "PENDING" | "COMPLETED" | "IN_PROGRESS" | "DELAYED";
             plannedAt: string | null;
             completedAt: string | null;
             note: string | null;
@@ -130,7 +130,7 @@ export declare class OrdersController {
                 } | null;
                 videoUrl: string | null;
                 caption: string | null;
-                processing: "FAILED" | "PENDING" | "PROCESSING" | "READY";
+                processing: "PENDING" | "PROCESSING" | "READY" | "FAILED";
                 review: "REJECTED" | "PENDING" | "APPROVED";
             }[];
         }[];
@@ -176,7 +176,7 @@ export declare class OrdersController {
                 } | null;
                 videoUrl: string | null;
                 caption: string | null;
-                processing: "FAILED" | "PENDING" | "PROCESSING" | "READY";
+                processing: "PENDING" | "PROCESSING" | "READY" | "FAILED";
                 review: "REJECTED" | "PENDING" | "APPROVED";
             }[];
             reportUrl: string | null;
@@ -229,13 +229,13 @@ export declare class OrdersController {
                 } | null;
                 videoUrl: string | null;
                 caption: string | null;
-                processing: "FAILED" | "PENDING" | "PROCESSING" | "READY";
+                processing: "PENDING" | "PROCESSING" | "READY" | "FAILED";
                 review: "REJECTED" | "PENDING" | "APPROVED";
             }[];
         }[];
         milestones: {
             stage: "SHIPPED" | "ORDER_CONFIRMED" | "FABRIC_SOURCING" | "CUTTING" | "SEWING" | "FINISHING" | "PACKING" | "READY_FOR_INSPECTION";
-            status: "COMPLETED" | "PENDING" | "IN_PROGRESS" | "DELAYED";
+            status: "PENDING" | "COMPLETED" | "IN_PROGRESS" | "DELAYED";
             plannedAt: string | null;
             completedAt: string | null;
             note: string | null;
@@ -251,7 +251,7 @@ export declare class OrdersController {
                 } | null;
                 videoUrl: string | null;
                 caption: string | null;
-                processing: "FAILED" | "PENDING" | "PROCESSING" | "READY";
+                processing: "PENDING" | "PROCESSING" | "READY" | "FAILED";
                 review: "REJECTED" | "PENDING" | "APPROVED";
             }[];
         }[];
@@ -297,7 +297,7 @@ export declare class OrdersController {
                 } | null;
                 videoUrl: string | null;
                 caption: string | null;
-                processing: "FAILED" | "PENDING" | "PROCESSING" | "READY";
+                processing: "PENDING" | "PROCESSING" | "READY" | "FAILED";
                 review: "REJECTED" | "PENDING" | "APPROVED";
             }[];
             reportUrl: string | null;
@@ -363,13 +363,13 @@ export declare class OrdersController {
                 } | null;
                 videoUrl: string | null;
                 caption: string | null;
-                processing: "FAILED" | "PENDING" | "PROCESSING" | "READY";
+                processing: "PENDING" | "PROCESSING" | "READY" | "FAILED";
                 review: "REJECTED" | "PENDING" | "APPROVED";
             }[];
         }[];
         milestones: {
             stage: "SHIPPED" | "ORDER_CONFIRMED" | "FABRIC_SOURCING" | "CUTTING" | "SEWING" | "FINISHING" | "PACKING" | "READY_FOR_INSPECTION";
-            status: "COMPLETED" | "PENDING" | "IN_PROGRESS" | "DELAYED";
+            status: "PENDING" | "COMPLETED" | "IN_PROGRESS" | "DELAYED";
             plannedAt: string | null;
             completedAt: string | null;
             note: string | null;
@@ -385,7 +385,7 @@ export declare class OrdersController {
                 } | null;
                 videoUrl: string | null;
                 caption: string | null;
-                processing: "FAILED" | "PENDING" | "PROCESSING" | "READY";
+                processing: "PENDING" | "PROCESSING" | "READY" | "FAILED";
                 review: "REJECTED" | "PENDING" | "APPROVED";
             }[];
         }[];
@@ -431,7 +431,7 @@ export declare class OrdersController {
                 } | null;
                 videoUrl: string | null;
                 caption: string | null;
-                processing: "FAILED" | "PENDING" | "PROCESSING" | "READY";
+                processing: "PENDING" | "PROCESSING" | "READY" | "FAILED";
                 review: "REJECTED" | "PENDING" | "APPROVED";
             }[];
             reportUrl: string | null;

@@ -7,6 +7,7 @@ import {
   FactoryCameraSchema,
   FactoryOrderMonitoringSchema,
   PaymentStartSchema,
+  PublicManufacturerSchema,
 } from '@garmentgate/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -238,6 +239,18 @@ describe('Video monitoring (e2e)', () => {
     );
 
     // A rival's approved camera, to prove it can't be put on someone else's order.
+    // Buyers see only that the factory has live cameras (its badge), nothing more.
+    const profile = PublicManufacturerSchema.parse(
+      (await buyer.agent.get(`/manufacturers/${factory.code}`).expect(200)).body,
+    );
+    expect(profile.liveCameras).toBe(true);
+    expect(JSON.stringify(profile)).not.toContain('Line 3');
+    expect(
+      PublicManufacturerSchema.parse(
+        (await buyer.agent.get(`/manufacturers/${rival.code}`).expect(200)).body,
+      ).liveCameras,
+    ).toBe(false);
+
     rivalCameraId = FactoryCameraSchema.parse(
       (
         await rival.agent
@@ -299,6 +312,14 @@ describe('Video monitoring (e2e)', () => {
       .put(`/manufacturer/orders/${code}/cameras`)
       .send({ cameraIds: [cameraId] })
       .expect(204);
+    const buyerUser = await ctx.prisma.user.findFirstOrThrow({
+      where: { companyId: buyer.companyId },
+    });
+    expect(
+      await ctx.prisma.notification.count({
+        where: { userId: buyerUser.id, title: `${code}: your live factory view is ready` },
+      }),
+    ).toBe(1);
   });
 
   it('streams to the buyer once paid and in production, with only this order’s recordings', async () => {

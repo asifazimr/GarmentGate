@@ -87,6 +87,8 @@ export const ManufacturerSearchQuerySchema = z.object({
   country: csv(CountryCodeSchema),
   cert: csv(CertificationTypeSchema),
   moqMax: optionalInt(10_000_000),
+  /** "1": only factories with approved live cameras. */
+  live: z.literal('1').optional(),
   sort: ManufacturerSortSchema.default('relevance'),
   page: z.coerce.number().int().min(1).max(500).default(1),
   pageSize: z.coerce.number().int().min(1).max(48).default(24),

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CtaBand } from '../components/cta-band';
 import { JourneyStory } from '../components/journey';
 import { JsonLd } from '../components/json-ld';
+import { LiveViewVisual } from '../components/live-view-visual';
 import { MoneyFlow } from '../components/money-flow';
 import { OrderRoute } from '../components/order-route';
 import { QcReport } from '../components/qc-report';
@@ -163,6 +164,37 @@ export async function HomePage() {
           <Reveal>
             <QcReport />
           </Reveal>
+        </div>
+      </Section>
+
+      {/* ── Live factory view ────────────────────────────────── */}
+      <Section tone="surface">
+        <div className="grid items-center gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+          <Reveal className="order-last lg:order-first">
+            <LiveViewVisual />
+          </Reveal>
+          <div>
+            <SectionHeading
+              eyebrow={t('home.liveView.eyebrow')}
+              title={t('home.liveView.title')}
+              body={t('home.liveView.body')}
+            />
+            <ul className="mt-8 grid gap-3">
+              {stringList.parse(t.raw('home.liveView.points')).map((p) => (
+                <li key={p} className="flex gap-3">
+                  <BadgeCheck
+                    className="text-success-ink mt-0.5 size-5 shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+            <Button variant="outline" className="mt-8" render={<Link href="/buyers/live-view" />}>
+              {t('home.liveView.cta')}
+              <ArrowRight />
+            </Button>
+          </div>
         </div>
       </Section>
 

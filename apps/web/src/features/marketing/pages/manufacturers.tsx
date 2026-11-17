@@ -2,6 +2,7 @@ import {
   ArrowRight,
   BadgeCheck,
   CalendarRange,
+  Cctv,
   CheckCircle2,
   FileCheck2,
   Hammer,
@@ -26,6 +27,7 @@ const WHY = [
   { key: 'paid', Icon: Wallet },
   { key: 'noChasing', Icon: Handshake },
   { key: 'capacity', Icon: CalendarRange },
+  { key: 'cameras', Icon: Cctv },
 ] as const;
 const STEPS = [
   { key: 'apply', Icon: UserPlus },
@@ -60,7 +62,7 @@ export async function ManufacturersPage() {
 
       <Section>
         <SectionHeading title={t('manufacturers.why.title')} />
-        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {WHY.map(({ key, Icon }, i) => (
             <li key={key}>
               <Reveal delay={i * 0.05} className="bg-card h-full rounded-2xl border p-6 shadow-xs">

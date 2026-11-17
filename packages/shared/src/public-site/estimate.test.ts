@@ -35,6 +35,17 @@ describe('order estimate', () => {
     expect(e.landedPerPiece).toBe(Math.round(e.landed / 6_000));
   });
 
+  it('adds the live factory view fee only when chosen and offered', () => {
+    const plain = estimateOrder(base, terms);
+    expect(plain.monitoringFee).toBe(0);
+    const offered = { ...terms, monitoringFeeUsdMinor: 4_900 };
+    const added = estimateOrder({ ...base, monitoring: true }, offered);
+    expect(added.monitoringFee).toBe(4_900);
+    expect(added.payableToGarmentGate).toBe(plain.payableToGarmentGate + 4_900);
+    expect(added.balance).toBe(plain.balance);
+    expect(estimateOrder({ ...base, monitoring: true }, terms).monitoringFee).toBe(0);
+  });
+
   it('waives the first inspection on a first order, and all of them for Plus', () => {
     expect(estimateOrder({ ...base, firstOrder: true }, terms).inspectionFees).toBe(20_000);
     const plus = estimateOrder({ ...base, plus: true }, terms);

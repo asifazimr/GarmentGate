@@ -15,6 +15,7 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { listedManufacturer } from '../catalog/catalog.queries.js';
+import { MonitoringService } from '../monitoring/monitoring.service.js';
 import { Notifier } from '../notifications/notifier.service.js';
 import { serviceFees } from '../payments/charges.js';
 import { PaymentsService } from '../payments/payments.service.js';
@@ -44,6 +45,7 @@ export class PublicSiteService {
     private readonly prisma: PrismaService,
     private readonly payments: PaymentsService,
     private readonly plans: PlansService,
+    private readonly monitoring: MonitoringService,
     private readonly plus: BuyerPlusService,
     private readonly notifier: Notifier,
     private readonly audit: AuditService,
@@ -85,12 +87,13 @@ export class PublicSiteService {
   }
 
   async publicPricing(): Promise<PublicPricing> {
-    const [fees, schedule, factoryPlans, buyerPlus, gigRow] = await Promise.all([
+    const [fees, schedule, factoryPlans, buyerPlus, gigRow, monitoring] = await Promise.all([
       serviceFees(this.prisma),
       this.payments.releaseSchedule(),
       this.plans.settings(),
       this.plus.settings(),
       this.prisma.platformSetting.findUnique({ where: { key: 'gig' } }),
+      this.monitoring.settings(),
     ]);
     const gig = GigSettingsSchema.safeParse(gigRow?.value);
     return {
@@ -105,6 +108,7 @@ export class PublicSiteService {
       factoryPlans,
       buyerPlus,
       inspectorDayRateUsdMinor: (gig.success ? gig.data : DEFAULT_GIG_SETTINGS).dayRateUsdMinor,
+      monitoring: { enabled: monitoring.enabled, feeUsdMinor: monitoring.feeUsdMinor },
     };
   }
 
